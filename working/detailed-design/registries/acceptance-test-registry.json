@@ -1,18 +1,19 @@
 {
-  "registry_version": "2.0.0",
+  "registry_version": "2.1.0",
   "phase_1_freeze_audit": {
-    "status": "PASS",
+    "status": "REVIEW_REQUIRED",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
     "eligibility": "HUMAN_APPROVED_BUILD_FREEZE_REQUIRED",
     "excludes": [
       "PHASE_2_PLUS",
       "DEFERRED_CONTENT"
     ],
-    "audited_on": "2026-09-26"
+    "prior_audit_on": "2026-09-26",
+    "change_ref": "BF-007"
   },
   "owner": "working/detailed-design/registries/acceptance-test-registry.json",
   "conventions": "working/common-core/ACCEPTANCE-CONVENTIONS.md",
-  "total_acceptance": 285,
+  "total_acceptance": 287,
   "entries": [
     {
       "acceptance_id": "F00-AC-001",
@@ -1161,6 +1162,26 @@
       "required_for_build_freeze": true
     },
     {
+      "acceptance_id": "F03-AC-037",
+      "function_id": "F03",
+      "criterion": "F03 v2 Evidence必須分離 runtime_status與operation_status；不得再以runtime_stage混合兩種語意。",
+      "test_id": "TEST-F03-037",
+      "expected_observable": "F03 v2 events只接受runtime_status / operation_status的各自合法 enum；runtime_stage被拒絕。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "RUNTIME_EVIDENCE",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F03-AC-038",
+      "function_id": "F03",
+      "criterion": "只有integrity_status=PROVEN可進normal timeout recovery；non-PROVEN必須走F03-ERR-018 fail-closed，且discard_reason只表示stale/expired operation原因。",
+      "test_id": "TEST-F03-038",
+      "expected_observable": "UNKNOWN / ASSURANCE_DEGRADED / CORRUPTED均不得回正常Runtime；discard_reason不接受integrity failure語意。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "RUNTIME_EVIDENCE",
+      "required_for_build_freeze": true
+    },
+    {
       "acceptance_id": "F04-AC-001",
       "function_id": "F04",
       "criterion": "Canonical source 可 deterministic 產生 Compiler / Validator / Runtime / Compatibility artifacts。",
@@ -1863,9 +1884,9 @@
     {
       "acceptance_id": "F07-AC-008",
       "function_id": "F07",
-      "criterion": "forbidden property不能進 product_event。",
+      "criterion": "forbidden property，或不符合 registry property type / enum / format / bounds / narrowing constraint 的 property value，不能進 product_event。",
       "test_id": "TEST-F07-008",
-      "expected_observable": "forbidden property不能進 product_event。",
+      "expected_observable": "不在 allowlist的 property，以及 type / enum / format / bounds / narrowing constraint 不合法的 property value 均被該 event獨立拒絕，且不寫入 product_event。",
       "contract_status": "ACTIVE",
       "proof_scope": "RUNTIME_EVIDENCE",
       "required_for_build_freeze": true
