@@ -1,14 +1,14 @@
 {
   "registry_version": "2.0.0",
   "phase_1_freeze_audit": {
-    "status": "REVIEW_REQUIRED",
+    "status": "PASS",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
     "eligibility": "HUMAN_APPROVED_BUILD_FREEZE_REQUIRED",
     "excludes": [
       "PHASE_2_PLUS",
       "DEFERRED_CONTENT"
     ],
-    "prior_audit_on": "2026-09-26",
+    "audited_on": "2026-09-28",
     "change_ref": "BF-007"
   },
   "owner": "working/detailed-design/registries/evidence-event-registry.json",
