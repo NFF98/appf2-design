@@ -307,22 +307,31 @@ CI / build可由 Fxx event definitions生成：
 generated/evidence/event-registry.json
 ~~~
 
-Logical registry fields：
+Logical registry structure：
 
 ~~~text
-event_type
-event_name
-function_id
-schema_version
-collection_class
-required_context[]
-allowed_properties{}
-retention_class
-metric_tags[]
-deprecated
+registry_version
+property_schemas{}
+event_property_constraints{}
+entries[]:
+  event_type
+  event_name
+  function_id
+  schema_version
+  collection_class
+  required_context[]
+  allowed_properties[]
+  retention_class
+  metric_tags[]
+  deprecated
 ~~~
 
-Generated registry不手改，不是第二份人工 SSOT。
+Rules：
+
+1. 每個 `allowed_properties[]`名稱必須能解析到唯一 `property_schemas{}` contract。
+2. `event_property_constraints{}`只能收窄 base property schema，不得放寬。
+3. Registry必須完整表達 server intake所需的 type / enum / format / bounds，不得要求 Cursor / collector自行發明。
+4. Generated registry不手改，不是第二份人工 SSOT；Working registry是 approved Fxx / F07 truth 的 machine-readable projection。
 
 # 13. Collection Classes
 
@@ -409,7 +418,9 @@ F03 action_committed這類高頻 seed，Phase 1 production預設不 durable，�
 
 ## F07-DATA-003
 
-properties必須 event-type allowlisted。
+properties必須 event-type allowlisted，且每個 allowlisted property都必須在 Working Evidence Registry的 `property_schemas` 有 machine-readable type / enum / format / bound contract；不得只列名稱而把合法值留給 implementation猜。
+
+同名 property的共用 schema由 registry單一定義；若同名 property因 Function owner具有不同 enum，可用 function-scoped constraint收窄，但不得放寬 base schema。Event-specific constraint可再收窄合法值。
 
 Allowed categories：
 
@@ -675,7 +686,7 @@ Server validate：
 5. function_id matches registry
 6. context identifier format
 7. allowed_properties only
-8. property types / bounds
+8. property schema type / enum / format / bounds + event/function-specific narrowing constraints
 9. forbidden user-content fields
 10. occurred_at sanity
 11. collection class production policy
@@ -798,11 +809,19 @@ Continuity metric：
 
 ## F07-RQ-010
 
-Phase 1：
+Phase 1 default：
 
 ~~~text
 schema_version = 1.0.0
 ~~~
+
+BF-007 material delta後，F03 event family因 `runtime_stage` breaking split為 `runtime_status + operation_status`，使用：
+
+~~~text
+F03-EVT-* schema_version = 2.0.0
+~~~
+
+其他未改 event meaning / shape的 Phase 1 event維持各自 registry所列 schema_version。
 
 SemVer：
 
@@ -826,6 +845,8 @@ CI rules：
 
 - duplicate event_type → fail
 - prefix / function mismatch → fail
+- allowed property缺 property_schemas contract → fail
+- event_property_constraints放寬 base schema → fail
 - CORE_OUTCOME缺 trigger / metric mapping → fail
 - DEBUG_ONLY不得被 production collector默認 durable
 - generated registry不得手改
@@ -1168,7 +1189,7 @@ Evidence Envelope：
 
 - F07-AC-006 unknown event_type被拒絕。
 - F07-AC-007 function_id / event_type prefix mismatch被拒絕。
-- F07-AC-008 forbidden property不能進 product_event。
+- F07-AC-008 forbidden property，或不符合 registry property type / enum / format / bounds / narrowing constraint 的 property value，不能進 product_event。
 - F07-AC-009 raw Intent / raw Result不需要進 Evidence。
 - F07-AC-010 event retry使用同 event_id且不 duplicate durable row。
 - F07-AC-011 one invalid event不 rollback整個 valid batch。
@@ -1207,7 +1228,7 @@ F07-AC-002 → TEST-F07-002 no fingerprint identity
 F07-AC-003 → TEST-F07-003 no hidden identity recovery
 F07-AC-004 → TEST-F07-004 anonymous not authorization
 F07-AC-006 → TEST-F07-006 unknown event rejection
-F07-AC-008 → TEST-F07-008 property allowlist
+F07-AC-008 → TEST-F07-008 property allowlist + type / enum / format / bounds
 F07-AC-009 → TEST-F07-009 no raw content telemetry
 F07-AC-010 → TEST-F07-010 retry dedupe
 F07-AC-011 → TEST-F07-011 partial batch acceptance
