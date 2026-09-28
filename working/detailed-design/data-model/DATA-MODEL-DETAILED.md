@@ -408,6 +408,9 @@ F08 / F10 若需要 Blueprint family / ownership，可新增 metadata layer，�
 - `properties` 不得成為任意 user-content dump。
 - F07 定義 batching、retry、dedupe、event catalog、retention。
 - Function-specific evidence 必須用 stable Event ID / event_type。
+- `occurred_at` 與 `received_at` 是 durable immutable time pair；第一次成功 INSERT 的 `received_at` 是該 event canonical ingest time，duplicate event_id retry不得改寫。
+- BF-011 canonical aggregate time不新增 DB column：`effective_event_at = received_at` when `occurred_at > received_at + 10 minutes`；otherwise `effective_event_at = occurred_at`。Exactly +10 minutes仍使用 `occurred_at`。
+- `F07-ERR-013 EVENT_CLOCK_INVALID` 是 ingestion diagnostic，不得覆蓋 `product_event.error_code`；該欄仍保留 source Function / event本身的 canonical error semantics。
 
 ---
 

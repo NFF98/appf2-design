@@ -1,5 +1,5 @@
 {
-  "registry_version": "2.1.0",
+  "registry_version": "2.2.0",
   "phase_1_freeze_audit": {
     "status": "PASS",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
@@ -9,11 +9,11 @@
       "DEFERRED_CONTENT"
     ],
     "audited_on": "2026-09-28",
-    "change_ref": "BF-007"
+    "change_ref": "BF-011"
   },
   "owner": "working/detailed-design/registries/acceptance-test-registry.json",
   "conventions": "working/common-core/ACCEPTANCE-CONVENTIONS.md",
-  "total_acceptance": 287,
+  "total_acceptance": 289,
   "entries": [
     {
       "acceptance_id": "F00-AC-001",
@@ -2097,6 +2097,26 @@
       "criterion": "DEBUG_ONLY不默認 durable到 production product_event。",
       "test_id": "TEST-F07-029",
       "expected_observable": "DEBUG_ONLY不默認 durable到 production product_event。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "RUNTIME_EVIDENCE",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F07-AC-030",
+      "function_id": "F07",
+      "criterion": "parseable occurred_at > received_at + 10m 的 event仍 accepted；保留 occurred_at / received_at，response以 diagnostics[]回 F07-ERR-013 / occurred_at / USE_RECEIVED_AT，且不得增加 rejected。",
+      "test_id": "TEST-F07-030",
+      "expected_observable": "clock-invalid event形成 durable row並計入 accepted；原 occurred_at與server received_at均保留；F07-ERR-013只出現在diagnostics[]，rejections[]與rejected count不增加。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "RUNTIME_EVIDENCE",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F07-AC-031",
+      "function_id": "F07",
+      "criterion": "effective_event_at由durable occurred_at / received_at deterministic derive：clock-invalid用received_at，其餘用occurred_at；exactly +10m valid；duplicate retry不得改寫received_at或以新的retry time重算classification。",
+      "test_id": "TEST-F07-031",
+      "expected_observable": "future skew >10m查詢/aggregate使用首次durable received_at；exactly +10m使用occurred_at；同event_id retry只計duplicate且不改變durable timestamps、clock classification或effective_event_at。",
       "contract_status": "ACTIVE",
       "proof_scope": "RUNTIME_EVIDENCE",
       "required_for_build_freeze": true
