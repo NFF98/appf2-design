@@ -609,14 +609,28 @@ occurred_at：
 - Client UTC occurrence time
 
 received_at：
-- Server UTC ingest time
+- Server UTC ingest time；對 durable inserted event，第一次成功 INSERT 的 received_at 是 canonical ingest time，duplicate retry 不得改寫。
+
+Canonical aggregate time：
+
+~~~text
+effective_event_at =
+  if occurred_at > received_at + 10 minutes
+    then received_at
+    else occurred_at
+~~~
 
 Rules：
 
-- offline backlog最多24h
-- client occurred_at未來超過10分鐘 → clock_invalid
-- clock_invalid event可用 received_at做 aggregate
-- 不上傳完整 device time configuration
+- offline backlog最多24h。
+- parseable client occurred_at 若 **嚴格大於** server received_at + 10 minutes → `clock_invalid`。
+- `occurred_at = received_at + 10 minutes` 仍視為 valid；只有 `>` threshold 才是 clock_invalid。
+- clock_invalid event **仍 accepted**；不得只因 client clock future skew 丟掉 Evidence。
+- clock_invalid event保留原始 occurred_at，也保留 server received_at；不得 normalize / rewrite 原始 occurred_at。
+- clock_invalid event的 analytics / aggregate canonical time = received_at；其他 event = occurred_at。
+- `effective_event_at` 是由 durable `occurred_at + received_at` deterministic derive 的 logical value，Phase 1 不新增第二個 durable timestamp truth。
+- duplicate event_id retry沿用首次 durable row；不得以 retry request的新 server time重算 clock classification、改寫 received_at或改變 effective_event_at。
+- 不上傳完整 device time configuration。
 
 # 23. Batch Ingestion API
 
@@ -666,12 +680,29 @@ Response：
     "accepted": 1,
     "duplicates": 0,
     "rejected": 0,
-    "rejections": []
+    "rejections": [],
+    "diagnostics": [
+      {
+        "event_id": "uuid",
+        "code": "F07-ERR-013",
+        "field": "occurred_at",
+        "action": "USE_RECEIVED_AT"
+      }
+    ]
   }
 }
 ~~~
 
 Partial acceptance允許。
+
+`rejections[]` 與 `diagnostics[]` 是不同 contract：
+
+- `rejections[]` = event 未被接受 / 未形成新 durable event。
+- `diagnostics[]` = event 已被接受，但 server intake偵測到 non-rejecting canonical condition。
+- `F07-ERR-013 EVENT_CLOCK_INVALID` 只出現在 accepted INSERT 的 `diagnostics[]`；不得放進 `rejections[]`，也不得增加 `rejected`。
+- clock-invalid accepted INSERT仍增加 `accepted`。
+- duplicate retry增加 `duplicates`；不得用 retry request的新 server time重新 clock-classify，也不產生新的 clock diagnostic。
+- diagnostic item Phase 1 canonical shape = `event_id + code + field + action`；BF-011 的 action 固定為 `USE_RECEIVED_AT`。
 
 # 24. Event Intake Validation
 
@@ -688,7 +719,7 @@ Server validate：
 7. allowed_properties only
 8. property schema type / enum / format / bounds + event/function-specific narrowing constraints
 9. forbidden user-content fields
-10. occurred_at sanity
+10. occurred_at parseability + clock sanity；parse failure拒絕，future skew >10m依 F07-RQ-008 accepted + diagnostic，不得混成 rejection
 11. collection class production policy
 12. anonymous identity ensure when present
 
@@ -1155,7 +1186,7 @@ max accepted events / anonymous_id = 500 per 10 minutes
 | F07-ERR-010 | EVENT_STORAGE_FAILED | YES | retry if possible |
 | F07-ERR-011 | LOCAL_QUEUE_FULL | NO | priority drop |
 | F07-ERR-012 | LOCAL_QUEUE_EXPIRED | NO | drop |
-| F07-ERR-013 | EVENT_CLOCK_INVALID | NO | use received_at |
+| F07-ERR-013 | EVENT_CLOCK_INVALID | NO | accepted ingestion diagnostic；preserve occurred_at + received_at；aggregate uses received_at |
 | F07-ERR-014 | EVIDENCE_REGISTRY_MISMATCH | NO | deployment issue |
 | F07-ERR-015 | INTERNAL_INVARIANT | NO | diagnostics |
 
@@ -1220,6 +1251,8 @@ Retention / Quality：
 - F07-AC-027 non-identifying aggregate可在 raw deletion後保留。
 - F07-AC-028 evidence rejection/drop/queue expiry本身可觀測。
 - F07-AC-029 DEBUG_ONLY不默認 durable到 production product_event。
+- F07-AC-030 parseable occurred_at > received_at + 10m 的 event仍 accepted；保留兩個原始時間，response以 diagnostics[]回 F07-ERR-013 / occurred_at / USE_RECEIVED_AT，且不得增加 rejected。
+- F07-AC-031 effective_event_at必須由 durable occurred_at / received_at deterministic derive：clock-invalid用 received_at，其餘用 occurred_at；exactly +10m valid；duplicate retry不得改寫 received_at或以新的 retry time重算 classification。
 
 # 50. Test Mapping Seed
 
@@ -1241,6 +1274,8 @@ F07-AC-020 → TEST-F07-020 ready vs meaningful use
 F07-AC-022 → TEST-F07-022 no identity stitching
 F07-AC-026 → TEST-F07-026 retention job
 F07-AC-029 → TEST-F07-029 debug production guard
+F07-AC-030 → TEST-F07-030 accepted clock-invalid diagnostic
+F07-AC-031 → TEST-F07-031 effective event time + duplicate clock stability
 ~~~
 
 # 51. Dependencies
