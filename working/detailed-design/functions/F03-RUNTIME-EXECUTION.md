@@ -1441,6 +1441,62 @@ error_code when relevant
 trace_id when relevant
 ~~~
 
+## F03-RQ-016 — Evidence Runtime / Operation Status Separation
+
+BF-007 Human Review closure將原本模糊的 `runtime_stage` 拆成兩個不同維度；F03 Evidence schema自本 Delta起使用 `schema_version = 2.0.0`：
+
+~~~text
+runtime_status
+= RuntimeInstance.status
+= UNINITIALIZED | HYDRATING | READY | RECOVERABLE_ERROR | FATAL_ERROR | DISPOSED
+
+operation_status
+= RuntimeOperation.status when an admitted operation exists
+= STARTED | PROCESSING | COMMITTED | TIMED_OUT | FAILED | CANCELLED
+~~~
+
+Rules：
+
+1. `runtime_status`描述整個 Runtime Instance；`operation_status`只描述單次 admitted operation，兩者不得混用。
+2. 沒有對應 RuntimeOperation的 event可以省略 `operation_status`，不得填假值。
+3. F03 v2 event不得再使用 `runtime_stage`。
+4. `runtime_operation_started`的 operation_status = `STARTED`。
+5. `runtime_checkpoint_completed`與`runtime_soft_timeout_observed`發生時 operation_status = `PROCESSING`。
+6. `runtime_action_timed_out`的 operation_status = `TIMED_OUT`。
+
+Integrity Evidence：
+
+~~~text
+integrity_status:
+  PROVEN
+  UNKNOWN
+  ASSURANCE_DEGRADED
+  CORRUPTED
+~~~
+
+- `PROVEN` = F03已證明 committed Runtime / Store integrity成立。
+- `UNKNOWN` = 資訊不足，不能證明安全。
+- `ASSURANCE_DEGRADED` = 用來證明 integrity 的必要 assurance / check未完整成立。
+- `CORRUPTED` = 已有正面證據顯示 Runtime invariant / state consistency被破壞。
+- **只有 PROVEN 可以進 normal timeout recovery。**
+- UNKNOWN / ASSURANCE_DEGRADED / CORRUPTED全部視為「integrity無法證明」，必須產生 `F03-ERR-018 RUNTIME_INVARIANT_BROKEN`，由 F12-POL-001 fail closed；不得回正常 Runtime。
+- `F03-EVT-014 runtime_action_timed_out`若走 F12-POL-011，只能記 `integrity_status = PROVEN`。
+- non-PROVEN integrity可由 `F03-EVT-010 runtime_fatal` + `F03-ERR-018`記錄。
+
+Stale completion discard：
+
+~~~text
+discard_reason:
+  TOKEN_CLOSED
+  TOKEN_NOT_CURRENT
+  INSTANCE_EPOCH_MISMATCH
+  HARD_DEADLINE_ELAPSED
+~~~
+
+`discard_reason`只回答「這份 operation為什麼已過期 / 失效而不能 commit」。Integrity failure不是 stale reason，不得塞入 `discard_reason`；它由 `integrity_status + F03-ERR-018`表達。
+
+Machine-readable property type / enum / bound由 F07 Evidence Registry擁有；F03擁有上述 Runtime語意。
+
 # 43. Acceptance Criteria
 
 Technical：
@@ -1496,6 +1552,8 @@ Runtime Operation / Timeout：
 - F03-AC-034同一 recovery episode的每次 Retry都建立新 operation token。
 - F03-AC-035 hard deadline跨越後，即使 synchronous handler稍後返回，pre-commit guard仍拒絕 commit。
 - F03-AC-036 Runtime integrity無法證明時，必須產生 F03-ERR-018並停止 affected execution path，不得回正常 Runtime。
+- F03-AC-037 F03 v2 Evidence必須分離 `runtime_status`與`operation_status`；不得再以 `runtime_stage`混合兩種語意。
+- F03-AC-038 只有 `integrity_status = PROVEN`可進 normal timeout recovery；non-PROVEN必須走 F03-ERR-018 fail-closed，且 `discard_reason`只表示 stale / expired operation原因。
 
 # 44. Test Mapping Seed
 
@@ -1522,6 +1580,8 @@ F03-AC-033 → TEST-F03-033 closed or stale token cannot commit
 F03-AC-034 → TEST-F03-034 retry creates a fresh token
 F03-AC-035 → TEST-F03-035 pre-commit rejects post-deadline completion
 F03-AC-036 → TEST-F03-036 integrity uncertainty fails closed
+F03-AC-037 → TEST-F03-037 runtime / operation evidence status separation
+F03-AC-038 → TEST-F03-038 integrity and stale-discard evidence semantics
 ~~~
 
 完整 Executable Acceptance 待 Function contracts 完成後統一升級。
