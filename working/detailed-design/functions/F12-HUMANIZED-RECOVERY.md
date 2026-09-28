@@ -939,7 +939,8 @@ source_error_code
 policy_id
 blueprint_hash
 capability_id/version
-runtime_stage
+runtime_status
+operation_status when relevant
 schema_version
 registry_version
 runtime_version
