@@ -14,7 +14,7 @@
 
 | Count | Lost Time / Incident | Total Lost Time |
 |---:|---:|---:|
-| 11 | mixed | **>780 min / >13 hr** |
+| 13 | mixed | **>870 min / >14.5 hr** |
 
 ---
 
@@ -33,6 +33,8 @@
 | SHAME-009 | 2026-09-26 | Rename 工作拖超過 5 小時，違反已存在的 Hard Stop 治理 | appf2 repo / product rename 本應是可分段、可驗證的 bounded migration，但實際執行曾長時間卡在 repo rename / reference update / tool orchestration，總耗時超過 5 小時；這直接違反既有「同一路徑失敗 2 次就換方法、單一工作 10 分鐘未收斂就停止並回報 blocker」規則，也讓 User 長時間等待一個理應可拆解的治理任務。 | Rename / migration 類工作必須拆成 read-only audit → bounded file batch → verification → commit 四段；任何一段 10 分鐘未收斂立即 hard stop。不得因「快完成了」繼續延長同一路徑；若 GitHub ruleset / owner rename / repo-level constraint 阻塞，必須立刻把 blocker 與唯一下一步說清楚。 | >300 min / >5 hr | OPEN / MAJOR PROCESS FAILURE |
 | SHAME-010 | 2026-09-26 | Generic Build Machine 同步工作卡約 1.5 小時，沒有遵守「先一個 repo 完成再複製」與 10 分鐘 Hard Stop | User 要求把已在 `appf2-build` 約 10 分鐘完成的 Build Readiness hardening 同步到 Demo / Template；執行時同時做 schema 差異盤點、跨 repo 同步、舊 E2E 相容修補與多輪 tool orchestration，造成 `CursorBuildMachine-Demo` 遲遲未完成，約 1.5 小時仍沒有一個 repo 的 PASS checkpoint。這再次違反既有 10 分鐘 execution gate，也沒有優先採「先完成一個 → 驗證 → 再複製第二個」的 bounded strategy。 | Generic machine 同步固定採單 repo 串行：① 只選一個 target ② 同步通用 machine files ③ 第一個 red E2E 立即停下，不做廣泛逐段修補；若 fixture 大幅過期，直接重寫 bounded regression fixture ④ 全綠後立刻 merge + PASS checkpoint ⑤ 才複製到第二 repo。任何單 repo 10 分鐘未收斂必須停止並回報唯一 blocker。 | 90 min / 1.5 hr | OPEN / MAJOR PROCESS FAILURE |
 | SHAME-011 | 2026-09-27 | PR #25 checks 被錯誤改成每小時輪詢，無端把即時 CI gate 變成等待點 | PR #25 建立後，應立即查看 GitHub CI / Governance / Attack / CodeQL 狀態並持續推進可並行工作；卻錯誤建立每小時一次的 condition-watch automation，並告知 User「停手，等通知」。這把原本應即時取得的 execution gate 人為變成低頻等待，存在讓 Project 無限期等待的風險，且沒有任何治理規則授權這種 delay。 | PR 建立後，checks 必須視為 active execution gate：先立即查一次；若仍 running，短週期直接重查或繼續不依賴 merge 的安全並行工作；不得用低頻排程取代即時 execution flow，也不得要求 Human / Cursor 因此停工。 | 45 min | OPEN / PROCESS FAILURE |
+| SHAME-012 | 2026-09-28 | 第一次角色分工失守：ChatGPT 越過既定合作模式，直接代替 Cursor 執行施工型 GitHub 工作 | 已有固定分工明確規定 Human 決策、ChatGPT 規劃/審核、Cursor 施工；但 ChatGPT 在 Build Freeze / Activation / implementation flow 中因為自己具備 GitHub write 能力，就直接執行原本應交由 Cursor 的 execution 工作。這把「有能力操作」誤當成「角色應該操作」，破壞既定 Human → ChatGPT → Cursor collaboration boundary。 | 每個下一步先判定 owner：source/test/implementation/execution branch/PR = Cursor；Planning、independent audit、Evidence normalization、closure audit = ChatGPT；Product / material governance decision = Human。ChatGPT 不得因 connector 可寫 GitHub 就跨越 Execution Engine 邊界。 | 45 min | OPEN / ROLE BOUNDARY VIOLATION |
+| SHAME-013 | 2026-09-28 | 第二次角色分工失守：把 Evidence normalization 錯交給 Cursor | User 已批准進入 Evidence normalization + T006 closure audit 後，ChatGPT 又產生一整份 Cursor 指令，要求 Cursor 建立 BS-P1-003 Evidence、綁 completion_evidence、把 T006 推到 REVIEW。這與既定分工直接衝突：Evidence normalization、post-merge evidence binding、closure audit 與 closure 判定應由 ChatGPT 負責，Cursor 只提供 implementation / tests / raw execution result。 | 固定流程：Cursor implementation + tests + raw result → Human merge approval → ChatGPT Evidence normalization → ChatGPT independent closure audit → Human Gate（如需要）→ Task closure。看到 Evidence normalization / post-merge evidence binding / closure audit / closure anomaly adjudication 時，owner 預設必須是 ChatGPT，不得再次塞給 Cursor。 | 45 min | OPEN / REPEATED ROLE BOUNDARY VIOLATION |
 
 ---
 
@@ -50,9 +52,11 @@ SHAME-008  45 min
 SHAME-009  >300 min
 SHAME-010   90 min
 SHAME-011   45 min
+SHAME-012   45 min
+SHAME-013   45 min
 -----------------
-TOTAL     >780 min
-          >13 hr
+TOTAL     >870 min
+          >14.5 hr
 ~~~
 
 ---
@@ -129,10 +133,17 @@ TOTAL     >780 min
    - 不得用 hourly / low-frequency automation 取代 active execution polling，不得因此要求 Human 或 Cursor 停工。
    - checks 完成後立即進下一個治理決策；只有真正的 failed / pending external gate 才能成為 blocker。
 
+15. **Role ownership is fixed — capability does not change ownership**
+   - Human = Product / Governance decision authority。
+   - ChatGPT = Planning、scope/contract audit、independent GitHub review、Evidence normalization、closure audit / closure recommendation。
+   - Cursor = implementation、tests、debug、execution branch/PR、raw execution result。
+   - ChatGPT 即使具備 GitHub write capability，也不得因此接管 Cursor 的施工工作。
+   - Evidence normalization、post-merge evidence binding、closure audit、closure anomaly adjudication 不得再交給 Cursor。
+
 ---
 
 ## Current Status
 
-> **11 incidents / >780 minutes lost / >13 hr.**
+> **13 incidents / >870 minutes lost / >14.5 hr.**
 
 本表為 Working Project Management 紀錄，不屬 Formal Spec。
