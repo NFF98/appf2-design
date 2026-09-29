@@ -521,4 +521,46 @@ User Intent
 
 但 Network 只有在真實供需密度成立後才有價值。
 
+## Capability Discovery + Evolution Loop
+
+Phase 4+ 的 appf2 不應把第一次 LLM composition 當成 App 的終點。
+
+~~~text
+Create
+→ Use
+→ Share
+→ Remix
+→ Better Idea
+→ Evidence
+→ Contextual Enhancement Suggestion
+→ Refine / Remix
+→ Better App
+→ More Share
+~~~
+
+產品目標不是把 50 個 Capability 全部展示給 User，而是根據：
+- current App context
+- compatible unused capabilities
+- successful Remix patterns
+- reuse / correction / adoption evidence
+- LLM semantic suggestion
+
+只推薦真正可能改善目前 App 的少數 enhancement。
+
+這讓 Share 的價值不只在 distribution，也成為 **idea evolution mechanism**。
+
+長期 appf2 要回答的不只是：
+
+> 「這個 Intent 可以做什麼 App？」
+
+還要回答：
+
+> **「這個 App 下一步怎麼變得更好？」**
+
+Guardrails：
+- 不為提高 Capability usage 而硬塞功能。
+- popularity 不等於 semantic correctness。
+- recommendation 只提供候選，仍需 User 選擇並走 Refine / Remix + Validation。
+- Phase 4+ 才把這套 evidence-driven enhancement 提升為正式產品能力；不阻擋 Phase 1–3 主線。
+
 ---
