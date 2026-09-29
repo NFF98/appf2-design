@@ -664,7 +664,9 @@ Commerce mechanics
 21. Capability Discovery 必須是 contextual recommendation，不把 Registry 變成 User 自己翻閱的元件倉庫。
 22. Remix / Share evidence 可改善 enhancement ranking，但 popularity 不得取代 semantic correctness。
 23. 所有 enhancement suggestion 必須重走 Refine / Composition / Validation，不直接修改 validated Blueprint。
-24. Product Evidence 決定何時解鎖下一階段。
+24. Evolution Knowledge 與 Capability Registry 必須分離；learned pattern 不得改寫 executable truth。
+25. PROVEN enhancement 必須有可追溯 evidence policy / evaluation method，popular 不等於 proven。
+26. Product Evidence 決定何時解鎖下一階段。
 
 ---
 
@@ -846,20 +848,32 @@ Intent
 Orchestration Engine 只負責執行已被 appf2 Contract 描述的 workflow。
 Temporal、n8n 或其他 workflow engine 都只能位於 Adapter 後方，不可把 vendor DSL 寫進 Blueprint 核心。
 
-Phase 4+ 同時加入 Capability Discovery + Evolution Loop：
+Phase 4+ 同時加入 Capability Discovery + Evolution Loop 與 Evolution Knowledge Plane：
 
 ~~~text
 Current App
 + Registry-compatible unused capabilities
 + Remix / Reuse patterns
 + Execution / Adoption / Correction Evidence
+→ Evolution Knowledge Plane
 → Contextual Enhancement Candidates
 → User Choice / Edit
 → Refine / Remix
 → Recompose
 → Full Validation
 → New Immutable Blueprint
+→ New lineage / outcome evidence
+→ Evolution Knowledge Plane
 ~~~
+
+Evolution Knowledge Plane 保存的是「哪種變更在什麼 App context 下有什麼 outcome evidence」，不是 Capability implementation，也不是另一套 Blueprint truth。
+
+它至少包含：
+- normalized evolution observation
+- evidence-backed enhancement pattern
+- pattern maturity / revoke history
+- recommendation exposure / User decision
+- recommendation → child Blueprint / lineage trace
 
 這個 loop 不建立第二套生成引擎；它重用既有 F06 → F01 → F04 → F02 路徑。
 Recommendation 不得直接 mutation Blueprint，也不得因 popularity bypass semantic correctness。
