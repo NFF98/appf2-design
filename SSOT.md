@@ -52,7 +52,37 @@ Build Spec 不是新的 Product Design SSOT；它是某一 approved Working comm
 8. Material Product / Architecture / UX / Contract / Acceptance change 必須先更新 appf2 Working 並經 Human approval。
 9. Cursor 不得從 raw demand、Chat、歷史 Spec 或過期報告自行發明 Product Truth。
 10. Implementation finding 若改變 UX / Contract / Product Semantics，必須回到 appf2 Working；批准後建立新的 appf2-build baseline。
-11. 文件預設使用繁體中文；技術 identifier / API / Schema / Protocol 可保留英文。
+11. Human-facing 與 governance language 必須遵守下方 **Official Language Rule**。
+
+## Official Language Rule
+
+Traditional Chinese（繁體中文）是本專案唯一 authoritative 的 Human-facing 與 governance 說明語言。
+
+必須使用繁體中文：
+- Human-facing summaries / handoffs
+- Governance documents
+- Findings
+- Evidence descriptions
+- PR titles / descriptions（技術限制或外部工具不適用時除外）
+- Commit descriptions
+- Review conclusions
+- Product / Spec explanations
+
+為提高技術精確度，下列內容允許且通常優先保留英文：
+- source code
+- identifiers
+- schemas / field names
+- commands
+- file paths
+- branch names
+- Test IDs / Acceptance IDs
+- error codes
+- established technical terminology
+- machine-facing execution instructions
+
+不得為了翻譯而改變 code identifier、canonical ID、command 或 contract-defined term 的 exact meaning。
+
+文件混合中英文時，**繁體中文的 Human-readable explanation 為 authoritative interpretation**；英文 technical token 僅保留精確語意，不建立第二套產品或治理真相。
 
 ## Canonical Structure
 
