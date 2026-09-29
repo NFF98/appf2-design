@@ -316,9 +316,11 @@ Object Storage when media needs it
 Background Jobs only for heavy capability
 
 
-LONG TERM — Commerce / Network
+LONG TERM — Commerce / Network / Evolution
 
 same Runtime + Blueprint model
+      +
+Evolution Knowledge Plane
       +
 Capability Gateway
       +
@@ -333,6 +335,10 @@ Heterogeneous Orchestration Plane
 WorkflowEngineAdapter
       +
 Dynamic Certified Provider Registry
+      +
+PostgreSQL Evolution Knowledge Store
+      +
+async Observation / Pattern / Evidence workers
       +
 specialized scaling only where proven
 ~~~
@@ -360,5 +366,6 @@ appf2 最成本有效的架構，不是找到一個「最便宜的 Cloud」。
 3. **Durable State Plane** — PostgreSQL 為真實來源。
 4. **External Capability Plane** — Heavy / Paid / Commerce 可插拔。
 5. **Orchestration Plane** — 多步、非同步、跨 Provider 工作流可恢復、可替換、可治理。
+6. **Evolution Knowledge Plane** — 把 lineage + execution outcome 轉成可追溯、可撤銷的 recommendation knowledge，但不改寫 Registry / Blueprint truth。
 
-只要這四個邊界保持穩定，appf2 可以從 POC 走到 Reuse / Creator，再走到 Intent Commerce / Capability Network / Heterogeneous Orchestration，而不需要中途推翻整套 Infrastructure。
+只要這些邊界保持穩定，appf2 可以從 POC 走到 Reuse / Creator，再走到 Intent Commerce / Capability Network / Heterogeneous Orchestration / App Evolution，而不需要中途推翻整套 Infrastructure。
