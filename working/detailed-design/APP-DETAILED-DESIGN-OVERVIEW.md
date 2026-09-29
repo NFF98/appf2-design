@@ -81,6 +81,7 @@ working/common-core/DESIGN-TO-DELIVERY.md
 | F15 | Transaction / Settlement | Commerce Outcome 可追蹤、對帳、結算 | Phase 3+ / later activation | DEFERRED_BASELINE | `functions/F15-TRANSACTION-SETTLEMENT.md` |
 | F16 | Result Feedback / Logic Correction | 錯誤結果可修正、比較、回退 | 0–1 月 | BUILD_FREEZE_READY | `working/detailed-design/functions/F16-RESULT-CORRECTION.md` |
 | F17 | Heterogeneous Workflow Orchestration | 多異質 steps 完成同一 Outcome | Phase 3+ / evidence-gated | DEFERRED_BASELINE | `functions/F17-WORKFLOW-ORCHESTRATION.md` |
+| F18 | Capability Discovery + Evolution | Current App → contextual better ideas → Refine / Remix → better App | Phase 4+ / evidence-gated | DEFERRED_BASELINE | `functions/F18-CAPABILITY-DISCOVERY-EVOLUTION.md` |
 
 Deferred baseline 的存在不等於 activation；只有 `BUILD_FREEZE_READY` Function 才可進當期 Build Freeze candidate set。
 
@@ -110,6 +111,7 @@ flowchart TD
     F14[F14 Provider Registry]
     F15[F15 Transaction / Settlement]
     F17[F17 Workflow Orchestration]
+    F18[F18 Capability Discovery / Evolution]
 
     F00 --> F01
     F04 --> F01
@@ -163,6 +165,13 @@ flowchart TD
     F13 --> F17
     F14 --> F17
     F17 --> F15
+
+    F04 --> F18
+    F06 --> F18
+    F07 --> F18
+    F10 --> F18
+    F16 --> F18
+    F18 --> F06
 ~~~
 
 設計含義：
@@ -218,12 +227,13 @@ Phase 2 **不啟用 F13 entitlement / metering**；需要的 static cost / capab
 ~~~text
 F11 + F13
 + F14 + F15 + F17 when their evidence gates are met
++ F18 only in Phase 4+ when Share / Remix / Evidence maturity supports contextual evolution
 + reliability / compatibility / cost hardening
 + Intent Commerce / Capability Network expansion
 ~~~
 
 Outcome：
-> External / Paid Capability、Commerce 與 heterogeneous orchestration 能在既有 trust boundary內逐步啟用
+> External / Paid Capability、Commerce、heterogeneous orchestration 與 evidence-driven App evolution 能在既有 trust boundary內逐步啟用
 
 Phase 3+ 可以有不同 activation horizon；**日期不自動解鎖任何 Function**。只有 Evidence + Human approval + complete Detailed Design + Build Freeze inclusion 才解鎖。
 
