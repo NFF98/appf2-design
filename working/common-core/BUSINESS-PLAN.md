@@ -60,7 +60,7 @@ appf2 採四段節奏，而不是把未來能力全部塞進 Phase 1。
 | **0–1 個月** | Core Proof | 證明 Intent → App → Use → Share → Remix | 產品核心循環是否成立 |
 | **第 2–3 個月** | PMF Deepening | Reuse、Identity、Creator Value | 是否開始形成重複使用與資產價值 |
 | **第 4–6 個月** | Scale Readiness | 強化 Reliability、Cost、External Capability Pilot | 是否值得進入平台化 |
-| **6 個月後** | Continuous Platform Expansion | Intent Commerce / Capability Network | 供需是否足以形成 Network |
+| **6 個月後** | Continuous Platform Expansion | Intent Commerce / Capability Network / App Evolution | 供需與 Evolution Evidence 是否足以形成 Network + Learning Moat |
 
 原則：
 
@@ -77,7 +77,7 @@ Phase roadmap 不再拆成平行檔案；本檔後段以單一 canonical owner �
 - `appf2 Product Roadmap — Phase 1`：0–1 個月 Core Proof。
 - `appf2 Product Roadmap — Phase 2`：Reuse / Identity / Creator Value。
 - `appf2 Product Roadmap — Phase 3`：Scale Readiness。
-- `appf2 Product Roadmap — Phase 4+`：Intent Commerce / Capability Network。
+- `appf2 Product Roadmap — Phase 4+`：Intent Commerce / Capability Network / App Evolution。
 
 前段只擁有跨 Phase 商業核心、產品原則、KPI 與 Strategic Guardrails；後段只擁有 phase-specific goal / gate / hypothesis，避免 duplicate truth。
 
@@ -216,10 +216,10 @@ appf2 的發展順序不是：
 證明 Reliability / Cost / Paid Capability 可以擴張
 
 6 個月後
-才持續建立 Intent Commerce / Capability Network
+持續建立 Intent Commerce / Capability Network，並把累積的 Share / Remix / Execution Evidence 轉成 App Evolution Knowledge
 ~~~
 
-> **先證明核心循環，再累積資產，再建立交易網路。**
+> **先證明核心循環，再累積資產，再建立交易網路；有足夠 Evidence 後，才把使用與 Remix 經驗升級成 Evolution Moat。**
 
 
 ---
@@ -498,7 +498,7 @@ Intent
 
 > Shared business truth：`working/common-core/BUSINESS-PLAN.md`
 
-# 7. 6 個月後：Intent Commerce / Capability Network
+# 7. 6 個月後：Intent Commerce / Capability Network / App Evolution
 
 長期 appf2 的角色可能演進為：
 
