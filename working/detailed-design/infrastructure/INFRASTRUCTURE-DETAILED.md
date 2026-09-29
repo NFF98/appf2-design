@@ -614,6 +614,68 @@ Infra 規則：
 - 每個 step 必須可追蹤 provider、version、attempt、timeout、result。
 - Phase 1 不需要 workflow engine；只有 evidence 證明 multi-step durable work 成立才導入。
 
+## Evolution Knowledge Plane
+
+F18 的 long-term moat 需要一條與 Runtime request path 分離的 learning path。
+
+Online recommendation path：
+
+~~~text
+APP Improve Request
+→ Edge/API
+→ F18 Recommendation Service
+→ Current Blueprint / safe semantic context
+→ Registry compatibility projection
+→ Evolution Knowledge Store
+→ optional bounded LLM ideation
+→ deterministic filter / ranking
+→ Recommendation response
+~~~
+
+Offline / async learning path：
+
+~~~text
+Blueprint Lineage
++ Domain Lifecycle Truth
++ F07 Meaningful Evidence
+→ Observation Builder
+→ Pattern Matcher / Aggregator
+→ Evidence Evaluator
+→ Pattern Promotion / Downgrade
+→ Evolution Knowledge Store
+~~~
+
+Infra rules：
+
+1. Evolution Knowledge Store Phase 4+ canonical durable store先使用 PostgreSQL。
+2. Raw product_event不是永久 knowledge store；依F07 retention過期後，只保留privacy-safe aggregates / evidence snapshots。
+3. Pattern mining / aggregate evaluation預設不放在 interactive App request hot path。
+4. 初期可用 scheduled serverless job / queue worker；只有 volume / latency / experiment complexity證明需要才拆 specialized analytics / stream platform。
+5. Capability Registry build artifact與 Evolution tables分離；learned evidence不能動態改 runtime handler。
+6. Recommendation Service只能讀 Registry eligibility projection，不得直接安裝新 capability。
+7. Controlled experiment / holdout assignment必須可 deterministic / traceable，recommendation row保存 evaluation_id / evaluation_arm。
+8. LLM只作 bounded ideation / explanation；pattern maturity與 eligibility由 appf2-owned policy執行。
+9. Evolution subsystem故障不得影響 Current App runtime；最多退化成「沒有建議」。
+
+Suggested appf2-owned interfaces：
+
+~~~text
+EvolutionObservationRepository
+EvolutionPatternRepository
+EvolutionEvidenceRepository
+EnhancementRecommendationRepository
+EvolutionEvaluator
+EnhancementRankingPolicy
+~~~
+
+Phase 4+ 不要求一開始導入：
+- dedicated feature store
+- Kafka
+- separate ML platform
+- separate graph database
+
+只有 production evidence證明 PostgreSQL + bounded workers不足時才拆。
+
 ---
 
 # 16. 長期 Data / Platform Scaling
@@ -628,6 +690,8 @@ Infra 規則：
 
 ## Analytics
 當 Postgres telemetry 不再適合 operational + analytics 共用時，才導出到 warehouse / event platform。
+
+F18 pattern evaluation若開始需要大型 cohort / experiment analysis，可先把 privacy-safe analytical projection導出；PostgreSQL中的 evolution_pattern / evidence / recommendation trace仍是 product durable truth，不讓 warehouse變成唯一真相。
 
 ## Cache
 熱門 metadata / semantic retrieval 成為瓶頸後才加 dedicated distributed cache。
