@@ -599,7 +599,7 @@ Phase 是本 canonical architecture 的 **applicability / activation metadata**�
 - `appf2 Architecture Evolution — Phase 1`：Core Proof。
 - `appf2 Architecture Evolution — Phase 2`：Reuse / Identity / Creator。
 - `appf2 Architecture Evolution — Phase 3`：Scale Readiness。
-- `appf2 Architecture Evolution — Phase 4+`：Intent Commerce / Capability Network / Orchestration。
+- `appf2 Architecture Evolution — Phase 4+`：Intent Commerce / Capability Network / Orchestration / App Evolution。
 
 共用 architecture invariants 只在前段定義一次；Phase section 只能描述新增 / 啟用 / defer 的 architecture delta，不複製 shared core。
 
@@ -713,7 +713,7 @@ appf2 有什麼？
 → 1 月證明核心
 → 3 月建立 Reuse / Identity / Creator
 → 6 月證明 Scale / External Paid Capability
-→ 6 月後持續建立 Commerce / Network / Orchestration
+→ 6 月後持續建立 Commerce / Network / Orchestration / Evolution Knowledge
 ~~~
 
 > **核心架構穩定，能力與商業層逐步長大。**
@@ -813,7 +813,7 @@ Phase 2 不啟用 F13 entitlement / metering enforcement。
 
 > Canonical Role：Phase 4+ architecture additions / activation only. Shared architecture invariants remain in `working/common-core/APP-ARCHITECTURE.md`.
 
-## 6 個月後：Intent Commerce / Capability Network
+## 6 個月後：Intent Commerce / Capability Network / App Evolution
 
 逐步加入：
 
