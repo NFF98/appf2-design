@@ -501,6 +501,8 @@ Orchestration Metadata / Compatibility Graph
 15. Provider 數量不是護城河；可被 Compiler 發現、可驗證、可組合、可觀測、可結算才算有效供給。
 16. Registry 中未被當次 LLM 選中的 Capability 不等於浪費；長期必須可透過 context + remix + evidence 形成後續 enhancement suggestion。
 17. Capability recommendation 只能提供候選，最終仍需 User choice / semantic flow / validation。
+18. Evolution DB 只能引用 capability_id/version，不保存或覆蓋 executable Capability Card implementation。
+19. PROVEN enhancement是 context-scoped evidence conclusion，不得提升成「這個 Capability 全域都比較好」。
 
 # 結論
 
@@ -517,7 +519,7 @@ Capability Fabric 的發展順序：
 證明 External / Paid Capability 可安全加入
 
 6 個月後
-逐步建立 Capability Network + Heterogeneous Orchestration
+逐步建立 Capability Network + Heterogeneous Orchestration + Evidence-driven App Evolution
 ~~~
 
 > **appf2 的能力壁壘不在「有多少元件」，而在「可靠能力能否被 Compiler 正確發現、組合、編排並交付可驗證 Outcome」。**
@@ -704,6 +706,22 @@ Current Blueprint
 - 為提高 usage KPI 強迫加入功能。
 - 把 community popularity 當成 semantic correctness。
 - 讓 recommendation 直接 mutation 已驗證 Blueprint。
+
+Capability executable truth 與 learned evolution truth必須分離：
+
+~~~text
+Registry
+= capability definition / version / availability / runtime handler
+
+Evolution Knowledge
+= capability/version reference
++ App context
++ observed change
++ outcome evidence
++ recommendation result
+~~~
+
+被證明有效的是「某 capability / composition 在某 context下的 enhancement pattern」，不是把該 Capability Card本身改寫成全域最佳。
 
 長期 Fabric：
 
