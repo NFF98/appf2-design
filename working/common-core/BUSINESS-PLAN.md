@@ -158,6 +158,19 @@ appf2 不以 Vanity Metrics 管理。
 - orchestration recovery / compensation success
 - active certified providers / creator capabilities
 
+## Evolution，Phase 4+ 才重要
+- enhancement exposure → selection
+- selection → preview
+- preview → accepted child
+- accepted child → meaningful use
+- accepted child → share / remix
+- correction / revert after enhancement
+- evidence-backed pattern yield
+- proven pattern yield
+- proven pattern downgrade / revoke rate
+- recommendation reject / dismiss rate
+- app complexity / latency / cost guardrail delta
+
 ---
 
 # 7. Strategic Guardrails
@@ -175,8 +188,11 @@ appf2 不以 Vanity Metrics 管理。
 11. Orchestration Engine 是長期 execution plane；Phase 1 不引入 Temporal / n8n 類依賴。
 12. 雙邊市場必須由真實 demand + supply density 解鎖，不能先造 Marketplace。
 13. 第三方 Provider 必須經 Capability Contract / Certification / Evidence，不以「有 API」等同「可用」。
-14. 所有 Revenue / Growth / Cache / Latency 數字在實測前都是 Hypothesis。
-12. Roadmap 由 Evidence Gate 推進，不由日期推進。
+14. Share / Remix 在 Phase 4+ 同時是 Distribution 與 Software Evolution Evidence，但 popularity 不等於 product improvement。
+15. Evolution Engine 必須有 durable Observation → Pattern → Evidence → Recommendation → Outcome chain，不能只靠 LLM imagination。
+16. PROVEN enhancement 必須有可追溯 evaluation method；不能用 click / popularity 冒充 proven。
+17. 所有 Revenue / Growth / Cache / Latency 數字在實測前都是 Hypothesis。
+18. Roadmap 由 Evidence Gate 推進，不由日期推進。
 
 # 結論
 
@@ -548,6 +564,17 @@ Create
 只推薦真正可能改善目前 App 的少數 enhancement。
 
 這讓 Share 的價值不只在 distribution，也成為 **idea evolution mechanism**。
+
+Phase 4+ 最重要的累積資產不是「推薦了多少功能」，而是：
+
+~~~text
+哪些 App context
++ 哪些 capability / rule / composition change
++ 哪些 downstream outcomes
+→ 可以被重複驗證
+~~~
+
+只有形成 durable Evolution Knowledge，這個 loop 才能成為 moat。
 
 長期 appf2 要回答的不只是：
 
