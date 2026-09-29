@@ -302,6 +302,44 @@ Create
 
 > **appf2 不只知道「有哪些 Capability」，還逐步知道「在什麼 App context 下，加入哪個 Capability 真的讓產品變好」。**
 
+### Durable Moat：Evolution Knowledge Store
+
+如果這些知識只存在 telemetry query 或 LLM prompt 裡，就不是護城河。
+
+Phase 4+ 必須把它變成 durable、可回放的 learned product knowledge：
+
+~~~text
+Blueprint Lineage
+→ Normalized Evolution Observation
+→ Enhancement Pattern
+→ Evidence Snapshot
+→ Recommendation
+→ User Decision
+→ Child Blueprint / Outcome
+→ New Evidence
+~~~
+
+關鍵分離：
+
+~~~text
+Capability Registry
+= What appf2 can safely execute
+
+Evolution Knowledge Store
+= What changes repeatedly work in which contexts
+~~~
+
+真正可累積的資產因此不是 Component Count，而是：
+
+- 哪些能力常一起成功
+- 哪種 App context適合加什麼
+- 哪些 recommendation常被拒絕
+- 哪些改法導致 correction / revert
+- 哪些 pattern 經受控 evidence後可升為 PROVEN
+- 哪些曾經有效但後來失效，需要 downgrade / revoke
+
+> **沒有 durable observation → pattern → evidence → recommendation → outcome chain，就不能把 Evolution Engine 當 moat。**
+
 ---
 
 ## 5.6 Capability Network
