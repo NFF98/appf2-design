@@ -661,7 +661,10 @@ Commerce mechanics
 18. Multi-capability workflow 必須經 appf2-owned Orchestration Contract；workflow vendor 不得成為核心語意。
 19. Async / external step 必須有 timeout、retry、idempotency、compensation 或明確 failure policy。
 20. Provider Network 必須建立在 certification、compatibility、evidence 與可治理 routing 上，不以 API 數量當可用供給。
-21. Product Evidence 決定何時解鎖下一階段。
+21. Capability Discovery 必須是 contextual recommendation，不把 Registry 變成 User 自己翻閱的元件倉庫。
+22. Remix / Share evidence 可改善 enhancement ranking，但 popularity 不得取代 semantic correctness。
+23. 所有 enhancement suggestion 必須重走 Refine / Composition / Validation，不直接修改 validated Blueprint。
+24. Product Evidence 決定何時解鎖下一階段。
 
 ---
 
@@ -824,6 +827,9 @@ Phase 2 不啟用 F13 entitlement / metering enforcement。
 - async workflow state / retry / timeout / compensation
 - evidence-based provider discovery / routing
 - human approval step when required
+- contextual capability discovery
+- remix/evidence-derived enhancement suggestions
+- App evolution loop
 
 長期新增的是「多 Capability 如何可靠完成一個 Outcome」，不是第二套 App Runtime。
 
@@ -839,6 +845,24 @@ Intent
 
 Orchestration Engine 只負責執行已被 appf2 Contract 描述的 workflow。
 Temporal、n8n 或其他 workflow engine 都只能位於 Adapter 後方，不可把 vendor DSL 寫進 Blueprint 核心。
+
+Phase 4+ 同時加入 Capability Discovery + Evolution Loop：
+
+~~~text
+Current App
++ Registry-compatible unused capabilities
++ Remix / Reuse patterns
++ Execution / Adoption / Correction Evidence
+→ Contextual Enhancement Candidates
+→ User Choice / Edit
+→ Refine / Remix
+→ Recompose
+→ Full Validation
+→ New Immutable Blueprint
+~~~
+
+這個 loop 不建立第二套生成引擎；它重用既有 F06 → F01 → F04 → F02 路徑。
+Recommendation 不得直接 mutation Blueprint，也不得因 popularity bypass semantic correctness。
 
 仍維持：
 
