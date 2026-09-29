@@ -6,6 +6,10 @@
 >
 > Canonical Role：定義 appf2 如何把 Current App、Registry-compatible unused capabilities、LLM semantic ideas、Remix / Reuse lineage 與真實 Execution Evidence 組成一個可治理的 App Evolution Engine。
 >
+> UI presentation canonical owner：working/detailed-design/UI-UX/PHASE4-CAPABILITY-EVOLUTION.md。
+>
+> Durable data canonical owner：working/detailed-design/data-model/DATA-MODEL-DETAILED.md 的 Phase 4+ Evolution Knowledge Store。
+>
 > 上游：F04 Capability Registry / Resolution、F06 Remix / Refine、F07 Evidence、F10 Blueprint Reuse / Retrieval、F16 Result Correction、DATA-MODEL。
 >
 > 下游：F01 Intent Compilation、F02 Validation、F03 Runtime、未來 Creator / Capability Network。
