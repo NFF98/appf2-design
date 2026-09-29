@@ -1131,6 +1131,7 @@ Rules：
 | pattern_version | int | YES | evidence against exact pattern version |
 | policy_version | text | YES | F18 evidence policy |
 | evaluation_method | text | YES | OBSERVATIONAL_ONLY / MATCHED_HOLDOUT / CONTROLLED_EXPERIMENT / HUMAN_REVIEWED_MULTI_SIGNAL |
+| evaluation_id | text | NO | required for experiment / holdout trace when applicable |
 | window_start | timestamptz | YES | |
 | window_end | timestamptz | YES | |
 | observation_count | int | YES | >=0 |
@@ -1409,10 +1410,10 @@ enhancement_decision(child_blueprint_hash)
 規則：
 
 1. evolution_pattern_evidence不得回填 raw user content。
-2. recommendation candidate只存 bounded semantic description。
-3. anonymous_id只使用既有 first-party identity，不新增 hidden stitching。
-4. aggregate不足 minimum privacy threshold時，不顯示 community-derived claim。
-5. privacy deletion若移除某 actor的raw identity，不必破壞已匿名 aggregate，但不得保留可重新識別 linkage。
+5. recommendation candidate只存 bounded semantic description。
+6. anonymous_id只使用既有 first-party identity，不新增 hidden stitching。
+7. aggregate不足 minimum privacy threshold時，不顯示 community-derived claim。
+8. privacy deletion若移除某 actor的raw identity，不必破壞已匿名 aggregate，但不得保留可重新識別 linkage。
 
 # 9. F18 Data Acceptance
 
