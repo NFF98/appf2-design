@@ -252,6 +252,8 @@ Phase 3+ 可以有不同 activation horizon；**日期不自動解鎖任何 Func
 | Recovery | `functions/F12-HUMANIZED-RECOVERY.md` |
 | Anonymous Evidence | `functions/F07-ANONYMOUS-IDENTITY-EVIDENCE.md` |
 | Durable Identity / Ownership | `working/detailed-design/functions/F08-DURABLE-IDENTITY-OWNERSHIP.md` + `working/common-core/DATA-MODEL.md` |
+| Capability Discovery / App Evolution | `working/detailed-design/functions/F18-CAPABILITY-DISCOVERY-EVOLUTION.md` + Phase 4+ Evolution Knowledge Store in `working/detailed-design/data-model/DATA-MODEL-DETAILED.md` |
+| Phase 4 Evolution UI / UX | `working/detailed-design/UI-UX/PHASE4-CAPABILITY-EVOLUTION.md` |
 | Delivery / Acceptance / Release Gate | `working/common-core/DESIGN-TO-DELIVERY.md` |
 
 ---
@@ -292,11 +294,12 @@ User Outcome
 9. Phase 1 優先完成完整 Core Loop，不追求大量 Capability。
 10. 第 2–3 個月才把 Anonymous Value 升成 Durable Identity。
 11. 第 4–6 個月才把 External / Paid Capability 提升為正式 execution path。
-12. 6 個月後才持續建 Provider / Transaction / Orchestration Network。
-13. Workflow engine vendor 只能是 Adapter，不得成為 appf2 semantic contract。
-14. Multi-step external workflow 必須有 timeout / retry / idempotency / compensation policy。
-15. 日期不自動解鎖功能；Evidence Gate 才解鎖。
-16. 所有新 Function 必須證明不破壞 Intent → Blueprint → Runtime 核心。
+12. 6 個月後才持續建 Provider / Transaction / Orchestration Network 與 F18 Evolution Engine。
+13. F18 的 learned evidence不得取代 Capability Registry executable truth。
+14. Workflow engine vendor 只能是 Adapter，不得成為 appf2 semantic contract。
+15. Multi-step external workflow 必須有 timeout / retry / idempotency / compensation policy。
+16. 日期不自動解鎖功能；Evidence Gate 才解鎖。
+17. 所有新 Function 必須證明不破壞 Intent → Blueprint → Runtime 核心。
 
 ---
 
