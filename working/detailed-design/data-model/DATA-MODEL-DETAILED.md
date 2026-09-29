@@ -1161,7 +1161,31 @@ Rules：
 4. distinct_actor_count只做 aggregate，不保存新的 cross-site identity。
 5. effect_summary若沒有 comparative method不得偽裝 causal uplift。
 
-## 2.7 enhancement_recommendation
+## 2.7 evolution_pattern_transition
+
+目的：
+
+> 保存 Pattern maturity 的 append-only audit trail。
+
+| Field | Type | Required | Rule |
+|---|---|---:|---|
+| transition_id | uuid | YES | PK |
+| pattern_id | uuid | YES | FK → evolution_pattern |
+| from_status | text | YES | previous maturity |
+| to_status | text | YES | new maturity |
+| evidence_id | uuid | YES | FK → evolution_pattern_evidence |
+| policy_version | text | YES | |
+| reason_code | text | YES | stable promotion/downgrade/revoke reason |
+| created_at | timestamptz | YES | append-only |
+
+Rules：
+
+1. evolution_pattern.maturity_status update與 transition insert必須同一 logical transaction。
+2. 沒有 evidence_id不得 promotion / downgrade / revoke。
+3. transition row不可 update/delete作為一般產品流程。
+4. Human override若未來允許，也必須以 explicit evaluation_method / reason_code形成 evidence snapshot，不可直接改 status。
+
+## 2.8 enhancement_recommendation
 
 目的：
 
@@ -1180,6 +1204,8 @@ Rules：
 | evidence_level | text | YES | NOVEL / OBSERVED / REPEATED / EVIDENCE_BACKED / PROVEN |
 | rank_position | int | YES | >=1 |
 | ranking_policy_version | text | YES | |
+| evaluation_id | text | NO | experiment / holdout evaluation identifier |
+| evaluation_arm | text | NO | CONTROL / TREATMENT / approved variant |
 | cost_class | text | YES | coarse |
 | permission_class | text | YES | coarse |
 | status | text | YES | SHOWN / SELECTED / DECIDED / EXPIRED |
@@ -1193,7 +1219,7 @@ Rules：
 - EXPIRED recommendation不得再直接 apply；需 refresh。
 - recommendation本身不代表 User同意。
 
-## 2.8 enhancement_recommendation_capability
+## 2.9 enhancement_recommendation_capability
 
 目的：
 
@@ -1214,7 +1240,7 @@ PK：
 (recommendation_id, capability_id, capability_version, operation)
 ~~~
 
-## 2.9 enhancement_decision
+## 2.10 enhancement_decision
 
 目的：
 
@@ -1344,9 +1370,13 @@ evolution_pattern_observation(observation_id)
 evolution_pattern_evidence(pattern_id, created_at)
 evolution_pattern_evidence(policy_version, evaluation_method)
 
+evolution_pattern_transition(pattern_id, created_at)
+evolution_pattern_transition(evidence_id)
+
 enhancement_recommendation(source_blueprint_hash, created_at)
 enhancement_recommendation(pattern_id, created_at)
 enhancement_recommendation(context_digest, created_at)
+enhancement_recommendation(evaluation_id, evaluation_arm)
 enhancement_recommendation(status, expires_at)
 
 enhancement_decision(recommendation_id) UNIQUE
@@ -1389,7 +1419,7 @@ enhancement_decision(child_blueprint_hash)
 - DATA-F18-AC-001 Capability executable implementation不進 Evolution tables。
 - DATA-F18-AC-002 每個 observation可追到唯一 lineage edge。
 - DATA-F18-AC-003 Pattern可追到 supporting observations。
-- DATA-F18-AC-004 Pattern maturity可追到 evidence snapshot + policy version。
+- DATA-F18-AC-004 Pattern maturity可追到 evidence snapshot + policy version + append-only transition。
 - DATA-F18-AC-005 OBSERVATIONAL_ONLY snapshot不得產生PROVEN。
 - DATA-F18-AC-006 recommendation可追到 source Blueprint / context / ranking policy。
 - DATA-F18-AC-007 decision可追到 resulting intent / child / lineage when successful。
