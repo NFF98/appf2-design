@@ -255,7 +255,56 @@ LegoSpec syntax 本身不是 moat。
 
 ---
 
-## 5.5 Capability Network
+## 5.5 Capability Discovery + Evolution Loop
+
+appf2 不應把第一次 LLM composition 當成終局。
+
+即使 Registry 已有 50 個可用 Capability，一次 Intent 可能只需要其中 5 個；其餘 45 個不是浪費，前提是 appf2 能在後續使用與分享中持續發現「哪些未使用能力真的能讓這個 App 更好」。
+
+長期演進來源不是只有 LLM imagination，而是：
+
+~~~text
+Current App
++ Compatible Unused Capabilities
++ LLM Suggestions
++ Successful Remix Patterns
++ Execution / Adoption Evidence
+→ Contextual Enhancement Suggestions
+→ Refine / Remix
+→ New Blueprint
+→ New Evidence
+~~~
+
+核心原則：
+
+1. 不把全部 Capability 目錄丟給 User 自己挑。
+2. 不為了提高 Capability 使用率而硬塞功能。
+3. 建議必須與目前 Intent / App context 相容。
+4. Community Remix 只有在真實 use / adoption / correction evidence 支持時，才升為更強 suggestion signal。
+5. 建議仍走 F06/F01/F02；不可繞過 semantic analysis、coverage 與 validation。
+6. App 的價值可以經由 Use → Share → Remix → Evidence 持續演進，而不是要求第一次生成就完美。
+
+這形成新的產品 Flywheel：
+
+~~~text
+Create
+→ Use
+→ Share
+→ Remix
+→ Better Idea
+→ Evidence
+→ Better Suggestions
+→ Better App
+→ More Share
+~~~
+
+這層的潛在護城河是：
+
+> **appf2 不只知道「有哪些 Capability」，還逐步知道「在什麼 App context 下，加入哪個 Capability 真的讓產品變好」。**
+
+---
+
+## 5.6 Capability Network
 
 更長期若第三方能提供受控 Capability：
 
