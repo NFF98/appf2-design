@@ -499,6 +499,8 @@ Orchestration Metadata / Compatibility Graph
 13. Multi-step workflow 必須由 appf2 Orchestration Contract 描述，不能依賴某個 workflow vendor 的私有 DSL。
 14. n8n / Temporal / Queue / Worker 類工具只能是可替換 execution backend。
 15. Provider 數量不是護城河；可被 Compiler 發現、可驗證、可組合、可觀測、可結算才算有效供給。
+16. Registry 中未被當次 LLM 選中的 Capability 不等於浪費；長期必須可透過 context + remix + evidence 形成後續 enhancement suggestion。
+17. Capability recommendation 只能提供候選，最終仍需 User choice / semantic flow / validation。
 
 # 結論
 
@@ -643,7 +645,7 @@ Phase 2 不啟用 F13 premium enforcement / metering；真正 entitlement execut
 
 > Shared capability contract：`working/common-core/CAPABILITY-FABRIC.md`
 
-# 14. 6 個月後：Capability Network + Orchestration
+# 14. 6 個月後：Capability Network + Orchestration + Evolution
 
 只有供需證據成立後才逐步加入：
 
@@ -662,8 +664,13 @@ Phase 2 不啟用 F13 premium enforcement / metering；真正 entitlement execut
 - retry / timeout / idempotency metadata
 - compensation / rollback semantics
 - human-in-the-loop step when required
+- contextual capability discovery
+- compatible unused capability suggestions
+- remix-derived enhancement patterns
+- evidence-weighted enhancement ranking
+- capability adoption / rejection feedback
 
-長期 Fabric 不只描述「一個 Capability 能做什麼」，還要能描述「多個 Capability 如何可靠合作」。
+長期 Fabric 不只描述「一個 Capability 能做什麼」，還要能描述「多個 Capability 如何可靠合作」，以及「目前 App 還有哪些能力值得加入」。
 
 ~~~text
 Resolved Intent
@@ -676,6 +683,27 @@ Resolved Intent
 ~~~
 
 Orchestration metadata 必須仍然來自 Capability Contract；不能讓外部 workflow engine 自己發明 appf2 semantics。
+
+Capability Discovery / Evolution 規則：
+
+~~~text
+Current Blueprint
++ Resolved Intent / App Context
++ Registry-compatible unused capabilities
++ Remix / Reuse patterns
++ execution / adoption evidence
+→ ranked enhancement candidates
+→ User chooses / edits
+→ F06 Refine or Remix
+→ F01 composition
+→ F02 validation
+~~~
+
+不得：
+- 只因 Capability 存在就推薦。
+- 為提高 usage KPI 強迫加入功能。
+- 把 community popularity 當成 semantic correctness。
+- 讓 recommendation 直接 mutation 已驗證 Blueprint。
 
 長期 Fabric：
 
