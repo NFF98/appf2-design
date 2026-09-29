@@ -792,6 +792,7 @@ Phase 1 可由 Supabase/Postgres adapter 實作。
 | Evidence event catalog / batching / retention | F07 |
 | Humanized Recovery state | F12 |
 | Result Snapshot semantic fields / Correction Intent / Delta | F16 |
+| Evolution Candidate / Pattern / Evidence / Recommendation semantics | F18 + 本檔 Phase 4+ durable schema |
 
 Function 可以增加自己的欄位 / table proposal，但若跨 Function 共用或改變 durable truth，必須先回到本文 Review，不能自行建立第二份 data truth。
 
