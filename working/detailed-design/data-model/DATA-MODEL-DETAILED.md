@@ -950,8 +950,466 @@ Immutable Blueprint
 
 # appf2 Data Model — Phase 4+ Extensions
 
-> Shared invariants：`../../common-core/DATA-MODEL.md`
+> Shared invariants：../../common-core/DATA-MODEL.md
 >
-> Status：DEFERRED / NO ACTIVE PHASE 4+ DATA EXTENSION YET。
+> Status：DEFERRED_BASELINE / Phase 4+。本節已定義 F18 Evolution Engine 的完整 durable data contract，但不得提前進 Phase 1–3 implementation scope。
 >
-> Commerce / Provider Network / Orchestration 所需 durable execution / transaction / settlement model 必須在正式解鎖後於此定義；不得提前進 Phase 1 implementation scope。
+> F14/F15/F17 Commerce / Provider / Orchestration 的其他資料模型仍在各自 activation 時補齊；本節只擁有 F18 所需 Evolution Knowledge Store truth。
+
+# 1. Phase 4+ Evolution Knowledge Store
+
+目的：
+
+> 把 Share / Remix / Refine / Correct 產生的 lineage 與 downstream outcome，轉成可追溯、可撤銷、可版本化的 product knowledge；讓 appf2 知道「哪些 enhancement 在哪些 App context 下反覆表現較好」。
+
+這個 Store 不是：
+
+- Capability Registry
+- raw Prompt warehouse
+- raw Blueprint copy store
+- user profile warehouse
+- auto-generated executable code store
+
+Canonical relation：
+
+~~~text
+blueprint_lineage
+→ evolution_observation
+→ evolution_pattern
+→ evolution_pattern_evidence
+→ enhancement_recommendation
+→ enhancement_decision
+→ F06/F01/F02
+→ child blueprint
+→ new lineage/evidence
+~~~
+
+# 2. New Durable Entities
+
+## 2.1 evolution_observation
+
+目的：
+
+> 把一條已存在的 parent→child lineage 轉成 normalized「這次到底改了什麼」的 observation。
+
+| Field | Type | Required | Rule |
+|---|---|---:|---|
+| observation_id | uuid | YES | PK |
+| lineage_id | uuid | YES | unique FK → blueprint_lineage |
+| parent_hash | text | YES | FK → blueprint_content |
+| child_hash | text | YES | FK → blueprint_content |
+| relation_type | text | YES | REFINE / REMIX / CORRECT |
+| source_intent_id | uuid | NO | FK → intent_record |
+| context_digest | text | YES | safe semantic context digest |
+| context_version | text | YES | F18 context schema version |
+| normalized_change | jsonb | YES | F18 semantic change schema |
+| observed_at | timestamptz | YES | server time |
+| normalization_version | text | YES | observation normalizer version |
+| status | text | YES | ACTIVE / INVALIDATED |
+
+Rules：
+
+1. 一條 lineage edge 最多一個 canonical active observation。
+2. normalized_change 只保存 semantic/capability change，不複製 entire Blueprint。
+3. raw Prompt / raw Result / sensitive runtime input 不進 observation。
+4. observation invalidation 不刪 lineage；只表示此 normalization 不再可供 pattern learning使用。
+5. parent / child 仍以 blueprint_content為 artifact truth。
+
+## 2.2 evolution_observation_change
+
+目的：
+
+> 讓 capability-level change 可 relational query，不把所有 learned knowledge塞進 JSONB。
+
+| Field | Type | Required | Rule |
+|---|---|---:|---|
+| observation_change_id | uuid | YES | PK |
+| observation_id | uuid | YES | FK → evolution_observation |
+| change_kind | text | YES | ADD / REMOVE / REPLACE / RECONFIGURE / RULE / LAYOUT / COMPOSITION |
+| semantic_role | text | NO | bounded semantic label |
+| from_capability_id | text | NO | Registry ref |
+| from_capability_version | text | NO | exact version when present |
+| to_capability_id | text | NO | Registry ref |
+| to_capability_version | text | NO | exact version when present |
+| change_digest | text | YES | normalized change identity |
+| created_at | timestamptz | YES | |
+
+Rules：
+
+- CapabilityRef只是 evidence reference；不成為 Registry executable truth。
+- Registry不存在/已撤銷的歷史 ref可保留作 audit，但不可因此重新變成 eligible。
+- 同一 observation可有多個 change rows。
+
+## 2.3 evolution_pattern
+
+目的：
+
+> 保存可重用 enhancement pattern 的 durable identity與 maturity；不是 Blueprint template，也不是 executable patch。
+
+| Field | Type | Required | Rule |
+|---|---|---:|---|
+| pattern_id | uuid | YES | PK |
+| pattern_version | int | YES | starts at 1 |
+| pattern_type | text | YES | ADD_CAPABILITY / REMOVE_CAPABILITY / REPLACE_CAPABILITY / RECONFIGURE_CAPABILITY / RULE_CHANGE / LAYOUT_CHANGE / COMPOSITION_CHANGE / MULTI_CHANGE |
+| context_scope | jsonb | YES | bounded F18 context scope schema |
+| context_digest | text | YES | canonical scope digest |
+| semantic_change_contract | jsonb | YES | meaning-level change only |
+| maturity_status | text | YES | OBSERVED / REPEATED / EVIDENCE_BACKED / PROVEN / RETIRED / REVOKED |
+| evidence_policy_version | text | YES | policy used for current maturity |
+| created_at | timestamptz | YES | |
+| updated_at | timestamptz | YES | |
+| retired_at | timestamptz | NO | |
+| revoke_reason_code | text | NO | stable reason |
+
+Rules：
+
+1. pattern_version改變代表 semantic pattern contract changed。
+2. maturity update可變，但每次 promotion/downgrade/revoke都必須有 evidence snapshot。
+3. PROVEN不是 permanent；可 downgrade / revoke。
+4. popularity不能直接寫 maturity_status = PROVEN。
+5. semantic_change_contract 禁止 executable code / JSON Patch / module path。
+
+## 2.4 evolution_pattern_capability
+
+目的：
+
+> 保存 pattern 涉及哪些 CapabilityRef 與角色。
+
+| Field | Type | Required | Rule |
+|---|---|---:|---|
+| pattern_capability_id | uuid | YES | PK |
+| pattern_id | uuid | YES | FK → evolution_pattern |
+| operation | text | YES | ADD / REMOVE / REPLACE_FROM / REPLACE_TO / REQUIRE / OPTIONAL |
+| capability_id | text | YES | stable Registry capability ID |
+| capability_version | text | YES | exact version or approved version constraint at activation |
+| semantic_role | text | NO | bounded |
+| ordinal | int | YES | deterministic ordering |
+| created_at | timestamptz | YES | |
+
+Constraint：
+
+~~~text
+unique(pattern_id, operation, capability_id, capability_version, semantic_role)
+~~~
+
+## 2.5 evolution_pattern_observation
+
+目的：
+
+> Pattern與原始 observation的可追溯 many-to-many evidence link。
+
+| Field | Type | Required | Rule |
+|---|---|---:|---|
+| pattern_id | uuid | YES | FK |
+| observation_id | uuid | YES | FK |
+| match_version | text | YES | matcher version |
+| match_class | text | YES | EXACT / SEMANTIC / PARTIAL |
+| contribution_weight | numeric | YES | bounded 0..1；只作 evidence weighting |
+| linked_at | timestamptz | YES | |
+
+PK：
+
+~~~text
+(pattern_id, observation_id)
+~~~
+
+Rules：
+
+- contribution_weight不可讓單一 observation被重複灌大。
+- matcher更新不覆蓋舊 evidence；需要新 evaluation snapshot。
+
+## 2.6 evolution_pattern_evidence
+
+目的：
+
+> 保存「為什麼這個 Pattern目前是 OBSERVED / REPEATED / EVIDENCE_BACKED / PROVEN」的可回放 aggregate snapshot。
+
+| Field | Type | Required | Rule |
+|---|---|---:|---|
+| evidence_id | uuid | YES | PK |
+| pattern_id | uuid | YES | FK → evolution_pattern |
+| pattern_version | int | YES | evidence against exact pattern version |
+| policy_version | text | YES | F18 evidence policy |
+| evaluation_method | text | YES | OBSERVATIONAL_ONLY / MATCHED_HOLDOUT / CONTROLLED_EXPERIMENT / HUMAN_REVIEWED_MULTI_SIGNAL |
+| window_start | timestamptz | YES | |
+| window_end | timestamptz | YES | |
+| observation_count | int | YES | >=0 |
+| distinct_parent_count | int | YES | >=0 |
+| distinct_actor_count | int | YES | privacy-safe count |
+| recommendation_exposure_count | int | YES | >=0 |
+| applied_count | int | YES | >=0 |
+| meaningful_use_count | int | YES | >=0 |
+| share_count | int | YES | >=0 |
+| remix_count | int | YES | >=0 |
+| correction_count | int | YES | >=0 |
+| revert_count | int | YES | >=0 |
+| runtime_failure_count | int | YES | >=0 |
+| reject_count | int | YES | >=0 |
+| dismiss_count | int | YES | >=0 |
+| metric_summary | jsonb | YES | versioned bounded metric schema |
+| baseline_summary | jsonb | NO | required when comparative method |
+| effect_summary | jsonb | NO | bounded estimate/confidence |
+| guardrail_result | text | YES | PASS / FAIL / INSUFFICIENT |
+| recommended_maturity | text | YES | computed policy output |
+| created_at | timestamptz | YES | append-only |
+
+Rules：
+
+1. append-only evidence snapshot；不 update historical result。
+2. OBSERVATIONAL_ONLY 不可 recommended_maturity = PROVEN。
+3. raw event rows過期後可保留這種 non-user-content aggregate。
+4. distinct_actor_count只做 aggregate，不保存新的 cross-site identity。
+5. effect_summary若沒有 comparative method不得偽裝 causal uplift。
+
+## 2.7 enhancement_recommendation
+
+目的：
+
+> 保存「appf2 在某個 App context 曾經推薦什麼」的 durable recommendation exposure truth。
+
+| Field | Type | Required | Rule |
+|---|---|---:|---|
+| recommendation_id | uuid | YES | PK |
+| source_blueprint_hash | text | YES | FK → blueprint_content |
+| anonymous_id | uuid | NO | existing first-party identity only |
+| pattern_id | uuid | NO | FK → evolution_pattern |
+| source_class | text | YES | LLM_PROPOSED / REMIX_PATTERN / REUSE_PATTERN / CAPABILITY_DISCOVERY / EXECUTION_EVIDENCE / HYBRID |
+| context_digest | text | YES | |
+| context_version | text | YES | |
+| candidate_semantic_change | jsonb | YES | bounded F18 candidate schema |
+| evidence_level | text | YES | NOVEL / OBSERVED / REPEATED / EVIDENCE_BACKED / PROVEN |
+| rank_position | int | YES | >=1 |
+| ranking_policy_version | text | YES | |
+| cost_class | text | YES | coarse |
+| permission_class | text | YES | coarse |
+| status | text | YES | SHOWN / SELECTED / DECIDED / EXPIRED |
+| created_at | timestamptz | YES | |
+| expires_at | timestamptz | YES | |
+
+Rules：
+
+- 不保存 raw LLM chain-of-thought。
+- candidate_semantic_change不是 executable Blueprint patch。
+- EXPIRED recommendation不得再直接 apply；需 refresh。
+- recommendation本身不代表 User同意。
+
+## 2.8 enhancement_recommendation_capability
+
+目的：
+
+> recommendation涉及哪些 CapabilityRef，支援「哪些能力被建議／接受／拒絕」分析。
+
+| Field | Type | Required | Rule |
+|---|---|---:|---|
+| recommendation_id | uuid | YES | FK |
+| capability_id | text | YES | Registry ID |
+| capability_version | text | YES | exact candidate version |
+| operation | text | YES | ADD / REMOVE / REPLACE / RECONFIGURE / REQUIRE |
+| semantic_role | text | NO | |
+| created_at | timestamptz | YES | |
+
+PK：
+
+~~~text
+(recommendation_id, capability_id, capability_version, operation)
+~~~
+
+## 2.9 enhancement_decision
+
+目的：
+
+> 保存 User對 recommendation 的 durable product decision，以及是否真的形成 child Blueprint。
+
+| Field | Type | Required | Rule |
+|---|---|---:|---|
+| decision_id | uuid | YES | PK |
+| recommendation_id | uuid | YES | unique FK → enhancement_recommendation |
+| decision | text | YES | ACCEPT / EDIT / REJECT / DISMISS |
+| intent_id | uuid | NO | ACCEPT/EDIT後 FK → intent_record |
+| child_blueprint_hash | text | NO | successful F06/F02後 FK |
+| lineage_id | uuid | NO | resulting lineage |
+| preview_outcome | text | NO | USED_NEW / KEPT_PREVIOUS / ADJUSTED_AGAIN / FAILED |
+| decided_at | timestamptz | YES | |
+| updated_at | timestamptz | YES | limited lifecycle |
+
+Rules：
+
+1. REJECT/DISMISS不建立 child。
+2. ACCEPT/EDIT只表示進入 trusted change path，不代表 child一定成功。
+3. child / lineage只能在 F02 PASS + F06 lineage success後填入。
+4. free-form edit text留在 intent_record raw_intent retention policy，不複製到此表。
+
+# 3. Evolution Pattern Maturity Truth
+
+Canonical lifecycle：
+
+~~~text
+OBSERVED
+→ REPEATED
+→ EVIDENCE_BACKED
+→ PROVEN
+→ RETIRED / REVOKED
+~~~
+
+Promotion source of truth：
+
+~~~text
+evolution_pattern_evidence
++ policy_version
++ evaluation_method
++ guardrail_result
+~~~
+
+Rules：
+
+- Pattern可以被 downgrade。
+- Registry revoke可觸發 pattern REVOKED。
+- compatibility change可觸發 re-evaluation。
+- 同一 pattern新版本不得沿用舊版本PROVEN而不重新評估。
+- popularity count不是maturity source。
+
+# 4. Proven Evidence Boundary
+
+PROVEN 必須同時：
+
+1. 有足夠 independent observations。
+2. 有 downstream outcome evidence。
+3. guardrail_result = PASS。
+4. 使用非純 observational evaluation method。
+5. evaluation window / policy version可重建。
+
+F18 policy exact thresholds存在 versioned configuration / policy artifact；Data Model保存其 version與結果，不在 DB row藏一份不可治理的 thresholds JSON。
+
+# 5. Existing Table Integration
+
+## blueprint_lineage
+
+不新增新的「evolution edge truth」。
+
+~~~text
+blueprint_lineage
+= parent / child historical truth
+
+evolution_observation
+= 對該 edge 的 normalized learned interpretation
+~~~
+
+## product_event
+
+仍保存 bounded raw meaningful event（依F07 retention）。
+
+Evolution Engine不把所有長期知識靠raw product_event永久保存。
+
+## correction_record
+
+Correction / revert是重要 negative/repair signal；F18只讀 outcome，不複製 correction payload。
+
+## blueprint_content
+
+Pattern / recommendation永遠不修改或取代 immutable Blueprint。
+
+# 6. Repository Boundaries — Phase 4+
+
+新增 appf2-owned interfaces：
+
+~~~text
+EvolutionObservationRepository
+EvolutionPatternRepository
+EvolutionEvidenceRepository
+EnhancementRecommendationRepository
+~~~
+
+這些 interface不暴露 Supabase table API給 F18 domain logic。
+
+# 7. Index Baseline — Phase 4+
+
+啟用時最低建議：
+
+~~~text
+evolution_observation(lineage_id) UNIQUE
+evolution_observation(parent_hash, observed_at)
+evolution_observation(child_hash)
+evolution_observation(context_digest, observed_at)
+
+evolution_observation_change(observation_id)
+evolution_observation_change(to_capability_id, to_capability_version)
+evolution_observation_change(change_digest)
+
+evolution_pattern(context_digest, maturity_status)
+evolution_pattern(maturity_status, updated_at)
+
+evolution_pattern_capability(capability_id, capability_version)
+evolution_pattern_observation(observation_id)
+
+evolution_pattern_evidence(pattern_id, created_at)
+evolution_pattern_evidence(policy_version, evaluation_method)
+
+enhancement_recommendation(source_blueprint_hash, created_at)
+enhancement_recommendation(pattern_id, created_at)
+enhancement_recommendation(context_digest, created_at)
+enhancement_recommendation(status, expires_at)
+
+enhancement_decision(recommendation_id) UNIQUE
+enhancement_decision(child_blueprint_hash)
+~~~
+
+實際額外 indexes 必須由 production access pattern證明，不提前過度 indexing。
+
+# 8. Retention / Privacy — Phase 4+
+
+## Durable Knowledge
+
+可長期保留：
+
+- pattern identity / version
+- capability/version references
+- privacy-safe semantic context digest
+- aggregate evidence snapshot
+- maturity history
+- recommendation→decision→child trace
+
+受 F07/user-content retention 控制：
+
+- raw Prompt
+- User edit text
+- raw Result
+- raw sensitive inputs
+- raw event rows
+
+規則：
+
+1. evolution_pattern_evidence不得回填 raw user content。
+2. recommendation candidate只存 bounded semantic description。
+3. anonymous_id只使用既有 first-party identity，不新增 hidden stitching。
+4. aggregate不足 minimum privacy threshold時，不顯示 community-derived claim。
+5. privacy deletion若移除某 actor的raw identity，不必破壞已匿名 aggregate，但不得保留可重新識別 linkage。
+
+# 9. F18 Data Acceptance
+
+- DATA-F18-AC-001 Capability executable implementation不進 Evolution tables。
+- DATA-F18-AC-002 每個 observation可追到唯一 lineage edge。
+- DATA-F18-AC-003 Pattern可追到 supporting observations。
+- DATA-F18-AC-004 Pattern maturity可追到 evidence snapshot + policy version。
+- DATA-F18-AC-005 OBSERVATIONAL_ONLY snapshot不得產生PROVEN。
+- DATA-F18-AC-006 recommendation可追到 source Blueprint / context / ranking policy。
+- DATA-F18-AC-007 decision可追到 resulting intent / child / lineage when successful。
+- DATA-F18-AC-008 rejected/dismissed recommendation不會產生假child。
+- DATA-F18-AC-009 Registry revoked capability歷史 evidence可保留，但不得繼續eligible。
+- DATA-F18-AC-010 raw Prompt / Result / sensitive input不進 learned pattern store。
+- DATA-F18-AC-011 raw product_event過期後，privacy-safe aggregate evidence仍可保留。
+- DATA-F18-AC-012 Recommendation / Pattern不能直接改Blueprint content。
+
+# 10. Phase Boundary
+
+Phase 1–3 migration **不得**提前建立以上 F18 tables。
+
+Phase 4+ activation前提：
+
+- F18 Human-approved
+- migration reviewed
+- evidence policy approved
+- privacy review PASS
+- experiment/holdout method可執行
+- appf2-build Build Freeze明確包含此 Phase 4+ section
+
+> **Evolution Knowledge Store 是 appf2 moat 的 durable memory；但 executable truth仍然是 Registry + validated Blueprint。**
