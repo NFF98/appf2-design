@@ -14,7 +14,7 @@
 
 | Count | Lost Time / Incident | Total Lost Time |
 |---:|---:|---:|
-| 13 | mixed | **>870 min / >14.5 hr** |
+| 14 | mixed | **>915 min / >15.25 hr** |
 
 ---
 
@@ -35,6 +35,7 @@
 | SHAME-011 | 2026-09-27 | PR #25 checks 被錯誤改成每小時輪詢，無端把即時 CI gate 變成等待點 | PR #25 建立後，應立即查看 GitHub CI / Governance / Attack / CodeQL 狀態並持續推進可並行工作；卻錯誤建立每小時一次的 condition-watch automation，並告知 User「停手，等通知」。這把原本應即時取得的 execution gate 人為變成低頻等待，存在讓 Project 無限期等待的風險，且沒有任何治理規則授權這種 delay。 | PR 建立後，checks 必須視為 active execution gate：先立即查一次；若仍 running，短週期直接重查或繼續不依賴 merge 的安全並行工作；不得用低頻排程取代即時 execution flow，也不得要求 Human / Cursor 因此停工。 | 45 min | OPEN / PROCESS FAILURE |
 | SHAME-012 | 2026-09-28 | 第一次角色分工失守：ChatGPT 越過既定合作模式，直接代替 Cursor 執行施工型 GitHub 工作 | 已有固定分工明確規定 Human 決策、ChatGPT 規劃/審核、Cursor 施工；但 ChatGPT 在 Build Freeze / Activation / implementation flow 中因為自己具備 GitHub write 能力，就直接執行原本應交由 Cursor 的 execution 工作。這把「有能力操作」誤當成「角色應該操作」，破壞既定 Human → ChatGPT → Cursor collaboration boundary。 | 每個下一步先判定 owner：source/test/implementation/execution branch/PR = Cursor；Planning、independent audit、Evidence normalization、closure audit = ChatGPT；Product / material governance decision = Human。ChatGPT 不得因 connector 可寫 GitHub 就跨越 Execution Engine 邊界。 | 45 min | OPEN / ROLE BOUNDARY VIOLATION |
 | SHAME-013 | 2026-09-28 | 第二次角色分工失守：把 Evidence normalization 錯交給 Cursor | User 已批准進入 Evidence normalization + T006 closure audit 後，ChatGPT 又產生一整份 Cursor 指令，要求 Cursor 建立 BS-P1-003 Evidence、綁 completion_evidence、把 T006 推到 REVIEW。這與既定分工直接衝突：Evidence normalization、post-merge evidence binding、closure audit 與 closure 判定應由 ChatGPT 負責，Cursor 只提供 implementation / tests / raw execution result。 | 固定流程：Cursor implementation + tests + raw result → Human merge approval → ChatGPT Evidence normalization → ChatGPT independent closure audit → Human Gate（如需要）→ Task closure。看到 Evidence normalization / post-merge evidence binding / closure audit / closure anomaly adjudication 時，owner 預設必須是 ChatGPT，不得再次塞給 Cursor。 | 45 min | OPEN / REPEATED ROLE BOUNDARY VIOLATION |
+| SHAME-014 | 2026-09-29 | SP-P1-002 Planning / 新 Chat 交接漏掉 User 明確保留的跨 Sprint open items | 在 SP-P1-002 cold-read 與 Task decomposition 時，只讀 Build Spec / Sprint / Backlog current truth，沒有先把 User 先前明確要求保留的 project-level事項（官方語言規則、governance text drift cleanup、跨 repo open PR、T002 dead local patch、new-chat handoff/open-item continuity、Registry 必須誠實判斷真實支援度）做 canonical carry-forward audit。結果又要 User 自己保存並重新貼回，且我還自行發明模糊的 G0，而沒有先核對這些真正待辦。 | 建立「GitHub canonical open-items ledger + mandatory handoff carry-forward + pre-activation audit」：每次新 Chat 不靠聊天記憶，先讀 current control truth、未結 Findings、open PR inventory、project open-items ledger；HOLD/PLANNED 階段逐項分類 BLOCKER / NON_BLOCKING / MANUAL / RESOLVED，未處理的 blocking item 不得進 Sprint Activation。Handoff 只攜帶 current truth + unresolved items + next gate，不重讀整個歷史。 | 45 min | OPEN / HANDOFF GOVERNANCE FAILURE |
 
 ---
 
@@ -54,9 +55,10 @@ SHAME-010   90 min
 SHAME-011   45 min
 SHAME-012   45 min
 SHAME-013   45 min
+SHAME-014   45 min
 -----------------
-TOTAL     >870 min
-          >14.5 hr
+TOTAL     >915 min
+          >15.25 hr
 ~~~
 
 ---
@@ -144,6 +146,6 @@ TOTAL     >870 min
 
 ## Current Status
 
-> **13 incidents / >870 minutes lost / >14.5 hr.**
+> **14 incidents / >915 minutes lost / >15.25 hr.**
 
 本表為 Working Project Management 紀錄，不屬 Formal Spec。
