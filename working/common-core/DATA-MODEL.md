@@ -106,6 +106,48 @@ LegoSpec / Function Contract 不得依賴 Supabase table API。
 
 Application 透過 appf2-owned repository / service interface 使用資料層。
 
+## DM-P07 — Registry Truth 與 Evolution Knowledge 分離
+
+Capability Registry 是 executable truth；Evolution Knowledge Store 是 learned product knowledge。
+
+~~~text
+Registry
+= 能不能安全執行
+
+Evolution Knowledge
+= 在什麼 context 下，什麼變更曾被反覆採用並產生什麼 outcome
+~~~
+
+DB 不保存 Capability executable implementation，不把 learned popularity 改寫成 Registry availability。
+
+## DM-P08 — Proven 必須可追溯
+
+任何 Phase 4+ EVIDENCE_BACKED / PROVEN enhancement pattern 都必須能追到：
+
+- source evolution observations
+- evidence window
+- evaluation method
+- evidence policy version
+- guardrail metrics
+- promotion / downgrade / revoke history
+
+不得用單一 aggregate score 取代 audit chain。
+
+## DM-P09 — Recommendation 不改寫 Artifact Truth
+
+Recommendation / Pattern / Evidence 都不是 Blueprint。
+
+~~~text
+Recommendation
+→ User decision
+→ Refine / Remix Intent
+→ Compile
+→ Validate
+→ New Blueprint
+~~~
+
+任何 Evolution Engine 都不得直接 mutation validated Blueprint。
+
 ---
 
 # 3. Detailed Data Model Owner / Phase Applicability
