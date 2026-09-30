@@ -152,7 +152,9 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 1. `PFR-01 — Development Re-alignment Audit` 已於 2026-10-01 Human-approved 並完成。
 2. Current Step = `PFR-02 — Complete SP-P1-002`。
 3. Audit 決策：SP1 preserve；SP2 沿用 `BS-P1-003`、不 rebaseline；舊 SP3–SP8 execution sequence 由 Product-first roadmap 取代。
-4. `SP-P1-002` 已於 2026-10-01 Human-approved Activation；Build current state = **ACTIVE**，`BS-P1-003` 為 active baseline，`T001` 為唯一 Active Task。
-5. PFR-02 現在進入 implementation execution；但在第一個 Cursor implementation command 前，仍有一個 manual hard stop：`POI-003` dead patch disposition confirmation。
+4. `SP-P1-002` 已於 2026-10-01 Human-approved Activation；POI-003 亦已由 Human 以 `False / False` 完成並 RESOLVED。
+5. T001 開始執行後發現 `BF-014`：locked `BS-P1-003` evidence registry regex serialization defect 使 F04-AC-018 無法透過 canonical validator 誠實達成。
+6. Build current state = **HOLD**；`SP-P1-002 = BLOCKED`、`T001 = BLOCKED`；`BS-P1-003` 仍為 active locked baseline。
+7. Next Human Gate = **BF-014 Resolution Path**。Human decision 前不得恢復 Cursor Product implementation。
 
-> **不要先發 Cursor command。** 必須先由 Human 確認 PC B 的 `T002-candidate.patch` 與 `T002-full-candidate.patch` 已刪除或安全移出 project execution path。
+> BF-014 resolution 不得透過繞過 canonical validator、parallel evidence path 或 silent contract reinterpretation 來完成。

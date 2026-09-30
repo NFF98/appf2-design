@@ -41,11 +41,13 @@
 Program = PFR-2026
 Status = ACTIVE
 Current Step = PFR-02 — Complete SP-P1-002
-Step Status = IMPLEMENTATION ACTIVE / T001 IN_PROGRESS
-Current Build Execution = ACTIVE — SP-P1-002 / BS-P1-003 / T001
-SP-P1-002 = ACTIVE
-Next Human / Manual Gate = POI-003 Dead Patch Confirmation before first Cursor implementation command
-Cursor Product Implementation = SPRINT/TASK AUTHORIZED, BUT FIRST CURSOR COMMAND HARD-BLOCKED UNTIL POI-003 CONFIRMED
+Step Status = BLOCKED — BF-014 HUMAN GOVERNANCE REQUIRED
+Current Build Execution = HOLD
+SP-P1-002 = BLOCKED
+T001 = BLOCKED
+Active Locked Baseline = BS-P1-003
+Next Human Gate = BF-014 Resolution Path
+Cursor Product Implementation = NOT AUTHORIZED WHILE HOLD
 ~~~
 
 # 4. Phase 1 Product-First Re-alignment
@@ -54,7 +56,7 @@ Cursor Product Implementation = SPRINT/TASK AUTHORIZED, BUT FIRST CURSOR COMMAND
 |---|---|---|---|---:|---|
 | PFR-00 | Program Registration | 正式建立本重構與 tracker | No implementation | — | **COMPLETED — 2026-09-30** |
 | PFR-01 | Development Re-alignment Audit | 新 Product Spec 對舊 Build Plan；判斷保留 / 修改 / 延後 | Audit only | 0.5–1 day | **COMPLETED — 2026-10-01** |
-| PFR-02 | Complete `SP-P1-002 — Validation + Intent Foundation + Evidence Reliability` | 完成 Intent / Validation / Evidence 地基 | **Cursor implementation** | 2–4 days | **CURRENT — ACTIVE / T001 IN_PROGRESS** |
+| PFR-02 | Complete `SP-P1-002 — Validation + Intent Foundation + Evidence Reliability` | 完成 Intent / Validation / Evidence 地基 | **Cursor implementation after BF-014 resolution** | 2–4 days | **CURRENT — BLOCKED / BF-014** |
 | PFR-03 | Complete `F19 — Shared App Data / Social Persistence` Detailed Design | 把 Shared Ranking 設計到可施工 | Design only | 1–2 days | PENDING |
 | PFR-04 | UI/UX Delta Review | 重新檢查 S03 / S04 / S05 的 Shared Data / Remix / Lineage 影響 | Design only | ~1 day | PENDING |
 | PFR-05 | Create `BS-P1-004 — Product Proof Baseline` | 最新 Product Truth Freeze 成新的施工圖 | Build planning / no product code | 0.5–1 day | PENDING |
@@ -161,4 +163,6 @@ PFR-2026 只有在以下都成立後才可標為 `COMPLETED`：
 | 2026-09-30 | PFR-00 | 建立 Product-First Phase Realignment program + canonical progress tracker | COMPLETED |
 | 2026-10-01 | PFR-01 | 完成 Design → Build impact audit；Human 批准 PRESERVE / CHANGE / DEFER / NEW 與 Product-first Phase 1 重排 | COMPLETED |
 | 2026-10-01 | PFR-02 | 進入 SP-P1-002；沿用 BS-P1-003，不 rebaseline；完成 Activation Review PASS | REVIEW PASS |
-| 2026-10-01 | PFR-02 | Human 批准 SP-P1-002 Activation；Build control state 已切換 ACTIVE，T001 為唯一 Active Task；第一個 Cursor command 仍受 POI-003 hard stop | CURRENT / ACTIVE |
+| 2026-10-01 | PFR-02 | Human 批准 SP-P1-002 Activation；Build control state 已切換 ACTIVE，T001 為唯一 Active Task；第一個 Cursor command 仍受 POI-003 hard stop | ACTIVATED |
+| 2026-10-01 | PFR-02 | POI-003 經 Human `False / False` 驗證後解除；T001 開始執行 | EXECUTION STARTED |
+| 2026-10-01 | PFR-02 | T001 發現 BF-014：BS-P1-003 evidence registry regex serialization defect 使 F04-AC-018 無法誠實達成；SP2/T001 fail-closed BLOCKED，Build execution 轉 HOLD，等待 Human resolution | CURRENT / BLOCKED |
