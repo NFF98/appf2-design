@@ -41,12 +41,13 @@
 Program = PFR-2026
 Status = ACTIVE
 Current Step = PFR-02 — Complete SP-P1-002
-Step Status = BLOCKED — BF-014 HUMAN GOVERNANCE REQUIRED
+Step Status = BLOCKED — BF-014 OPTION A / DESIGN DELTA IN PROGRESS
 Current Build Execution = HOLD
 SP-P1-002 = BLOCKED
 T001 = BLOCKED
 Active Locked Baseline = BS-P1-003
-Next Human Gate = BF-014 Resolution Path
+Planned Replacement Baseline = BS-P1-004
+Next Human Gate = BF-014 Working Delta Audit + Human Build Freeze
 Cursor Product Implementation = NOT AUTHORIZED WHILE HOLD
 ~~~
 
@@ -59,7 +60,7 @@ Cursor Product Implementation = NOT AUTHORIZED WHILE HOLD
 | PFR-02 | Complete `SP-P1-002 — Validation + Intent Foundation + Evidence Reliability` | 完成 Intent / Validation / Evidence 地基 | **Cursor implementation after BF-014 resolution** | 2–4 days | **CURRENT — BLOCKED / BF-014** |
 | PFR-03 | Complete `F19 — Shared App Data / Social Persistence` Detailed Design | 把 Shared Ranking 設計到可施工 | Design only | 1–2 days | PENDING |
 | PFR-04 | UI/UX Delta Review | 重新檢查 S03 / S04 / S05 的 Shared Data / Remix / Lineage 影響 | Design only | ~1 day | PENDING |
-| PFR-05 | Create `BS-P1-004 — Product Proof Baseline` | 最新 Product Truth Freeze 成新的施工圖 | Build planning / no product code | 0.5–1 day | PENDING |
+| PFR-05 | Create `BS-P1-005 — Product Proof Baseline` | 最新 Product Truth Freeze 成新的施工圖；`BS-P1-004` 已保留給 BF-014 replacement rebaseline | Build planning / no product code | 0.5–1 day | PENDING |
 | PFR-06 | `SP-P1-003 — Playable App Vertical Slice` | Intent → generated App → render → play | **Cursor implementation** | 3–5 days | PENDING |
 | PFR-07 | `SP-P1-004 — Share + Shared Ranking Product Proof` | Share → recipient use → asynchronous Shared Ranking | **Cursor implementation** | 3–5 days | PENDING |
 | PFR-08 | `SP-P1-005 — Remix + Lineage Product Proof` | Remix → child Version → Parent / Root lineage → fresh Shared Data Scope | **Cursor implementation** | 3–5 days | PENDING |
@@ -165,4 +166,5 @@ PFR-2026 只有在以下都成立後才可標為 `COMPLETED`：
 | 2026-10-01 | PFR-02 | 進入 SP-P1-002；沿用 BS-P1-003，不 rebaseline；完成 Activation Review PASS | REVIEW PASS |
 | 2026-10-01 | PFR-02 | Human 批准 SP-P1-002 Activation；Build control state 已切換 ACTIVE，T001 為唯一 Active Task；第一個 Cursor command 仍受 POI-003 hard stop | ACTIVATED |
 | 2026-10-01 | PFR-02 | POI-003 經 Human `False / False` 驗證後解除；T001 開始執行 | EXECUTION STARTED |
-| 2026-10-01 | PFR-02 | T001 發現 BF-014：BS-P1-003 evidence registry regex serialization defect 使 F04-AC-018 無法誠實達成；SP2/T001 fail-closed BLOCKED，Build execution 轉 HOLD，等待 Human resolution | CURRENT / BLOCKED |
+| 2026-10-01 | PFR-02 | T001 發現 BF-014：BS-P1-003 evidence registry regex serialization defect 使 F04-AC-018 無法誠實達成；SP2/T001 fail-closed BLOCKED，Build execution 轉 HOLD，等待 Human resolution | BLOCKED |
+| 2026-10-01 | PFR-02 | Human 同意沿用 Sprint 1 Build Constitution 繼續 BF-014 Option A；Working 修正 9 個 regex serialization defects、固定 registry_digest wire format，planned replacement = BS-P1-004；原 PFR-05 Product Proof Baseline 順延 BS-P1-005 | DESIGN DELTA IN PROGRESS |
