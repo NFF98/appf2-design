@@ -6,6 +6,17 @@
 >
 > 2026-09-26 已完成 STEP 2 Working Content Quality Review 與 Final Audit。Final Audit 已完成 Cross-file Consistency、Acceptance Mapping、UI/UX Consistency、Registry Integrity 與 Phase 1 Build Freeze Inventory；目前沒有已知 Phase 1 Build Freeze blocker。尚未 Human-approved Build Freeze。
 
+## Active Cross-Phase Program
+
+目前啟動中的跨 Phase 重構：
+
+> **PFR-2026 — Product-First Phase Realignment**
+
+Canonical tracker：
+
+`working/PHASE-REALIGNMENT-PROGRAM.md`
+
+所有與本次 Phase 1–Phase 4+ 重構相關的 planning / review / handoff，必須記錄 `Program / Current Step / Status / Next Human Gate`，直到 PFR-2026 正式完成。
 ## Canonical Structure
 
 ```text

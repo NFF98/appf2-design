@@ -1,0 +1,125 @@
+# PFR-2026 — Product-First Phase Realignment
+
+> 狀態：**ACTIVE / HUMAN-GOVERNED**
+>
+> 啟動日期：2026-09-30
+>
+> 範圍：Phase 1 → Phase 4+ roadmap / Build alignment 重構。
+>
+> 目的：把 appf2 的開發順序改成 **先做出可玩、可分享、可共用 Shared Data、可 Remix 的真實 Product Proof，再用 Evidence 決定後續 Phase**。
+>
+> 本檔是此次 phase realignment 的唯一進度 tracker。它記錄「現在做到哪」，但**不取代**各 canonical Function / UI / Data / Business owner，也**不直接授權 Cursor implementation**。
+
+# 1. Program Name
+
+正式名稱：
+
+> **PFR-2026 — Product-First Phase Realignment**
+
+人話：
+
+> **先把真正產品做出來，再根據 Evidence 一步一步重排 Phase 1–Phase 4+。**
+
+# 2. Hard Rules
+
+1. GitHub Working SSOT 仍是 Product Design Current Truth。
+2. `appf2-build` locked `BS-*` 仍是 implementation authority。
+3. PFR-2026 不得直接修改已鎖定的舊 Build Spec；需要同步時建立新的 Build Spec baseline。
+4. 每個 material Product / UX / Contract change 仍需 Human approval。
+5. Cursor 只能執行已經進入 approved Build Spec + activated Sprint / Task 的工作。
+6. Phase 2 / 3 / 4+ 不因本 tracker 出現就自動 activation。
+7. 後續每次與本重構相關的 Review / Handoff / Planning Note，必須標明：
+   - `Program = PFR-2026`
+   - `Current Step`
+   - `Status`
+   - `Next Human Gate`
+8. 完成的 Step 不因後續討論自動 reopen；如需 reopen，必須留下原因與 Human decision。
+
+# 3. Current Program Status
+
+~~~text
+Program = PFR-2026
+Status = ACTIVE
+Current Step = PFR-01 — Development Re-alignment Audit
+Current Build Execution = HOLD
+Cursor Product Implementation = NOT AUTHORIZED BY THIS PROGRAM RECORD
+~~~
+
+# 4. Phase 1 Product-First Re-alignment
+
+| ID | Step | Human meaning | Build / Cursor | Planning estimate | Status |
+|---|---|---|---|---:|---|
+| PFR-00 | Program Registration | 正式建立本重構與 tracker | No implementation | — | **COMPLETED — 2026-09-30** |
+| PFR-01 | Development Re-alignment Audit | 新 Product Spec 對舊 Build Plan；判斷保留 / 修改 / 延後 | Audit only | 0.5–1 day | **NEXT** |
+| PFR-02 | Complete `SP-P1-002 — Validation + Intent Foundation + Evidence Reliability` | 完成 Intent / Validation / Evidence 地基 | **Cursor implementation** | 2–4 days | PENDING |
+| PFR-03 | Complete `F19 — Shared App Data / Social Persistence` Detailed Design | 把 Shared Ranking 設計到可施工 | Design only | 1–2 days | PENDING |
+| PFR-04 | UI/UX Delta Review | 重新檢查 S03 / S04 / S05 的 Shared Data / Remix / Lineage 影響 | Design only | ~1 day | PENDING |
+| PFR-05 | Create `BS-P1-004 — Product Proof Baseline` | 最新 Product Truth Freeze 成新的施工圖 | Build planning / no product code | 0.5–1 day | PENDING |
+| PFR-06 | `SP-P1-003 — Playable App Vertical Slice` | Intent → generated App → render → play | **Cursor implementation** | 3–5 days | PENDING |
+| PFR-07 | `SP-P1-004 — Share + Shared Ranking Product Proof` | Share → recipient use → asynchronous Shared Ranking | **Cursor implementation** | 3–5 days | PENDING |
+| PFR-08 | `SP-P1-005 — Remix + Lineage Product Proof` | Remix → child Version → Parent / Root lineage → fresh Shared Data Scope | **Cursor implementation** | 3–5 days | PENDING |
+| PFR-09 | `SP-P1-006+ — Product Hardening & Phase 1 Close` | Recovery / Correction / Accessibility / performance / evidence 等必要收尾 | **Cursor implementation** | Evidence-driven | PENDING |
+
+Phase 1 完成的核心產品循環：
+
+~~~text
+Intent
+→ App
+→ Play
+→ Share
+→ Recipient Use
+→ Shared Data
+→ Remix
+→ New App
+~~~
+
+Phase 1 不以「所有未來功能都做完」為完成條件；以 Human-approved Product Proof + required hardening + Evidence Gate 為準。
+
+# 5. Phase 2–Phase 4+ Replanning
+
+Phase 2–Phase 4+ 必須重排，但**不在 Phase 1 尚未產生真實 Evidence 前一次鎖死詳細 Sprint**。
+
+| ID | Phase | Replanning focus | Status |
+|---|---|---|---|
+| PFR-10 | Phase 2 Replan | PMF Deepening：Retention / Durable Identity / Ownership / Creator Value；Realtime only if evidence supports | PENDING — after Phase 1 evidence |
+| PFR-11 | Phase 3 Replan | Monetization + Scale Readiness：Creator Pro / Paid App / Entitlement / Metering / Settlement / Commerce Pilot | PENDING — after earlier evidence |
+| PFR-12 | Phase 4+ Replan | App Evolution / Capability Network / Discovery / Marketplace / Network Effect | PENDING — after earlier evidence |
+| PFR-13 | Cross-Phase Final Consistency Review | Phase 1–4+ goal / gate / dependency / naming / SSOT consistency final audit | PENDING |
+
+未來 Phase 5+ 可以存在，但現在不預先 Freeze 名稱或內容。只有 Evidence 顯示需要新的獨立 Phase 時，才由 Human approval 建立。
+
+# 6. Current Timing Target
+
+2026-09-30 Working planning estimate：
+
+~~~text
+PFR-01 audit
+→ PFR-02 SP2
+→ PFR-03 / 04 design delta
+→ PFR-05 BS-P1-004
+→ PFR-06 first playable App
+   target ≈ 2026-10-07 to 2026-10-10
+
+→ PFR-07 Share + Shared Ranking
+→ PFR-08 Remix + Lineage
+   Product Proof target ≈ 2026-10-15 to 2026-10-20
+~~~
+
+這些日期是 planning estimate，不是 activation gate，也不是保證日期。真實進度由 Evidence / review / blocker 決定。
+
+# 7. Completion Rule
+
+PFR-2026 只有在以下都成立後才可標為 `COMPLETED`：
+
+1. Phase 1 Product-First roadmap 已完成並有 Human-approved Product Proof。
+2. Phase 2 roadmap 已依 Phase 1 Evidence replan 並 Human-approved。
+3. Phase 3 roadmap 已依前序 Evidence replan 並 Human-approved。
+4. Phase 4+ roadmap 已依前序 Evidence replan 並 Human-approved。
+5. Cross-Phase Final Consistency Review PASS。
+6. Business Plan / Function portfolio / UI/UX / Data / Infrastructure / Build handoff 沒有互相矛盾的 active truth。
+
+# 8. Update Log
+
+| Date | Step | Update | Result |
+|---|---|---|---|
+| 2026-09-30 | PFR-00 | 建立 Product-First Phase Realignment program + canonical progress tracker | COMPLETED |

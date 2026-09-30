@@ -72,6 +72,21 @@ appf2 採四段節奏，而不是把未來能力全部塞進 Phase 1。
 
 ---
 
+# 3.1 Active Roadmap Re-alignment Program
+
+目前 Phase 1–Phase 4+ 的正式重構計畫：
+
+> **PFR-2026 — Product-First Phase Realignment**
+
+Canonical progress tracker：
+
+`working/PHASE-REALIGNMENT-PROGRAM.md`
+
+PFR-2026 的目的，是把開發順序改成「先完成可玩、可分享、Shared Data、Remix 的 Phase 1 Product Proof，再依真實 Evidence 重排 Phase 2 / 3 / 4+」。
+
+在各 Phase replan 尚未經 Human approval 前，本檔既有 Phase 2 / 3 / 4+ 內容仍是目前 Working strategy baseline；PFR tracker 的 PENDING 項目本身不建立新 Product Truth，也不授權 Build / Cursor implementation。
+
+---
 # 4. Phase Roadmap Index
 
 Phase roadmap 不再拆成平行檔案；本檔後段以單一 canonical owner 保留 Phase sections：
