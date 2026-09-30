@@ -857,6 +857,8 @@ F18 讀：
 - F07 evidence aggregates / domain lifecycle truth
 - F16 correction outcome
 - F10 reuse metadata when available
+- F19 Shared App Data privacy-safe aggregates / participation outcomes
+- F20 / F15 bounded commerce aggregates when available
 - Phase 4 Evolution Knowledge Store
 
 F18 寫：
@@ -973,6 +975,7 @@ Event properties只允許：
 - accepted child → meaningful use
 - accepted child → share
 - accepted child → remix
+- accepted child → Shared Participation / Data adoption where F19 applies
 - correction / revert after suggestion
 - recommendation rejection / dismissal
 
@@ -996,7 +999,11 @@ Event properties只允許：
 - abandonment delta
 - User reject / dismiss fatigue
 
-不能只看 CTR。
+Commerce / revenue可以作 downstream outcome signal，但：
+
+> **Sales ≠ Semantic Correctness；Revenue ≠ PROVEN。**
+
+不能只看 CTR、GMV 或 purchase conversion。
 
 # 21. Acceptance Criteria
 
@@ -1078,6 +1085,8 @@ Phase 1–3 只需要保留未來地基：
 - capability/version evidence
 - meaningful use
 - share / remix
+- F19 shared participation / bounded shared-data outcomes
+- F20 / F15 commerce outcomes as non-authoritative product evidence
 - correction / revert
 - Registry compatibility
 - privacy-safe evidence

@@ -769,11 +769,60 @@ Phase 1 可由 Supabase/Postgres adapter 實作。
 - Account / Ownership tables；
 - Creator profile；
 - Entitlement / Transaction tables；
+- **F19 Shared App Data tables are not in the already-frozen Phase 1 baseline; they are an approved Product Proof extension that requires a separate Human-approved Build Freeze delta；**
 - large media blob table；
 - workflow / queue state machine；
 - generic cross-app Context store。
 
 ---
+
+# 15.1 Approved Phase 1 Product Proof Extension — F19 Shared App Data
+
+> Status：WORKING PRODUCT-PROOF EXTENSION / NOT PART OF CURRENT PHASE 1 BUILD FREEZE。
+
+F19不是generic User Database；只允許Registry-approved Shared Ranking / Vote / Counter / bounded Shared Records。
+
+~~~text
+shared_data_scope
+- shared_data_scope_id
+- blueprint_hash
+- created_by_anonymous_id?
+- owner_user_id? / app_version_id?   # F08後
+- status
+- entitlement_policy_version?
+- created_at
+
+shared_data_collection
+- collection_id
+- shared_data_scope_id
+- collection_key
+- collection_type        # RANKING / VOTE / COUNTER / RECORD_SET
+- schema_version
+- read_policy / write_policy
+- status
+
+shared_data_record
+- record_id
+- collection_id
+- participant_ref?
+- payload                # Capability-defined bounded schema only
+- created_at / updated_at?
+~~~
+
+Rules：
+
+1. payload不是arbitrary user-defined schema。
+2. Client不得拿table/SQL/RLS當產品API。
+3. F19-enabled Share activation後可增加optional shared_data_scope resolution；目前frozen F05不自動改schema。
+4. 同一Shared App recipients解析同一scope。
+5. REMIX child預設fresh scope，不繼承Parent data。
+6. same-Creator REFINE若保留scope必須explicit compatibility/migration。
+7. capacity由F13 versioned config決定。
+8. writes要rate limit / abuse / privacy guardrail。
+9. 只有capability-defined shared outcome durable，不是每次local click寫DB。
+10. exact migration/index/retention在F19 Build Freeze前完成。
+
+Product Proof：18啦A/B/C不同時間玩仍共享bounded Ranking；Remix child有自己的Ranking空間。
 
 # 16. Ownership of Detailed Schemas
 
@@ -883,16 +932,23 @@ Anonymous Identity
 
 # 1. F08 Identity / Ownership
 
-未來新增：
+Phase 2 metadata layer新增：
 
 ~~~text
 user_identity
 identity_claim
+app_family
+app_version
 artifact_ownership
 creator_attribution
 ~~~
 
-透過 mapping 連接 anonymous identity / Blueprint，不修改 Blueprint body。
+~~~text
+app_family: family_id / root_version_id / root_creator_user_id
+app_version: app_version_id / family_id / blueprint_hash / creator_user_id / owner_user_id / parent_version_id? / relation_type / created_at
+~~~
+
+Ownership / root不進Blueprint；Purchase不修改Parent owner；REMIX child建立自己的AppVersion ownership；Root pointer不取代blueprint_lineage audit truth；同content hash不等於同ownership context。F19 scope在F08 activation後可掛app_version_id / owner_user_id。
 
 # 2. F10 Trusted Reuse / Vector
 
@@ -942,9 +998,22 @@ Immutable Blueprint
 
 > Shared invariants：`../../common-core/DATA-MODEL.md`
 >
-> Status：DEFERRED / NO ACTIVE PHASE 3 DATA EXTENSION YET。
->
-> Phase 3 開始時，只在此記錄相對於已啟用模型的新增 entity / table / migration / retention change；不得複製 Phase 1 / 2 全量 schema。
+> Status：DEFERRED_BASELINE / NOT BUILD FREEZE READY。
+
+Conceptual entities：
+
+~~~text
+creator_plan_subscription / creator_plan_entitlement
+usage_meter / quota_state
+app_commercial_offer
+app_purchase_entitlement
+commerce_transaction / commerce_split
+settlement_ledger
+refund_or_reversal
+payout
+~~~
+
+Rules：Axis A App Price與Axis B Creator Plan分開；purchase entitlement不等於ownership；split snapshot保存policy version與Seller/Direct Parent/appf2 allocation；Root不建立永久royalty row；plan limits由versioned config管理；exact schema由F13/F15/F20 activation承接。
 
 
 ---

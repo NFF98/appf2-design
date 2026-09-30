@@ -1009,3 +1009,33 @@ Future directions：
 3. Future UI可形成「分享 App / 分享結果 / 開啟共同遊玩 Room」三種意圖，但 Phase 1 O01只落地「分享 App」。
 
 此 boundary 不修改目前 BUILD_FREEZE_READY F05 semantics。
+
+## Future Shared Data + Commerce Compatibility
+
+此節只固定 future compatibility，不改目前 Phase 1 BUILD_FREEZE_READY F05 behavior。
+
+### F19 Shared App Data
+
+F05 仍只分享 immutable App definition；若某個 Share 啟用 F19，Share resolution 可以另外帶回 **opaque shared_data_scope reference**，讓不同時間打開同一 Shared App 的 recipients 共用受控 durable data。
+
+這不代表分享 Creator 的 private Runtime state。
+
+~~~text
+F05 = resolve App definition
+F19 = resolve approved Shared Data Scope
+~~~
+
+Remix child 預設建立新的 F19 scope，不繼承 Parent shared data。
+
+### F20 FREE / PAID Share Gate
+
+F20 activation 前，F05 維持 Recipient 不登入即可直接使用。
+
+F20 activation 後：
+
+~~~text
+FREE App → F05 resolve → immediate Play → Remix available
+PAID App → F05 resolve metadata → F20 purchase / entitlement gate → Play + Remix unlock together
+~~~
+
+PAID gate 由 F20 + F13 擁有；F05 不自己實作 payment / entitlement，也不因此改寫 Blueprint。

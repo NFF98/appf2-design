@@ -1027,3 +1027,34 @@ Existing immutable Blueprint
 ~~~
 
 > Remix / Refine 的本質不是「改 JSON」，而是「保留有價值的語意，重新產生一個完整、可驗證的新 App」。
+
+## Future Ownership / Shared Data / Commerce Compatibility
+
+此節固定 F06 與 F08 / F19 / F20 的 future contract，不改 Phase 1 immutable Remix / Refine core。
+
+### Ownership
+
+F08 activation 後：
+
+~~~text
+Purchase Parent App ≠ transfer Parent ownership
+REMIX → create new immutable child Version → child ownership belongs to remixer
+→ Parent ownership unchanged → Direct Parent + Root attribution preserved
+~~~
+
+### Shared Data
+
+F19-enabled Parent 被 REMIX 時，child 預設建立新的 Shared Data Scope，不得自動寫入 Parent leaderboard / vote / counter。
+
+同一 Creator 的 REFINE 若未來要保留 Shared Data，必須經 F19 明確 compatibility / migration policy；不得因 lineage 自動偷接 mutable data。
+
+### Commerce
+
+F20 activation 後：
+
+- FREE Parent：Play + Remix 無 purchase gate。
+- PAID Parent：完成一次 purchase 後，Play + Remix 同時解鎖。
+- Buyer 不因 purchase 成為 Parent owner。
+- child Creator 可把自己的 child Version 設為 FREE 或 PAID。
+- same Creator REFINE / self-derived version 不產生 Direct Parent royalty。
+- Direct Parent royalty 只由 F15/F20 transaction policy決定，不寫進 Blueprint / Semantic Delta。

@@ -20,6 +20,8 @@ Intent
 → App
 → Use
 → Share
+→ Recipient Use
+→ Shared Participation / Data
 → Remix
 ~~~
 
@@ -29,7 +31,7 @@ Intent
 
 appf2 的產品是：
 
-> **把當下 Intent 直接轉成可互動、可分享、可 Remix 的 Micro-App。**
+> **把當下 Intent 直接轉成可互動、可分享、可共同參與、可 Remix，並能累積 Ownership / Lineage / Evidence 的 Micro-App。**
 
 appf2 不是 Decision App、AI Code Generator、Form Builder，也不是所有 Native App 的替代品。
 
@@ -57,7 +59,7 @@ appf2 採四段節奏，而不是把未來能力全部塞進 Phase 1。
 
 | 時間 | 階段 | 核心任務 | 主要判斷 |
 |---|---|---|---|
-| **0–1 個月** | Core Proof | 證明 Intent → App → Use → Share → Remix | 產品核心循環是否成立 |
+| **0–1 個月** | Core Proof | 證明 Intent → App → Use → Share → Recipient Use → Shared Participation/Data → Remix | 產品核心循環是否成立 |
 | **第 2–3 個月** | PMF Deepening | Reuse、Identity、Creator Value | 是否開始形成重複使用與資產價值 |
 | **第 4–6 個月** | Scale Readiness | 強化 Reliability、Cost、External Capability Pilot | 是否值得進入平台化 |
 | **6 個月後** | Continuous Platform Expansion | Intent Commerce / Capability Network / App Evolution | 供需與 Evolution Evidence 是否足以形成 Network + Learning Moat |
@@ -193,6 +195,140 @@ appf2 不以 Vanity Metrics 管理。
 16. PROVEN enhancement 必須有可追溯 evaluation method；不能用 click / popularity 冒充 proven。
 17. 所有 Revenue / Growth / Cache / Latency 數字在實測前都是 Hypothesis。
 18. Roadmap 由 Evidence Gate 推進，不由日期推進。
+19. App Price 與 Creator Platform Plan 是兩個獨立收費軸，不得綁死。
+20. FREE / PAID App 都保留 Remix；PAID 是一次付款後同時解鎖 Play + Remix。
+21. Purchase 不轉移原 Version ownership；Remix 產生新的 child Version ownership。
+22. Root Creator 永久保留 attribution / lineage，但不永久抽成。
+23. Creator Plan 的價格、quota、retention、traffic、Realtime limits 必須由 versioned configuration / entitlement policy 管理，不得 hard-code 在功能邏輯。
+24. Creator hit quota 時優先 warning / grace / bounded degradation，不得因單一資源超限就讓已分享 App 整體死亡。
+
+# 8. Creator Commercial Model — Two Independent Axes
+
+appf2 的 Creator 商業模式固定分成兩個互不綁死的軸。
+
+## Axis A — App Price：Creator 的客人要不要付錢
+
+Creator 發布每個 App Version 時只有兩種 consumer-facing commercial state：
+
+~~~text
+FREE
+= Recipient 免費 Play + 免費 Remix
+
+PAID
+= Recipient 一次付款
+→ Play + Remix 同時解鎖
+~~~
+
+不建立以下 consumer modes：
+
+- Free Play + Paid Remix
+- Paid Play + 第二次 Paid Remix
+- No-Remix paid mode
+- ownership transfer sale
+
+Purchase 代表取得該 Version 的 Play + Remix entitlement，**不代表買走原 Version ownership**。
+
+Buyer 真正 Remix 後：
+
+~~~text
+Parent Version ownership stays unchanged
+→ create new immutable child Version
+→ child Version belongs to the remixer
+~~~
+
+每個 child Creator 可獨立把自己的 Version 設為 FREE 或 PAID。
+
+## Axis B — Creator Plan：Creator 要不要付 appf2 取得更多 App 資源
+
+Creator Plan 管的是 appf2 resource envelope，不是 App 售價。
+
+因此以下兩種都合法：
+
+~~~text
+Free Creator Plan + Paid App
+Paid Creator Plan + Free App
+~~~
+
+人話：
+
+> Axis A = 我的客人要不要付錢。  
+> Axis B = 我這個 Creator 要不要付 appf2，讓我的 App 有更多資源。
+
+### Initial Working Plan Baseline
+
+以下是 **Working commercial defaults**，不是 hard-coded constants；正式 activation 前仍需用成本與 usage evidence 校正。
+
+| Resource / Product value | Free Creator | Creator Pro |
+|---|---:|---:|
+| Price | $0 | US$12 / month；annual target ≈ US$10 / month equivalent |
+| 普通 App 建立 / 分享 | YES | YES |
+| 可發布 PAID App | YES | YES |
+| Active Shared-Data Apps | 3 | 25 |
+| Shared Records / App | 約 100 | 約 10,000 |
+| Monthly Shared Participants | 約 1,000 | 約 10,000 |
+| Shared Ranking / Vote / Counter | YES | YES |
+| Advanced Shared Records | basic | expanded |
+| Shared Data retention / history | bounded | larger / longer |
+| Private App / Private Data | NO | YES |
+| Basic Realtime | NO | YES，僅在 F09 正式 activation 後 |
+| Realtime concurrent target | — | 約 50 / App，僅作 Working default |
+| AI Create / Remix allowance | basic | higher |
+
+Future Scale tier 只有在真實高流量 / 高 Realtime / 高 storage evidence 出現後才考慮，不提前建立多層 pricing maze。
+
+### Viral Grace
+
+Creator resource 使用接近限制時：
+
+~~~text
+~80%
+→ warn Creator：App 正在成長
+
+100%
+→ temporary viral grace
+→ prompt upgrade
+
+grace exhausted
+→ 優先限制昂貴 Shared Data write / Realtime / high-cost operations
+→ keep safe read / local App experience whenever possible
+~~~
+
+不得只因 Creator 沒升級就讓已分享 App 整體突然死亡。
+
+## Creator App Revenue Share
+
+Paid App transaction 採 bounded lineage split，不沿 100 代 ancestry 無限抽成。
+
+若 seller 的 Version 是另一位 Creator 的 Remix child：
+
+~~~text
+Current Seller        80%
+Direct Parent Creator  5%
+appf2                  15%
+Other ancestors         0%
+~~~
+
+例如 D Version 售價 $10、Direct Parent = C：
+
+~~~text
+D = $8.00
+C = $0.50
+appf2 = $1.50
+B / Root A = $0
+~~~
+
+如果沒有 eligible Direct Parent，例如 Original App，或 parent / seller 是同一 Creator：
+
+~~~text
+Current Seller 85%
+appf2           15%
+~~~
+
+FREE Parent → PAID direct child 仍適用 5% Direct Parent share。
+
+Root Creator 永久保留 lineage / attribution；只有當 Root 同時就是 Direct Parent 時，才因 Direct Parent 身分取得該筆 5%。
+
+Tax / payment processor / refund 對 settlement base 的會計處理屬 F15 activation detail；不得在沒有明確 checkout disclosure 的情況下偷偷改變上述 Creator-facing split。
 
 # 結論
 
@@ -246,6 +382,7 @@ Intent
 → Immediate Use
 → Share
 → Recipient Use
+→ Shared Participation / Data
 → Remix / Create
 ~~~
 
@@ -260,6 +397,7 @@ Intent
 - Browser Runtime
 - Share / Restore
 - Remix
+- **F19 bounded Shared App Data proof：Shared Ranking / Vote / Counter**
 - Anonymous Identity
 - Humanized Recovery
 - 最小必要 Evidence
@@ -305,6 +443,7 @@ First Value 前原則上不要求註冊。
 - approved capabilities
 - shareable Blueprint
 - bounded compilation
+- bounded Shared App Data proof，讓免費 Creator / Recipient 真正體驗 shared participation
 
 只有產生真實邊際成本或 Durable Value 才適合成為付費候選：
 
@@ -324,8 +463,9 @@ First Value 前原則上不要求註冊。
 3. 使用者是否真的會 Share？
 4. Recipient 是否真的會 Use？
 5. Remix 是否會自然發生？
-6. Anonymous-first 是否降低摩擦？
-7. 每個 Successful Intent 的成本是否可持續？
+6. Shared Participation / Data 是否讓 Shared App 比單純 HTML / static share 更有價值？
+7. Anonymous-first 是否降低摩擦？
+8. 每個 Successful Intent 的成本是否可持續？
 
 沒有這些 Evidence，不進 Creator Economy 或 Marketplace。
 
@@ -396,6 +536,8 @@ anonymous_id
 只有 Reuse / Remix 行為存在後，才建立：
 
 - creator attribution
+- Version-scoped ownership
+- Root Creator / Direct Parent lineage attribution
 - publishing
 - reusable Blueprint family
 - creator profile
@@ -462,7 +604,20 @@ anonymous_id
 
 ## Commerce Pilot
 
-可以開始驗證：
+Phase 3 先驗證 **direct-link Paid App Commerce**，不先蓋 Marketplace：
+
+~~~text
+Creator publishes Version as FREE or PAID
+→ Share URL / App Card
+→ FREE: Recipient Play + Remix
+→ PAID: one-time purchase
+→ Play + Remix entitlement
+→ optional child Remix
+→ bounded revenue split
+→ settlement / evidence
+~~~
+
+同時可繼續驗證 Paid / External Capability：
 
 ~~~text
 Intent
@@ -474,7 +629,7 @@ Intent
 → Result
 ~~~
 
-這仍是 Pilot，不是 Marketplace。
+這仍是 Pilot，不是 Marketplace。F20 Creator App Commerce 負責 Consumer / Creator commerce flow；F13 負責 entitlement / quota，F15 負責 transaction / settlement。
 
 ## 6 個月 Gate
 

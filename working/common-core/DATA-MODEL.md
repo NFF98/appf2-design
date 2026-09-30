@@ -148,6 +148,25 @@ Recommendation
 
 任何 Evolution Engine 都不得直接 mutation validated Blueprint。
 
+## DM-P10 — Shared App Data 與 Blueprint / Runtime 分離
+
+F19 Shared App Data 是 durable mutable App-level data，不是 Blueprint body，也不是單一 Browser Runtime state。
+
+~~~text
+Blueprint
+= immutable App definition
+
+Browser Runtime Instance
+= 個別使用者 / session 的 local mutable state
+
+F19 Shared Data Scope
+= 同一 Shared App 的 recipients 可跨時間共同讀寫的 bounded durable state
+~~~
+
+F19 不建立「User 自己管理資料庫」產品。User 只能透過 Registry-approved Shared Ranking / Vote / Counter / Shared Record Capability 使用受控資料模型。
+
+Share 同一個 F19-enabled App 可解析到同一 Shared Data Scope；Remix child 預設建立新的 Scope，不得偷偷讀寫 Parent 的 shared data。
+
 ---
 
 # 3. Detailed Data Model Owner / Phase Applicability
@@ -160,6 +179,7 @@ working/detailed-design/data-model/DATA-MODEL-DETAILED.md
 
 該檔內以 section 區分：
 - Phase 1 Detailed Contract：目前 Build Freeze candidate。
+- Phase 1 Product Proof Extension：F19 Shared App Data，Human-approved direction，但不自動進既有 Build Freeze。
 - Phase 2 Extensions：deferred。
 - Phase 3 Extensions：deferred。
 - Phase 4+ Extensions：deferred。

@@ -393,8 +393,20 @@ Controlled 2D Canvas、3D Scene / Model、Camera、Lighting、Hotspot、Object I
 ## G. Device / Sensor
 Camera、Microphone、Location、Motion、Orientation、File、Clipboard、QR / Barcode、Haptic。
 
-## H. Realtime / Social
-Room、Presence、Shared State、Vote、Shared Score、Turn Sync、Collaborative Input、Broadcast。
+## H. Shared Data / Realtime / Social
+這個 Family 明確分兩層，不再把所有 social state 都等同 Realtime：
+
+~~~text
+F19 Shared App Data / Social Persistence
+= 非同步也能共用的 durable App data
+= Shared Ranking / Vote / Counter / bounded Shared Records
+
+F09 Realtime Room
+= 同時在線的 Presence + live mutable shared instance state
+= Room / Shared Score / Turn Sync / Collaborative Input / Broadcast
+~~~
+
+Shared Durable Data 不要求所有人同時在線；Realtime 也不得取代 F19 durable data truth。
 
 ## I. AI / External
 Text / Image / Speech AI、Search、Translation、External API、Data Provider、Specialized Compute。
@@ -551,7 +563,7 @@ Random / Dice / Wheel
 Timer / Score / Simple Turn
 Basic Image / Audio / Video playback
 Basic Animation / Confetti
-Shareable State
+Bounded Shared Ranking / Vote / Counter（F19 Shared App Data Product Proof）
 Recovery / Notice presentation
 ~~~
 
@@ -564,6 +576,8 @@ Recovery / Notice presentation
 5. Compiler 能合理選擇
 6. Share / Remix 有意義
 7. 可測試、可版本化
+
+F19 是 Human-approved Product Direction extension；**不因出現在 Phase 1 roadmap 就自動進既有 Build Freeze**。必須完成自己的 Detailed Design、Acceptance、Human approval 後才可 activation。
 
 第 1 個月目標不是全部 RELEASED。
 
@@ -591,7 +605,7 @@ Recovery / Notice presentation
 - ownership-aware capability
 - attribution
 - creator configuration
-- durable state
+- F19 shared durable data hardening / larger bounded records
 - save / history
 - publishing hooks
 - non-enforcing cost / entitlement metadata hooks only

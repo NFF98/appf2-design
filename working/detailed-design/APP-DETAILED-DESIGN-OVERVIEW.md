@@ -82,6 +82,8 @@ working/common-core/DESIGN-TO-DELIVERY.md
 | F16 | Result Feedback / Logic Correction | 錯誤結果可修正、比較、回退 | 0–1 月 | BUILD_FREEZE_READY | `working/detailed-design/functions/F16-RESULT-CORRECTION.md` |
 | F17 | Heterogeneous Workflow Orchestration | 多異質 steps 完成同一 Outcome | Phase 3+ / evidence-gated | DEFERRED_BASELINE | `functions/F17-WORKFLOW-ORCHESTRATION.md` |
 | F18 | Capability Discovery + Evolution | Current App → contextual better ideas → Refine / Remix → better App | Phase 4+ / evidence-gated | DEFERRED_BASELINE | `functions/F18-CAPABILITY-DISCOVERY-EVOLUTION.md` |
+| F19 | Shared App Data / Social Persistence | Shared App → recipients 跨時間共用 bounded durable data | Phase 1 Product Proof extension / evidence-gated | WORKING_BASELINE / NOT_BUILD_FREEZE_READY | `functions/F19-SHARED-APP-DATA.md` |
+| F20 | Creator App Commerce | FREE / PAID App → Play + Remix entitlement → bounded creator revenue split | Phase 3 Commerce Pilot / evidence-gated | DEFERRED_BASELINE / NOT_BUILD_FREEZE_READY | `functions/F20-CREATOR-APP-COMMERCE.md` |
 
 Deferred baseline 的存在不等於 activation；只有 `BUILD_FREEZE_READY` Function 才可進當期 Build Freeze candidate set。
 
@@ -112,6 +114,8 @@ flowchart TD
     F15[F15 Transaction / Settlement]
     F17[F17 Workflow Orchestration]
     F18[F18 Capability Discovery / Evolution]
+    F19[F19 Shared App Data / Social Persistence]
+    F20[F20 Creator App Commerce]
 
     F00 --> F01
     F04 --> F01
@@ -123,6 +127,11 @@ flowchart TD
     F03 --> F05
     F05 --> F06
     F01 --> F06
+
+    F03 --> F19
+    F05 --> F19
+    F06 --> F19
+    F19 --> F07
 
     F07 --> F01
     F07 --> F05
@@ -157,6 +166,12 @@ flowchart TD
 
     F08 --> F13
     F07 --> F13
+    F13 --> F19
+
+    F06 --> F20
+    F08 --> F20
+    F13 --> F20
+    F20 --> F15
 
     F11 --> F14
     F13 --> F14
@@ -171,6 +186,8 @@ flowchart TD
     F07 --> F18
     F10 --> F18
     F16 --> F18
+    F19 --> F18
+    F20 --> F18
     F18 --> F06
 ~~~
 
@@ -190,6 +207,14 @@ F00 + F01 + F02 + F03 + F04 + F05 + F06 + F07 + F12 + F16
 
 Outcome：
 > Intent → Correct App → Use → Share → Remix → Correct Result → Recover
+
+Phase 1 Product Proof extension candidate：
+
+~~~text
+F19 — bounded Shared Ranking / Vote / Counter
+~~~
+
+F19 已是 Human-approved Product Direction，但目前 **不屬於既有 Phase 1 Build Freeze**；必須完成 F19 Detailed Design / Acceptance / Human approval 才可加入任何 Build Spec。
 
 Release 1 Gate：
 
@@ -226,6 +251,7 @@ Phase 2 **不啟用 F13 entitlement / metering**；需要的 static cost / capab
 
 ~~~text
 F11 + F13
++ F20 Creator App Commerce when direct-link commerce gate is met
 + F14 + F15 + F17 when their evidence gates are met
 + F18 only in Phase 4+ when Share / Remix / Evidence maturity supports contextual evolution
 + reliability / compatibility / cost hardening
@@ -252,6 +278,8 @@ Phase 3+ 可以有不同 activation horizon；**日期不自動解鎖任何 Func
 | Recovery | `functions/F12-HUMANIZED-RECOVERY.md` |
 | Anonymous Evidence | `functions/F07-ANONYMOUS-IDENTITY-EVIDENCE.md` |
 | Durable Identity / Ownership | `working/detailed-design/functions/F08-DURABLE-IDENTITY-OWNERSHIP.md` + `working/common-core/DATA-MODEL.md` |
+| Shared App Data / Social Persistence | `working/detailed-design/functions/F19-SHARED-APP-DATA.md` + `working/detailed-design/data-model/DATA-MODEL-DETAILED.md` |
+| Creator App Commerce | `working/detailed-design/functions/F20-CREATOR-APP-COMMERCE.md` + F08 / F13 / F15 |
 | Capability Discovery / App Evolution | `working/detailed-design/functions/F18-CAPABILITY-DISCOVERY-EVOLUTION.md` + Phase 4+ Evolution Knowledge Store in `working/detailed-design/data-model/DATA-MODEL-DETAILED.md` |
 | Phase 4 Evolution UI / UX | `working/detailed-design/UI-UX/PHASE4-CAPABILITY-EVOLUTION.md` |
 | Delivery / Acceptance / Release Gate | `working/common-core/DESIGN-TO-DELIVERY.md` |
@@ -300,6 +328,10 @@ User Outcome
 15. Multi-step external workflow 必須有 timeout / retry / idempotency / compensation policy。
 16. 日期不自動解鎖功能；Evidence Gate 才解鎖。
 17. 所有新 Function 必須證明不破壞 Intent → Blueprint → Runtime 核心。
+18. F19 Shared Durable Data 與 F09 Realtime 是不同能力：跨時間共用資料不要求 live room。
+19. F20 的 FREE / PAID App price 與 F13 Creator Plan 是兩個獨立軸，不得綁死。
+20. Purchase 不得轉移 Parent ownership；Root attribution 與 bounded Direct Parent royalty 不得改寫 immutable lineage。
+21. F19 / F20 雖已納入 Working SSOT，仍不得繞過 Human-approved Build Freeze。
 
 ---
 
