@@ -2,9 +2,9 @@
 
 > `working/` = appf2 唯一可修改的 Product Design Current Truth。
 >
-> 狀態：**STRUCTURE_READY / CONTENT_REVIEW_COMPLETE / FINAL_AUDIT_COMPLETE / HUMAN_APPROVAL_PENDING**
+> 狀態：**PFR-2026 ACTIVE / WORKING CURRENT TRUTH**
 >
-> 2026-09-26 已完成 STEP 2 Working Content Quality Review 與 Final Audit。Final Audit 已完成 Cross-file Consistency、Acceptance Mapping、UI/UX Consistency、Registry Integrity 與 Phase 1 Build Freeze Inventory；目前沒有已知 Phase 1 Build Freeze blocker。尚未 Human-approved Build Freeze。
+> 2026-09-26 的 Phase 1 Final Audit / Build Freeze Candidate 內容保留為歷史 pre-freeze snapshot。後續 Build Freeze、Build Spec、Sprint 與 implementation current truth 由 `NFF98/appf2-build` 擁有；目前跨 Phase Product Design 重構以 `working/PHASE-REALIGNMENT-PROGRAM.md` 為進度 owner。
 
 ## Active Cross-Phase Program
 
@@ -84,7 +84,7 @@ appf2 Working
 
 appf2-build 負責 implementation / delivery governance；appf2 不重複維護 Cursor execution rules。
 
-## Final Audit Result — 2026-09-26
+## Historical Final Audit Result — 2026-09-26
 
 Final Audit 結論：**PASS / HUMAN APPROVAL REQUIRED BEFORE BUILD FREEZE**。
 
@@ -103,7 +103,7 @@ Final Audit 修正的 material / structural findings：
 2. Business / Capability appendix 與 Detailed Overview 的 stale canonical references修正。
 3. S06 舊 execution-boundary wording收斂回 Human-approved Build Freeze boundary。
 
-## Phase 1 Build Freeze Candidate Inventory
+## Historical Phase 1 Build Freeze Candidate Inventory
 
 Build Freeze **不是複製全部 Working**。目前 candidate 共 **47 個 source artifacts**：
 
@@ -147,11 +147,11 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 
 ## Current Next Step
 
-只剩 Human Gate：
+依 `PFR-2026 — Product-First Phase Realignment`：
 
-1. User Review Final Audit result。
-2. User 明確批准 **Phase 1 Build Freeze**。
-3. 才把上述 approved Phase 1 truth投影為 `NFF98/appf2-build` 第一個 immutable `BS-*` baseline。
-4. Build Freeze 後才進 Backlog → Sprint → Cursor → Test → Evidence → Release。
+1. `PFR-01 — Development Re-alignment Audit`。
+2. 對齊最新 Working Product Truth 與目前 `appf2-build` 的 `BS-P1-003 / SP-P1-002 / SP-P1-003–008`。
+3. 明確標記 preserve / change / defer。
+4. Human Review 後才決定後續 Build planning / Sprint activation。
 
-> **Final Audit Complete ≠ Build Freeze。沒有 Human approval，不建立 appf2-build baseline。**
+> **本 Design SSOT update 不授權 Cursor implementation。Build execution authority 仍以 `appf2-build` current state 為準。**
