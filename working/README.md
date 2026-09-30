@@ -155,6 +155,8 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 4. `SP-P1-002` 已於 2026-10-01 Human-approved Activation；POI-003 亦已由 Human 以 `False / False` 完成並 RESOLVED。
 5. T001 開始執行後發現 `BF-014`：locked `BS-P1-003` evidence registry regex serialization defect 使 F04-AC-018 無法透過 canonical validator 誠實達成。
 6. Build current state = **HOLD**；`SP-P1-002 = BLOCKED`、`T001 = BLOCKED`；`BS-P1-003` 仍為 active locked baseline。
-7. Next Human Gate = **BF-014 Resolution Path**。Human decision 前不得恢復 Cursor Product implementation。
+7. BF-014 Working fix 已於 appf2-design PR #5 merge；targeted registry audit PASS；Build-side BD-003 已建立並 APPROVED。
+8. Replacement Freeze audit 發現 current Working 對 BS-P1-003 有 11 個 projected output changes，其中僅 F04 / F07 / Evidence Registry 3 個屬 BF-014；其餘 8 個屬 PFR/F19/future compatibility，因此 **不得把 current Working 全量 freeze 成 BS-P1-004**。
+9. Next Human Gate = **BF-014 Scope-safe Replacement Freeze Decision**。決策前 Build 繼續 HOLD、Cursor Product implementation 不得恢復。
 
-> BF-014 resolution 不得透過繞過 canonical validator、parallel evidence path 或 silent contract reinterpretation 來完成。
+> BF-014 resolution 不得透過繞過 canonical validator、parallel evidence path、silent contract reinterpretation，或把未到 PFR-05 Gate 的 Product changes 偷帶進 replacement baseline。

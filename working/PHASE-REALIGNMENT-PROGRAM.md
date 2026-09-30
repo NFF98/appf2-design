@@ -41,13 +41,14 @@
 Program = PFR-2026
 Status = ACTIVE
 Current Step = PFR-02 — Complete SP-P1-002
-Step Status = BLOCKED — BF-014 OPTION A / DESIGN DELTA IN PROGRESS
+Step Status = BLOCKED — BF-014 DESIGN FIX COMPLETE / REPLACEMENT FREEZE SCOPE BLOCKED
 Current Build Execution = HOLD
 SP-P1-002 = BLOCKED
 T001 = BLOCKED
 Active Locked Baseline = BS-P1-003
 Planned Replacement Baseline = BS-P1-004
-Next Human Gate = BF-014 Working Delta Audit + Human Build Freeze
+BD-003 = APPROVED
+Next Human Gate = BF-014 Scope-safe Replacement Freeze Decision
 Cursor Product Implementation = NOT AUTHORIZED WHILE HOLD
 ~~~
 
@@ -96,7 +97,7 @@ Phase 1 不以「所有未來功能都做完」為完成條件；以 Human-appro
 - 舊 `SP-P1-003–SP-P1-008` 不再作為 execution sequence；其 backlog 必須依 Product-first roadmap 重新 move / split / re-sequence。
 - Phase 1 execution sequence改為：
   `SP2 foundation → Playable App → Share + Shared Ranking → Remix + Lineage → Hardening`。
-- `BS-P1-004 — Product Proof Baseline` 只在 PFR-05 建立，前置為 F19 Detailed Design closure + S03/S04/S05 UI/UX Delta Review + required Acceptance/Test/Evidence closure。
+- `BS-P1-004` 已保留給 BF-014 replacement rebaseline；原 Product Proof Baseline 順延為 `BS-P1-005`，仍只在 PFR-05 建立，前置為 F19 Detailed Design closure + S03/S04/S05 UI/UX Delta Review + required Acceptance/Test/Evidence closure。
 
 ### DEFER
 
@@ -135,7 +136,7 @@ Phase 2–Phase 4+ 必須重排，但**不在 Phase 1 尚未產生真實 Evidenc
 PFR-01 audit
 → PFR-02 SP2
 → PFR-03 / 04 design delta
-→ PFR-05 BS-P1-004
+→ PFR-05 BS-P1-005
 → PFR-06 first playable App
    target ≈ 2026-10-07 to 2026-10-10
 
@@ -167,4 +168,5 @@ PFR-2026 只有在以下都成立後才可標為 `COMPLETED`：
 | 2026-10-01 | PFR-02 | Human 批准 SP-P1-002 Activation；Build control state 已切換 ACTIVE，T001 為唯一 Active Task；第一個 Cursor command 仍受 POI-003 hard stop | ACTIVATED |
 | 2026-10-01 | PFR-02 | POI-003 經 Human `False / False` 驗證後解除；T001 開始執行 | EXECUTION STARTED |
 | 2026-10-01 | PFR-02 | T001 發現 BF-014：BS-P1-003 evidence registry regex serialization defect 使 F04-AC-018 無法誠實達成；SP2/T001 fail-closed BLOCKED，Build execution 轉 HOLD，等待 Human resolution | BLOCKED |
-| 2026-10-01 | PFR-02 | Human 同意沿用 Sprint 1 Build Constitution 繼續 BF-014 Option A；Working 修正 9 個 regex serialization defects、固定 registry_digest wire format，planned replacement = BS-P1-004；原 PFR-05 Product Proof Baseline 順延 BS-P1-005 | DESIGN DELTA IN PROGRESS |
+| 2026-10-01 | PFR-02 | Human 同意沿用 Sprint 1 Build Constitution 繼續 BF-014 Option A；Working 修正 9 個 regex serialization defects、固定 registry_digest wire format，planned replacement = BS-P1-004；原 PFR-05 Product Proof Baseline 順延 BS-P1-005 | DESIGN DELTA |
+| 2026-10-01 | PFR-02 | appf2-design PR #5 merge；targeted registry audit PASS；BD-003 merge。Replacement Freeze audit 發現 latest Working 相對 BS-P1-003 有 11 個 projected output changes，其中只有 3 個屬 BF-014、另 8 個屬 PFR/F19/future compatibility，禁止 silent freeze | CURRENT / FREEZE SCOPE BLOCKED |
