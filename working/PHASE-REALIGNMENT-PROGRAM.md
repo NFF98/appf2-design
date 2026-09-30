@@ -40,9 +40,12 @@
 ~~~text
 Program = PFR-2026
 Status = ACTIVE
-Current Step = PFR-01 — Development Re-alignment Audit
+Current Step = PFR-02 — Complete SP-P1-002
+Step Status = PRE-ACTIVATION / HUMAN REVIEW REQUIRED
 Current Build Execution = HOLD
-Cursor Product Implementation = NOT AUTHORIZED BY THIS PROGRAM RECORD
+SP-P1-002 = PLANNED / NOT ACTIVATED
+Next Human Gate = SP-P1-002 Activation Review
+Cursor Product Implementation = NOT AUTHORIZED UNTIL EXPLICIT HUMAN SPRINT ACTIVATION
 ~~~
 
 # 4. Phase 1 Product-First Re-alignment
@@ -50,8 +53,8 @@ Cursor Product Implementation = NOT AUTHORIZED BY THIS PROGRAM RECORD
 | ID | Step | Human meaning | Build / Cursor | Planning estimate | Status |
 |---|---|---|---|---:|---|
 | PFR-00 | Program Registration | 正式建立本重構與 tracker | No implementation | — | **COMPLETED — 2026-09-30** |
-| PFR-01 | Development Re-alignment Audit | 新 Product Spec 對舊 Build Plan；判斷保留 / 修改 / 延後 | Audit only | 0.5–1 day | **NEXT** |
-| PFR-02 | Complete `SP-P1-002 — Validation + Intent Foundation + Evidence Reliability` | 完成 Intent / Validation / Evidence 地基 | **Cursor implementation** | 2–4 days | PENDING |
+| PFR-01 | Development Re-alignment Audit | 新 Product Spec 對舊 Build Plan；判斷保留 / 修改 / 延後 | Audit only | 0.5–1 day | **COMPLETED — 2026-10-01** |
+| PFR-02 | Complete `SP-P1-002 — Validation + Intent Foundation + Evidence Reliability` | 完成 Intent / Validation / Evidence 地基 | **Cursor implementation after Human Activation** | 2–4 days | **CURRENT — PRE-ACTIVATION** |
 | PFR-03 | Complete `F19 — Shared App Data / Social Persistence` Detailed Design | 把 Shared Ranking 設計到可施工 | Design only | 1–2 days | PENDING |
 | PFR-04 | UI/UX Delta Review | 重新檢查 S03 / S04 / S05 的 Shared Data / Remix / Lineage 影響 | Design only | ~1 day | PENDING |
 | PFR-05 | Create `BS-P1-004 — Product Proof Baseline` | 最新 Product Truth Freeze 成新的施工圖 | Build planning / no product code | 0.5–1 day | PENDING |
@@ -74,6 +77,39 @@ Intent
 ~~~
 
 Phase 1 不以「所有未來功能都做完」為完成條件；以 Human-approved Product Proof + required hardening + Evidence Gate 為準。
+
+# 4A. PFR-01 Approved Re-alignment Decision
+
+2026-10-01 Human Review 已批准 PFR-01 Audit。以下為後續 planning / Build authority 必須沿用的正式結論：
+
+### PRESERVE
+
+- `SP-P1-001` 已完成 implementation 全部保留；Capability Registry / Admission / Coverage、Canonical Blueprint Identity、Anonymous Identity、Evidence ingestion / batching / retry 不因新 Product direction 重做。
+- `SP-P1-002 T001–T009` 保留；其 F01 / F02 / F04 / F07 foundation 未被 F19 / F20 推翻。
+- `BS-P1-003` 仍足夠作為 `SP-P1-002` implementation authority；**PFR-02 前不需要 rebaseline**。
+
+### CHANGE
+
+- 舊 `SP-P1-003–SP-P1-008` 不再作為 execution sequence；其 backlog 必須依 Product-first roadmap 重新 move / split / re-sequence。
+- Phase 1 execution sequence改為：
+  `SP2 foundation → Playable App → Share + Shared Ranking → Remix + Lineage → Hardening`。
+- `BS-P1-004 — Product Proof Baseline` 只在 PFR-05 建立，前置為 F19 Detailed Design closure + S03/S04/S05 UI/UX Delta Review + required Acceptance/Test/Evidence closure。
+
+### DEFER
+
+- Full Result Correction、deeper Recovery、full Accessibility、advanced hardening、final cross-function metrics 延後到 `SP-P1-006+`，但前序 Product Proof 仍需 minimum safe failure / truthful timeout / bounded recovery。
+- F09 Realtime 保持 evidence-gated。
+- F08 durable account ownership 保持 Phase 2。
+- F13 full entitlement / metering、F20 Creator Commerce、F15 settlement 保持 Phase 3。
+
+### NEW / BOUNDARY
+
+- F19 Shared App Data 為 Phase 1 Product Proof extension；第一個 implementation proof優先 Shared Ranking，不要求一次做完所有 Shared Data capability。
+- Remix child必須有 fresh Shared Data Scope，不得自動讀寫 Parent shared data。
+- Phase 1 先證明 child creation + creator attribution + Direct Parent lineage + Root provenance；**durable account ownership仍由 F08 承接**。
+- F19 Phase 1 resource-limit contract不得依賴完整 Phase 3 F13 billing/entitlement system；完整 Creator Plan / commercial metering仍 deferred。
+
+> 本段是 PFR-01 Human-approved planning truth；不直接授權任何 Cursor implementation。
 
 # 5. Phase 2–Phase 4+ Replanning
 
@@ -123,3 +159,5 @@ PFR-2026 只有在以下都成立後才可標為 `COMPLETED`：
 | Date | Step | Update | Result |
 |---|---|---|---|
 | 2026-09-30 | PFR-00 | 建立 Product-First Phase Realignment program + canonical progress tracker | COMPLETED |
+| 2026-10-01 | PFR-01 | 完成 Design → Build impact audit；Human 批准 PRESERVE / CHANGE / DEFER / NEW 與 Product-first Phase 1 重排 | COMPLETED |
+| 2026-10-01 | PFR-02 | 進入 SP-P1-002；沿用 BS-P1-003，不 rebaseline；Build 維持 HOLD，等待獨立 SP-P1-002 Activation Review | CURRENT / PRE-ACTIVATION |
