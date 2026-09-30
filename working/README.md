@@ -152,7 +152,7 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 1. `PFR-01 — Development Re-alignment Audit` 已於 2026-10-01 Human-approved 並完成。
 2. Current Step = `PFR-02 — Complete SP-P1-002`。
 3. Audit 決策：SP1 preserve；SP2 沿用 `BS-P1-003`、不 rebaseline；舊 SP3–SP8 execution sequence 由 Product-first roadmap 取代。
-4. `SP-P1-002` 目前仍為 **PLANNED / NOT ACTIVATED**；下一個 Human Gate = **SP-P1-002 Activation Review**。
-5. 未取得明確 Sprint Activation 前，Build 維持 HOLD、不得發 Cursor product implementation command。
+4. `SP-P1-002` 已於 2026-10-01 Human-approved Activation；Build current state = **ACTIVE**，`BS-P1-003` 為 active baseline，`T001` 為唯一 Active Task。
+5. PFR-02 現在進入 implementation execution；但在第一個 Cursor implementation command 前，仍有一個 manual hard stop：`POI-003` dead patch disposition confirmation。
 
-> 第一個 SP2 Cursor implementation command 前，仍必須重新確認 PC B 的 dead patch 已刪除或安全移出 project execution path。
+> **不要先發 Cursor command。** 必須先由 Human 確認 PC B 的 `T002-candidate.patch` 與 `T002-full-candidate.patch` 已刪除或安全移出 project execution path。
