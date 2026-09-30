@@ -1,5 +1,5 @@
 {
-  "registry_version": "2.0.0",
+  "registry_version": "2.0.1",
   "phase_1_freeze_audit": {
     "status": "PASS",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
@@ -8,8 +8,8 @@
       "PHASE_2_PLUS",
       "DEFERRED_CONTENT"
     ],
-    "audited_on": "2026-09-28",
-    "change_ref": "BF-007"
+    "audited_on": "2026-10-01",
+    "change_ref": "BF-014"
   },
   "owner": "working/detailed-design/registries/evidence-event-registry.json",
   "source_of_truth": "Fxx event contracts + F07 evidence policy",
@@ -2898,11 +2898,11 @@
       "type": "string",
       "minLength": 3,
       "maxLength": 256,
-      "pattern": "^[a-z0-9]+(?:\\\\.[a-z0-9]+)+$"
+      "pattern": "^[a-z0-9]+(?:\\.[a-z0-9]+)+$"
     },
     "capability_version": {
       "type": "string",
-      "pattern": "^(0|[1-9]\\\\d*)\\\\.(0|[1-9]\\\\d*)\\\\.(0|[1-9]\\\\d*)(?:-[0-9A-Za-z-]+(?:\\\\.[0-9A-Za-z-]+)*)?(?:\\\\+[0-9A-Za-z-]+(?:\\\\.[0-9A-Za-z-]+)*)?$"
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
     },
     "checkpoint_id": {
       "type": "string",
@@ -2971,7 +2971,7 @@
       "type": "string",
       "minLength": 3,
       "maxLength": 64,
-      "pattern": "^(?:F\\\\d{2}-ERR-\\\\d{3}|[A-Z][A-Z0-9_-]{2,63})$",
+      "pattern": "^(?:F\\d{2}-ERR-\\d{3}|[A-Z][A-Z0-9_-]{2,63})$",
       "x-semantic-rule": "must be a canonical source Function error ID or registered shared API error ID"
     },
     "instance_epoch": {
@@ -3089,7 +3089,7 @@
     },
     "policy_id": {
       "type": "string",
-      "pattern": "^F12-POL-\\\\d{3}$"
+      "pattern": "^F12-POL-\\d{3}$"
     },
     "policy_version": {
       "type": "string",
@@ -3139,7 +3139,7 @@
     },
     "registry_version": {
       "type": "string",
-      "pattern": "^(0|[1-9]\\\\d*)\\\\.(0|[1-9]\\\\d*)\\\\.(0|[1-9]\\\\d*)(?:-[0-9A-Za-z-]+(?:\\\\.[0-9A-Za-z-]+)*)?(?:\\\\+[0-9A-Za-z-]+(?:\\\\.[0-9A-Za-z-]+)*)?$"
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
     },
     "relation_type": {
       "type": "string",
@@ -3161,7 +3161,7 @@
     },
     "runtime_version": {
       "type": "string",
-      "pattern": "^(0|[1-9]\\\\d*)\\\\.(0|[1-9]\\\\d*)\\\\.(0|[1-9]\\\\d*)(?:-[0-9A-Za-z-]+(?:\\\\.[0-9A-Za-z-]+)*)?(?:\\\\+[0-9A-Za-z-]+(?:\\\\.[0-9A-Za-z-]+)*)?$"
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
     },
     "safe_surface": {
       "type": "string",
@@ -3177,7 +3177,7 @@
     },
     "schema_version": {
       "type": "string",
-      "pattern": "^(0|[1-9]\\\\d*)\\\\.(0|[1-9]\\\\d*)\\\\.(0|[1-9]\\\\d*)(?:-[0-9A-Za-z-]+(?:\\\\.[0-9A-Za-z-]+)*)?(?:\\\\+[0-9A-Za-z-]+(?:\\\\.[0-9A-Za-z-]+)*)?$"
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
     },
     "severity": {
       "type": "string",
@@ -3212,11 +3212,11 @@
     },
     "source_error_code": {
       "type": "string",
-      "pattern": "^F\\\\d{2}-ERR-\\\\d{3}$"
+      "pattern": "^F\\d{2}-ERR-\\d{3}$"
     },
     "source_function_id": {
       "type": "string",
-      "pattern": "^F\\\\d{2}$"
+      "pattern": "^F\\d{2}$"
     },
     "surface": {
       "type": "string",
