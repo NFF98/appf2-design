@@ -312,6 +312,7 @@ Rules：
 4. Optional field 缺失與 explicit null 不等價；Phase 1 machine contract原則上不用 null。
 5. Unknown prop / binding / action arg / event payload field → F02 reject。
 6. Capability-specific cross-field relation可以用 canonical named invariant，但 invariant ID + semantics 必須在本 Working 固定，implementation 不得自創。
+7. `capability_state` 是 Runtime-local schema，不是 Blueprint app state；其 RECORD field 可明確標 optional，absence 由 F03 internal ABSENT/initialization semantics 處理，不得序列化成 Blueprint null。
 
 # 6. Enum Contracts
 
@@ -557,7 +558,7 @@ layout.container：
 direction: ROW | COLUMN
 gap: bounded spacing token
 align: START | CENTER | END | STRETCH
-children: node refs
+F02 structural children: allowed
 permission: NONE
 shareability: FULL
 ~~~
@@ -572,23 +573,24 @@ content.card：
 ~~~text
 title?: text/binding
 description?: text/binding
-children: node refs
+F02 structural children: allowed
 ~~~
 
 content.list：
 ~~~text
-items: bounded list binding
-item_template: declarative child template
-max_items: platform-bounded
+F02 structural repeat.items: bounded LIST<T>
+F02 structural children: declarative repeated template
+repeat.max_items: platform-bounded
+no bindings.items / bindings.item_template executable alias
 no arbitrary template code
 ~~~
 
 action.button：
 ~~~text
 label
-action_ref
 disabled?: boolean/binding
 event: press
+Blueprint Action reference = F02 Node.events.press only
 permission: USER_GESTURE
 ~~~
 
