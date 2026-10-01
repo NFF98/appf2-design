@@ -14,7 +14,7 @@
 
 | Count | Lost Time / Incident | Total Lost Time |
 |---:|---:|---:|
-| 15 | mixed | **>960 min / >16 hr** |
+| 16 | mixed | **>1005 min / >16.75 hr** |
 
 ---
 
@@ -37,6 +37,7 @@
 | SHAME-013 | 2026-09-28 | 第二次角色分工失守：把 Evidence normalization 錯交給 Cursor | User 已批准進入 Evidence normalization + T006 closure audit 後，ChatGPT 又產生一整份 Cursor 指令，要求 Cursor 建立 BS-P1-003 Evidence、綁 completion_evidence、把 T006 推到 REVIEW。這與既定分工直接衝突：Evidence normalization、post-merge evidence binding、closure audit 與 closure 判定應由 ChatGPT 負責，Cursor 只提供 implementation / tests / raw execution result。 | 固定流程：Cursor implementation + tests + raw result → Human merge approval → ChatGPT Evidence normalization → ChatGPT independent closure audit → Human Gate（如需要）→ Task closure。看到 Evidence normalization / post-merge evidence binding / closure audit / closure anomaly adjudication 時，owner 預設必須是 ChatGPT，不得再次塞給 Cursor。 | 45 min | OPEN / REPEATED ROLE BOUNDARY VIOLATION |
 | SHAME-014 | 2026-09-29 | SP-P1-002 Planning / 新 Chat 交接漏掉 User 明確保留的跨 Sprint open items | 在 SP-P1-002 cold-read 與 Task decomposition 時，只讀 Build Spec / Sprint / Backlog current truth，沒有先把 User 先前明確要求保留的 project-level事項（官方語言規則、governance text drift cleanup、跨 repo open PR、T002 dead local patch、new-chat handoff/open-item continuity、Registry 必須誠實判斷真實支援度）做 canonical carry-forward audit。結果又要 User 自己保存並重新貼回，且我還自行發明模糊的 G0，而沒有先核對這些真正待辦。 | 建立「GitHub canonical open-items ledger + mandatory handoff carry-forward + pre-activation audit」：每次新 Chat 不靠聊天記憶，先讀 current control truth、未結 Findings、open PR inventory、project open-items ledger；HOLD/PLANNED 階段逐項分類 BLOCKER / NON_BLOCKING / MANUAL / RESOLVED，未處理的 blocking item 不得進 Sprint Activation。Handoff 只攜帶 current truth + unresolved items + next gate，不重讀整個歷史。 | 45 min | OPEN / HANDOFF GOVERNANCE FAILURE |
 | SHAME-015 | 2026-09-29 | Open PR Audit 漏報：把 7 個 open PR 錯說成只剩 2 個 | 在 User 明確提醒曾有 4+ 個 Open PR、且部分 PR 不得在 Sprint close 前處理的前提下，ChatGPT 仍先依賴不完整的 GitHub PR search 結果，沒有用 canonical open-pulls collection 做全量盤點，就斷言 appf2-build 只剩 PR #10/#11。實際完整清單為 7 個 Open PR：#1/#2/#3/#4/#10/#11/#94。錯誤原因是把搜尋工具的 partial result 當成 repository complete truth，違反 GitHub Current Truth first 與「不得在未驗證完整集合前下結論」的規則。 | Open PR audit 必須使用完整 `pulls?state=open&per_page=100`（必要時分頁）作 authoritative inventory；search 只能做定位，不能用來宣稱總數。任何涉及「全部／只剩／沒有」的 repo-wide 結論，都必須先用完整 collection 驗證。 | 45 min | OPEN / REPOSITORY AUDIT FAILURE |
+| SHAME-016 | 2026-10-01 | BF-014 後仍優先提出窄修 A1/A2/B，沒有先以 Product correctness 為最高原則做 SP2 全面 Contract Re-Audit | BF-014 已證明 SP2 pre-activation review 漏掉可執行語意層級 defect，且 User 已明確要求沿用 Sprint 1 Build Constitution、Product correctness 是最高優先；但 ChatGPT 仍先提出 A1 scope-isolated rebaseline、A2 全量 freeze、B governance interpretation 三個局部修復選項，而沒有第一時間提出真正正確的路徑：先保持 HOLD，對 SP2 T001–T009、F01/F02/F04/F07、Evidence Registry、所有 regex/enum/type/bounds/serialization/hash/version/Acceptance-Test/projection 做 comprehensive re-audit，將同類 defect 一次找完再 rebaseline。這把「盡快解除當前 blocker」放在「先證明整體 Product correctness」之前，屬於優先級錯誤。 | 永久規則：任何 Build blocker 一旦證明可能屬於 class-level / shared-contract defect，不得先推薦 narrow hotfix。預設先執行 Comprehensive Contract Re-Audit：擴大到同一 shared path、同 Sprint remaining Tasks、相關 registries、canonical values、negative cases、serialization/encoding、projection drift；只有 audit 證明 blast radius bounded 後才允許窄修。Product correctness 永遠高於恢復 Cursor 的速度。 | 45 min | OPEN / PRIORITY & AUDIT FAILURE |
 
 ---
 
@@ -58,9 +59,10 @@ SHAME-012   45 min
 SHAME-013   45 min
 SHAME-014   45 min
 SHAME-015   45 min
+SHAME-016   45 min
 -----------------
-TOTAL     >960 min
-          >16 hr
+TOTAL    >1005 min
+         >16.75 hr
 ~~~
 
 ---
@@ -144,10 +146,16 @@ TOTAL     >960 min
    - ChatGPT 即使具備 GitHub write capability，也不得因此接管 Cursor 的施工工作。
    - Evidence normalization、post-merge evidence binding、closure audit、closure anomaly adjudication 不得再交給 Cursor。
 
+16. **Class-level blocker defaults to comprehensive re-audit, not narrow hotfix**
+   - 任何 shared Registry / validator / serialization / contract defect 一旦證明可能影響多個 Task 或 Function，先保持 HOLD。
+   - 必須重新審同 Sprint remaining Tasks、相關 Fxx contracts、registries、canonical valid/invalid examples、regex/enum/type/bounds、encoding/serialization、hash/version representation、Acceptance/Test executable mapping、Design→Build projection drift。
+   - 只有 audit 證明 blast radius bounded 後，才可提出 scope-isolated fix。
+   - **Product correctness > Cursor resume speed。**
+
 ---
 
 ## Current Status
 
-> **15 incidents / >960 minutes lost / >16 hr.**
+> **16 incidents / >1005 minutes lost / >16.75 hr.**
 
 本表為 Working Project Management 紀錄，不屬 Formal Spec。
