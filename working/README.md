@@ -150,19 +150,14 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 依 `PFR-2026 — Product-First Phase Realignment`：
 
 1. `BS-P1-004` 已 LOCKED；Build Freeze merge commit = `3ef227f0a85d687788077648a2df6eb3c3c4a740`。
-2. SP2 Rebind + Activation Review 已由 Build PR #114 完成並 merge；review merge commit = `bc874a8bb5e400f49f12d844bf756cacc0c0e700`。
-3. Review required checks全部 PASS；Governance Attack Dry-run = `81 / 81` expected outcomes observed。
-4. BF-024（derived freeze provenance）與 BF-025（completed Acceptance revalidation）= **RESOLVED**。
-5. BF-023 = **OPEN implementation bug**，已綁定下一次 T001 execution plan；它不再是 Product/contract ambiguity。
-6. Rebind 必須依既有 precedent 與 Human Activation **atomic 落地**，不得在 HOLD 期間先做半套 canonical rebind。
-7. Human Activation 時將一次完成：
-   - CURRENT `BS-P1-003 → BS-P1-004`
-   - 38 個 unfinished backlog rebind `BS-P1-004`
-   - 保留 5 個 DONE 歷史；`BL-P1-032 / F07-AC-008` 由 SP2/T001 revalidate
-   - SP-P1-002 → ACTIVE
-   - T001 → IN_PROGRESS；其他 Tasks 保持 PLANNED
-   - 建立 append-only `build-spec/activations/BS-P1-004.json`
-8. Build execution 現在仍是 **HOLD**，Cursor Product implementation 仍禁止。
-9. Next Human Gate = **BS-P1-004 / SP-P1-002 Activation Approval**。
+2. SP2 Rebind + Activation Review 已 PASS；review merge commit = `bc874a8bb5e400f49f12d844bf756cacc0c0e700`。
+3. Human 已批准 `BS-P1-004 / SP-P1-002 Activation`；Activation merge commit = `24d37a43be8b79bafceaf96c45c60d2599e5bcb8`。
+4. Current active baseline = `BS-P1-004`；`implementation_enabled=true`。
+5. `SP-P1-002 = ACTIVE`；`T001 = IN_PROGRESS`；T002–T009 = PLANNED。
+6. 38 個 unfinished backlog 已 atomic rebind 至 `BS-P1-004`；5 個 DONE 歷史保留原 baseline provenance。
+7. `BL-P1-032 / F07-AC-008` revalidation = IN_PROGRESS under T001。
+8. BF-023 = **OPEN implementation bug**，屬 T001 active scope；BF-024 / BF-025 = RESOLVED。
+9. Cursor Product implementation 現在只授權 **T001 active scope**；不得啟動 T002+ 或任何 SP-P1-003+ work。
+10. Next Step = **T001 Cursor Execution**。
 
-> Rebind Review PASS ≠ Activation。只有取得 Human Activation approval 並讓 atomic control transition 通過 repo gates 後，才能恢復 Cursor。
+> Activation 已完成；下一步可以發出第一個 Cursor command，但必須嚴格依 T001 scope、BS-P1-004、BF-023 與 F07-AC-008 revalidation 執行。
