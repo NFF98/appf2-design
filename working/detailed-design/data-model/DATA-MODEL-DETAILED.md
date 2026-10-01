@@ -445,9 +445,10 @@ Canonical rules：
 2. 不得保存 free-form content、raw properties dump、raw Prompt / Result / Runtime state。
 3. aggregate key / dimensions 必須是 F07 明確 allowlist；Phase 1 最低支援 event count 與 Evidence pipeline quality counters/rates。
 4. rate = `numerator_count / denominator_count`；denominator 為 0 時不得假造 percentage。
-5. materialization 必須 idempotent；相同 `bucket_date + metric_key + approved dimensions + policy_version` 重跑不得 double count。
-6. raw row deletion前必須先 materialize / verify 對應 aggregate watermark；aggregate failure 時 fail closed，不刪除尚未安全聚合的 eligible raw rows。
-7. 本表是 F07 retention/evidence quality owner；不得藉此提前定義 BL-P1-034 final cross-function Product metric semantics。
+5. logical unique key = `bucket_date + metric_key + normalized(function_id?) + normalized(event_type?) + normalized(collection_class?) + policy_version`；nullable dimension 必須用 DB-level deterministic normalization / unique index表達，不能靠 application best effort。
+6. materialization 必須 idempotent；相同 logical unique key 重跑以 deterministic upsert / recompute 寫入，不得累加造成 double count。
+7. raw row deletion前必須先 materialize / verify 對應 aggregate watermark；aggregate failure 時 fail closed，不刪除尚未安全聚合的 eligible raw rows。
+8. 本表是 F07 retention/evidence quality owner；不得藉此提前定義 BL-P1-034 final cross-function Product metric semantics。
 
 ---
 
