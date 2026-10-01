@@ -150,13 +150,12 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 依 `PFR-2026 — Product-First Phase Realignment`：
 
 1. Current Step = `PFR-02 — Complete SP-P1-002`。
-2. BF-014 觸發 **A0 — SP2 Comprehensive Contract Re-Audit + Clean Rebaseline**；不採 narrow hotfix。
-3. A0 first-pass 已完成並寫入 Build PR #110：BF-014～BF-023 為目前 open Finding set。
-4. `T001 / T002 / T006 / T008 = BLOCKED`；其餘 Task 不得因仍為 PLANNED 而繞過 Build HOLD。
-5. Build current state = **HOLD**；active locked baseline 仍為 `BS-P1-003`；`BS-P1-004` 尚未建立。
-6. Design PR #6 已修正 canonical Capability ID grammar；其餘 contract findings等待 Human resolution。
-7. Next Human Gate = **A0 Contract Resolution Decisions**。
+2. A0 first-pass 已找出 BF-014～BF-023；Human 已批准 BF-016～BF-023 resolution direction。
+3. A0 Phase 2 remediation 已進 Working；Evidence Registry = `3.0.0`。
+4. 第二輪 executable machine audit = **PASS**：35/35 SP2 Acceptance/Test mapping、0 reserved envelope collision、UUID v4 boundary、Capability ID grammar均通過。
+5. Scope-clean Freeze Source = `91894ae8bd6241bb5ee1897180db72e9e578d1bf`；由 BS-P1-003 source commit 派生，只包含 11 個 approved BF-014～BF-023 remediation paths，不含 F18/F19/F20 / Phase 4 / future Product work。
+6. Build current state = **HOLD**；active locked baseline 仍為 `BS-P1-003`；`BS-P1-004` **尚未建立**。
+7. Next Human Gate = **BS-P1-004 Build Freeze Approval**。
+8. 在 Human Freeze Approval + replacement baseline verification + SP2 rebind/activation 前，Cursor Product implementation 仍禁止。
 
-> 在 blocking Findings resolved、第二輪 cross-contract audit PASS、projection scope clean、Human Build Freeze approval 以前，不得建立/啟用 replacement Build Spec，也不得恢復 Cursor Product implementation。
-
-> **A0 原則：Product correctness > Cursor resume speed。**
+> **A0 原則：Product correctness > Cursor resume speed。Freeze Candidate 不是 Build Freeze；只有 Human approval 後才能建立 locked replacement baseline。**
