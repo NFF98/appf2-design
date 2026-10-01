@@ -1373,7 +1373,7 @@ Registry update：
 
 # 30. Open Decisions
 
-BF-030 / BF-031 remediation branch 尚待 Human 對本次 exact machine contract 做 review / approval；在 replacement Build Freeze 完成前，T002 必須保持 BLOCKED。
+BF-030 / BF-031 exact machine contract 已於 2026-10-02 取得 Human resolution approval 並合併至 Working；在 replacement Build Freeze、T002 rebind 與 Activation 完成前，T002 必須保持 BLOCKED。
 
 已閉合：
 
