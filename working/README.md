@@ -149,14 +149,14 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 
 依 `PFR-2026 — Product-First Phase Realignment`：
 
-1. `PFR-01 — Development Re-alignment Audit` 已於 2026-10-01 Human-approved 並完成。
-2. Current Step = `PFR-02 — Complete SP-P1-002`。
-3. Audit 決策：SP1 preserve；SP2 沿用 `BS-P1-003`、不 rebaseline；舊 SP3–SP8 execution sequence 由 Product-first roadmap 取代。
-4. `SP-P1-002` 已於 2026-10-01 Human-approved Activation；POI-003 亦已由 Human 以 `False / False` 完成並 RESOLVED。
-5. T001 開始執行後發現 `BF-014`：locked `BS-P1-003` evidence registry regex serialization defect 使 F04-AC-018 無法透過 canonical validator 誠實達成。
-6. Build current state = **HOLD**；`SP-P1-002 = BLOCKED`、`T001 = BLOCKED`；`BS-P1-003` 仍為 active locked baseline。
-7. BF-014 Working fix 已於 appf2-design PR #5 merge；targeted registry audit PASS；Build-side BD-003 已建立並 APPROVED。
-8. Replacement Freeze audit 發現 current Working 對 BS-P1-003 有 11 個 projected output changes，其中僅 F04 / F07 / Evidence Registry 3 個屬 BF-014；其餘 8 個屬 PFR/F19/future compatibility，因此 **不得把 current Working 全量 freeze 成 BS-P1-004**。
-9. Next Human Gate = **BF-014 Scope-safe Replacement Freeze Decision**。決策前 Build 繼續 HOLD、Cursor Product implementation 不得恢復。
+1. Current Step = `PFR-02 — Complete SP-P1-002`。
+2. BF-014 觸發 **A0 — SP2 Comprehensive Contract Re-Audit + Clean Rebaseline**；不採 narrow hotfix。
+3. A0 first-pass 已完成並寫入 Build PR #110：BF-014～BF-023 為目前 open Finding set。
+4. `T001 / T002 / T006 / T008 = BLOCKED`；其餘 Task 不得因仍為 PLANNED 而繞過 Build HOLD。
+5. Build current state = **HOLD**；active locked baseline 仍為 `BS-P1-003`；`BS-P1-004` 尚未建立。
+6. Design PR #6 已修正 canonical Capability ID grammar；其餘 contract findings等待 Human resolution。
+7. Next Human Gate = **A0 Contract Resolution Decisions**。
 
-> BF-014 resolution 不得透過繞過 canonical validator、parallel evidence path、silent contract reinterpretation，或把未到 PFR-05 Gate 的 Product changes 偷帶進 replacement baseline。
+> 在 blocking Findings resolved、第二輪 cross-contract audit PASS、projection scope clean、Human Build Freeze approval 以前，不得建立/啟用 replacement Build Spec，也不得恢復 Cursor Product implementation。
+
+> **A0 原則：Product correctness > Cursor resume speed。**
