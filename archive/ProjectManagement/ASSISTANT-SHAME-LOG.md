@@ -38,6 +38,7 @@
 | SHAME-014 | 2026-09-29 | SP-P1-002 Planning / 新 Chat 交接漏掉 User 明確保留的跨 Sprint open items | 在 SP-P1-002 cold-read 與 Task decomposition 時，只讀 Build Spec / Sprint / Backlog current truth，沒有先把 User 先前明確要求保留的 project-level事項（官方語言規則、governance text drift cleanup、跨 repo open PR、T002 dead local patch、new-chat handoff/open-item continuity、Registry 必須誠實判斷真實支援度）做 canonical carry-forward audit。結果又要 User 自己保存並重新貼回，且我還自行發明模糊的 G0，而沒有先核對這些真正待辦。 | 建立「GitHub canonical open-items ledger + mandatory handoff carry-forward + pre-activation audit」：每次新 Chat 不靠聊天記憶，先讀 current control truth、未結 Findings、open PR inventory、project open-items ledger；HOLD/PLANNED 階段逐項分類 BLOCKER / NON_BLOCKING / MANUAL / RESOLVED，未處理的 blocking item 不得進 Sprint Activation。Handoff 只攜帶 current truth + unresolved items + next gate，不重讀整個歷史。 | 45 min | OPEN / HANDOFF GOVERNANCE FAILURE |
 | SHAME-015 | 2026-09-29 | Open PR Audit 漏報：把 7 個 open PR 錯說成只剩 2 個 | 在 User 明確提醒曾有 4+ 個 Open PR、且部分 PR 不得在 Sprint close 前處理的前提下，ChatGPT 仍先依賴不完整的 GitHub PR search 結果，沒有用 canonical open-pulls collection 做全量盤點，就斷言 appf2-build 只剩 PR #10/#11。實際完整清單為 7 個 Open PR：#1/#2/#3/#4/#10/#11/#94。錯誤原因是把搜尋工具的 partial result 當成 repository complete truth，違反 GitHub Current Truth first 與「不得在未驗證完整集合前下結論」的規則。 | Open PR audit 必須使用完整 `pulls?state=open&per_page=100`（必要時分頁）作 authoritative inventory；search 只能做定位，不能用來宣稱總數。任何涉及「全部／只剩／沒有」的 repo-wide 結論，都必須先用完整 collection 驗證。 | 45 min | OPEN / REPOSITORY AUDIT FAILURE |
 | SHAME-016 | 2026-10-01 | BF-014 後仍優先提出窄修 A1/A2/B，沒有先以 Product correctness 為最高原則做 SP2 全面 Contract Re-Audit | BF-014 已證明 SP2 pre-activation review 漏掉可執行語意層級 defect，且 User 已明確要求沿用 Sprint 1 Build Constitution、Product correctness 是最高優先；但 ChatGPT 仍先提出 A1 scope-isolated rebaseline、A2 全量 freeze、B governance interpretation 三個局部修復選項，而沒有第一時間提出真正正確的路徑：先保持 HOLD，對 SP2 T001–T009、F01/F02/F04/F07、Evidence Registry、所有 regex/enum/type/bounds/serialization/hash/version/Acceptance-Test/projection 做 comprehensive re-audit，將同類 defect 一次找完再 rebaseline。這把「盡快解除當前 blocker」放在「先證明整體 Product correctness」之前，屬於優先級錯誤。 | 永久規則：任何 Build blocker 一旦證明可能屬於 class-level / shared-contract defect，不得先推薦 narrow hotfix。預設先執行 Comprehensive Contract Re-Audit：擴大到同一 shared path、同 Sprint remaining Tasks、相關 registries、canonical values、negative cases、serialization/encoding、projection drift；只有 audit 證明 blast radius bounded 後才允許窄修。Product correctness 永遠高於恢復 Cursor 的速度。 | 45 min | OPEN / PRIORITY & AUDIT FAILURE |
+| SHAME-017 | 2026-10-01 | BF-026 / BF-027 過早 closure：用 indirect green 取代 direct proof，且未做 next-T001 future-diff dry-run | BF-026 remediation 只擴大 T001 write scope，沒有以真正下一個 T001 fixture diff 執行 CI-mode `validate-test-integrity`，因此漏掉 Test ownership gate 仍會阻擋 7 個既有 Test IDs；BF-027 remediation 則把 HOLD / control-only 的綠色 CI 誤當成 `npm run check:lint` 已 PASS，但實際 `product:ci` 在 HOLD 直接 exit 0、reactivation control-only 也 skip，導致 2 個 lint errors 被錯誤帶過並提前宣告 RESOLVED。這不是新 defect 無限冒出，而是 closure audit 本身不完整。 | 永久規則：任何 blocker 在標記 RESOLVED 前，必須直接執行它聲稱修復的 command / gate，不能用間接 CI 綠燈推論；若 remediation 會影響下一個 implementation，還必須用預期的 next-task diff 做 CI-mode future-diff dry-run，證明 scope / integrity / ownership / lint / test gates 全部可通過。對 shared governance defect，closure 前再做同 class audit，避免只修 symptom。 | 45 min | OPEN / PREMATURE CLOSURE & VERIFICATION FAILURE |
 
 ---
 
@@ -60,9 +61,10 @@ SHAME-013   45 min
 SHAME-014   45 min
 SHAME-015   45 min
 SHAME-016   45 min
+SHAME-017   45 min
 -----------------
-TOTAL    >1005 min
-         >16.75 hr
+TOTAL    >1050 min
+         >17.50 hr
 ~~~
 
 ---
@@ -152,10 +154,15 @@ TOTAL    >1005 min
    - 只有 audit 證明 blast radius bounded 後，才可提出 scope-isolated fix。
    - **Product correctness > Cursor resume speed。**
 
+17. **Blocker closure requires direct proof + future-diff dry-run**
+   - 在 Finding / blocker 標記 RESOLVED 前，必須直接執行該 blocker 聲稱修復的 command / gate；不得用 HOLD、control-only、skip path 或其他 indirect green 代替。
+   - 若 remediation 目的是讓下一個 implementation 可執行，closure 前必須以預期的 next-task changed files / Test IDs / scope 做 CI-mode future-diff dry-run，確認 change-scope、test-integrity、lint、required commands 與 ownership gate 全部可通過。
+   - 對 shared governance / validator 類 defect，必須再做同 class audit，確認沒有相鄰同型漏洞後才可 closure。
+
 ---
 
 ## Current Status
 
-> **16 incidents / >1005 minutes lost / >16.75 hr.**
+> **17 incidents / >1050 minutes lost / >17.50 hr.**
 
 本表為 Working Project Management 紀錄，不屬 Formal Spec。
