@@ -776,10 +776,12 @@ Unknown key inside a Value Source → V02 schema reject。
 
 - null / undefined forbidden。
 - scalar = finite number / string / boolean。
-- bounded array / object literal is allowed **only when static typing can prove a concrete TypeDescriptor** from the receiving contract or from all contained values。
-- empty array/object without an expected TypeDescriptor is ambiguous → reject。
-- LIST literal items must unify to one compatible TypeDescriptor。
-- RECORD literal keys are exact declared keys under the receiving TypeDescriptor；no extra key。
+- array / object literal is allowed **only when the receiving context supplies an explicit expected TypeDescriptor**。
+- receiving context = Capability prop/binding/action arg、SET_STATE target、operator arg signature、或其他已經有 canonical expected type 的位置。
+- 沒有 expected TypeDescriptor 的 composite literal（包含 non-empty / empty array/object）一律 reject；Validator 不得從 object shape 自創新的 RECORD contract。
+- LIST literal 每個 item 必須符合 expected item descriptor。
+- RECORD literal keys 必須與 expected declared fields exact match；no extra / missing key。
+- scalar literal 在沒有 expected enum domain 時只推得 NUMBER / STRING / BOOLEAN；只有 expected ENUM descriptor 可把 exact scalar value視為該 ENUM member。
 - no executable string interpretation；string 永遠只是 data。
 
 Static type inference owner：
