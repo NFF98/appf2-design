@@ -14,7 +14,7 @@
 
 | Count | Lost Time / Incident | Total Lost Time |
 |---:|---:|---:|
-| 16 | mixed | **>1005 min / >16.75 hr** |
+| 18 | mixed | **>1095 min / >18.25 hr** |
 
 ---
 
@@ -39,6 +39,7 @@
 | SHAME-015 | 2026-09-29 | Open PR Audit 漏報：把 7 個 open PR 錯說成只剩 2 個 | 在 User 明確提醒曾有 4+ 個 Open PR、且部分 PR 不得在 Sprint close 前處理的前提下，ChatGPT 仍先依賴不完整的 GitHub PR search 結果，沒有用 canonical open-pulls collection 做全量盤點，就斷言 appf2-build 只剩 PR #10/#11。實際完整清單為 7 個 Open PR：#1/#2/#3/#4/#10/#11/#94。錯誤原因是把搜尋工具的 partial result 當成 repository complete truth，違反 GitHub Current Truth first 與「不得在未驗證完整集合前下結論」的規則。 | Open PR audit 必須使用完整 `pulls?state=open&per_page=100`（必要時分頁）作 authoritative inventory；search 只能做定位，不能用來宣稱總數。任何涉及「全部／只剩／沒有」的 repo-wide 結論，都必須先用完整 collection 驗證。 | 45 min | OPEN / REPOSITORY AUDIT FAILURE |
 | SHAME-016 | 2026-10-01 | BF-014 後仍優先提出窄修 A1/A2/B，沒有先以 Product correctness 為最高原則做 SP2 全面 Contract Re-Audit | BF-014 已證明 SP2 pre-activation review 漏掉可執行語意層級 defect，且 User 已明確要求沿用 Sprint 1 Build Constitution、Product correctness 是最高優先；但 ChatGPT 仍先提出 A1 scope-isolated rebaseline、A2 全量 freeze、B governance interpretation 三個局部修復選項，而沒有第一時間提出真正正確的路徑：先保持 HOLD，對 SP2 T001–T009、F01/F02/F04/F07、Evidence Registry、所有 regex/enum/type/bounds/serialization/hash/version/Acceptance-Test/projection 做 comprehensive re-audit，將同類 defect 一次找完再 rebaseline。這把「盡快解除當前 blocker」放在「先證明整體 Product correctness」之前，屬於優先級錯誤。 | 永久規則：任何 Build blocker 一旦證明可能屬於 class-level / shared-contract defect，不得先推薦 narrow hotfix。預設先執行 Comprehensive Contract Re-Audit：擴大到同一 shared path、同 Sprint remaining Tasks、相關 registries、canonical values、negative cases、serialization/encoding、projection drift；只有 audit 證明 blast radius bounded 後才允許窄修。Product correctness 永遠高於恢復 Cursor 的速度。 | 45 min | OPEN / PRIORITY & AUDIT FAILURE |
 | SHAME-017 | 2026-10-01 | BF-026 / BF-027 過早 closure：用 indirect green 取代 direct proof，且未做 next-T001 future-diff dry-run | BF-026 remediation 只擴大 T001 write scope，沒有以真正下一個 T001 fixture diff 執行 CI-mode `validate-test-integrity`，因此漏掉 Test ownership gate 仍會阻擋 7 個既有 Test IDs；BF-027 remediation 則把 HOLD / control-only 的綠色 CI 誤當成 `npm run check:lint` 已 PASS，但實際 `product:ci` 在 HOLD 直接 exit 0、reactivation control-only 也 skip，導致 2 個 lint errors 被錯誤帶過並提前宣告 RESOLVED。這不是新 defect 無限冒出，而是 closure audit 本身不完整。 | 永久規則：任何 blocker 在標記 RESOLVED 前，必須直接執行它聲稱修復的 command / gate，不能用間接 CI 綠燈推論；若 remediation 會影響下一個 implementation，還必須用預期的 next-task diff 做 CI-mode future-diff dry-run，證明 scope / integrity / ownership / lint / test gates 全部可通過。對 shared governance defect，closure 前再做同 class audit，避免只修 symptom。 | 45 min | OPEN / PREMATURE CLOSURE & VERIFICATION FAILURE |
+| SHAME-018 | 2026-10-02 | T002 Preflight 重大治理失守：明知 executable schema 未定義，仍默許 Cursor 自行補 Product truth | BS-P1-004 只定義 ENUM/LIST/RECORD 等 state semantics，沒有 freeze exact JSON keys / machine schema；Preflight 本應立即建立 SPEC_AMBIGUITY blocker，卻反而在 Cursor 指令中允許用「fail-closed 結構」自行採用 `constraints.allowed`、`item_type`、`max_length`、`fields` 等未授權 syntax。這等於由 ChatGPT 把未定 Product/Schema 決策下放給 Cursor，直接違反 `product_decision_allowed=false`、Human 決策權與「shared contract defect 先 comprehensive re-audit」規則。 | 永久規則：只要 executable contract 的 exact machine shape、key、type、enum、binding/type relation 或 serialization 未被 canonical truth 明確定義，Preflight 必須先 HARD STOP + SPEC_AMBIGUITY Finding；不得用「合理預設」「fail-closed」「implementation detail」替 Product truth 補空白。且恢復 Cursor 前必須完成同 class schema ambiguity 全面審核，證明相鄰 contract 無同型缺口。 | 45 min | OPEN / CRITICAL PRODUCT-TRUTH GOVERNANCE FAILURE |
 
 ---
 
@@ -62,9 +63,10 @@ SHAME-014   45 min
 SHAME-015   45 min
 SHAME-016   45 min
 SHAME-017   45 min
+SHAME-018   45 min
 -----------------
-TOTAL    >1050 min
-         >17.50 hr
+TOTAL    >1095 min
+         >18.25 hr
 ~~~
 
 ---
@@ -159,10 +161,15 @@ TOTAL    >1050 min
    - 若 remediation 目的是讓下一個 implementation 可執行，closure 前必須以預期的 next-task changed files / Test IDs / scope 做 CI-mode future-diff dry-run，確認 change-scope、test-integrity、lint、required commands 與 ownership gate 全部可通過。
    - 對 shared governance / validator 類 defect，必須再做同 class audit，確認沒有相鄰同型漏洞後才可 closure。
 
+18. **Undefined executable schema = governance blocker, never implementation freedom**
+   - 任何 executable contract 若缺 exact JSON key / machine shape / enum / type relation / serialization，Preflight 必須建立 SPEC_AMBIGUITY Finding 並 HARD STOP。
+   - `product_decision_allowed=false` 時，ChatGPT 與 Cursor 都不得以「合理預設」「fail-closed shape」「implementation detail」補出 Product truth。
+   - 恢復 implementation 前，必須對同一 schema/type/Registry path 做 class-level ambiguity audit，確認相鄰語意也已 canonicalized。
+
 ---
 
 ## Current Status
 
-> **17 incidents / >1050 minutes lost / >17.50 hr.**
+> **18 incidents / >1095 minutes lost / >18.25 hr.**
 
 本表為 Working Project Management 紀錄，不屬 Formal Spec。
