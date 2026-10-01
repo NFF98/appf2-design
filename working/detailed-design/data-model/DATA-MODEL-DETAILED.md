@@ -388,27 +388,27 @@ F08 / F10 若需要 Blueprint family / ownership，可新增 metadata layer，�
 
 | Field | Type | Required | Rule |
 |---|---|---:|---|
-| event_id | uuid | YES | PK |
+| event_id | uuid | YES | PK；canonical UUID v4 |
 | event_type | text | YES | Fxx-EVT-* catalog 定義 |
 | occurred_at | timestamptz | YES | client occurrence time |
-| received_at | timestamptz | YES | server intake time |
-| anonymous_id | uuid | NO | |
-| session_id | text | NO | client session opaque ID |
+| received_at | timestamptz | YES | server intake time；first durable ingest time |
+| anonymous_id | uuid | NO | canonical UUID v4 |
+| session_id | text | NO | canonical UUID v4 string；browser-session evidence context |
 | function_id | text | YES | F00 / F01 / ... |
-| intent_id | uuid | NO | |
-| blueprint_hash | text | NO | |
-| share_id | uuid | NO | |
-| capability_id | text | NO | |
-| error_code | text | NO | |
-| policy_rule_id | text | NO | |
-| trace_id | text | NO | |
-| properties | jsonb | NO | bounded, allowlisted properties |
-| schema_version | text | YES | event schema version |
+| intent_id | uuid | NO | opaque Intent identity |
+| blueprint_hash | text | NO | `sha256:<64 lowercase hex>` |
+| share_id | uuid | NO | canonical UUID v4 |
+| capability_id | text | NO | canonical F04 capability ID grammar |
+| error_code | text | NO | canonical source/shared API error ID |
+| policy_rule_id | text | NO | bounded policy rule ID |
+| trace_id | text | NO | canonical trace ID |
+| properties | jsonb | NO | bounded, allowlisted properties；不得重複 reserved envelope field names |
+| schema_version | text | YES | Evidence event schema version |
 
 規則：
 
 - 不記每次 render / click / timer tick。
-- `properties` 不得成為任意 user-content dump。
+- `properties` 不得成為任意 user-content dump，也不得包含 F07 `reserved_envelope_fields[]`；event-level identity / error / trace 只保存 envelope column 一份。
 - F07 定義 batching、retry、dedupe、event catalog、retention。
 - Function-specific evidence 必須用 stable Event ID / event_type。
 - `occurred_at` 與 `received_at` 是 durable immutable time pair；第一次成功 INSERT 的 `received_at` 是該 event canonical ingest time，duplicate event_id retry不得改寫。
@@ -695,6 +695,10 @@ product_event(anonymous_id, occurred_at)
 product_event(blueprint_hash, occurred_at)
 product_event(event_type, occurred_at)
 product_event(trace_id)
+
+evidence_daily_aggregate(bucket_date, metric_key)
+evidence_daily_aggregate(function_id, bucket_date)
+evidence_daily_aggregate(event_type, bucket_date)
 ~~~
 
 不要 Phase 1 為未證明 access pattern 建大量 indexes。
