@@ -277,6 +277,420 @@ Rules：
 - LIST 有 item type + max length
 - RECORD 有 declared fields，禁止 unbounded arbitrary object
 
+### 8.1.1 Canonical Phase 1 Mutable-State Machine Shape
+
+> **BF-030 remediation：以下 machine shape 是 executable Product truth。Implementation 不得改 key、增加 alias、接受第二種 shape，或用「fail-closed implementation detail」補未定語意。**
+
+Mutable state entry 只允許：
+
+~~~text
+mode = MUTABLE
+type = NUMBER | STRING | BOOLEAN | ENUM | LIST | RECORD
+initial = value matching the declared type
+constraints = type-specific object only when defined below
+~~~
+
+Type-specific canonical shape：
+
+**NUMBER**
+
+~~~json
+{
+  "mode":"MUTABLE",
+  "type":"NUMBER",
+  "initial":400,
+  "constraints":{"min":0,"max":1000000}
+}
+~~~
+
+- `constraints` optional。
+- allowed constraint keys only：`min?`, `max?`。
+- min/max 必須 finite；兩者同時存在時 `min <= max`。
+- initial 必須 finite 且落在 bounds 內。
+
+**STRING**
+
+~~~json
+{
+  "mode":"MUTABLE",
+  "type":"STRING",
+  "initial":"hello",
+  "constraints":{"max_length":120}
+}
+~~~
+
+- `constraints` required。
+- 唯一 allowed key：`max_length`。
+- `max_length` = integer，`0..8192`。
+- length 以 Unicode code points 計算。
+- initial length 不得超過 max_length。
+
+**BOOLEAN**
+
+~~~json
+{
+  "mode":"MUTABLE",
+  "type":"BOOLEAN",
+  "initial":false
+}
+~~~
+
+- `constraints` forbidden。
+- initial 只能是 JSON boolean。
+
+**ENUM**
+
+~~~json
+{
+  "mode":"MUTABLE",
+  "type":"ENUM",
+  "initial":"SMALL",
+  "constraints":{"allowed":["SMALL","MEDIUM","LARGE"]}
+}
+~~~
+
+- `constraints` required。
+- 唯一 allowed key：`allowed`。
+- `allowed` 必須 non-empty、unique，最多 500 items。
+- item 只能是 JSON string / finite number / boolean。
+- 同一 ENUM 的 allowed items 必須全部同一 primitive type；禁止 heterogeneous enum domain。
+- initial 必須是 allowed 中的 exact value；禁止 string/number coercion。
+
+**LIST**
+
+~~~json
+{
+  "mode":"MUTABLE",
+  "type":"LIST",
+  "initial":[{"name":"A","price":10}],
+  "constraints":{
+    "item":{
+      "type":"RECORD",
+      "constraints":{
+        "fields":{
+          "name":{"type":"STRING","constraints":{"max_length":120}},
+          "price":{"type":"NUMBER","constraints":{"min":0}}
+        }
+      }
+    },
+    "max_length":100
+  }
+}
+~~~
+
+- `constraints` required。
+- exact keys：`item`, `max_length`。
+- `item` 使用下方 TypeDescriptor。
+- `max_length` = integer，`0..500`。
+- initial 必須是 array，length <= max_length，每個 item 必須符合同一 item descriptor。
+
+**RECORD**
+
+~~~json
+{
+  "mode":"MUTABLE",
+  "type":"RECORD",
+  "initial":{"name":"A","price":10},
+  "constraints":{
+    "fields":{
+      "name":{"type":"STRING","constraints":{"max_length":120}},
+      "price":{"type":"NUMBER","constraints":{"min":0}}
+    }
+  }
+}
+~~~
+
+- `constraints` required。
+- 唯一 allowed key：`fields`。
+- `fields` 是 declared field map；field key grammar = `^[a-z][a-z0-9_]{0,63}# F02 — Blueprint Validation / Trust Admission
+
+> **PHASE 1 FREEZE AUDIT：PASS — Phase 1 applicable truth passed Final Audit and is eligible for Human-approved Build Freeze; Phase 2/3+ and deferred content are excluded.**
+
+> 狀態：BUILD_FREEZE_READY / STEP2_REVIEWED
+> Governance：Current Truth = this Working file；Build Freeze / implementation boundary 以 `working/common-core/DESIGN-TO-DELIVERY.md` 為準。
+>
+> Canonical Role：Phase 1 Executable Blueprint + L3 Validation 的 Working Current Truth。
+>
+> 上游：APP-ARCHITECTURE、APP-DETAILED-DESIGN-OVERVIEW、DATA-MODEL、F04-CAPABILITY-REGISTRY、DESIGN-TO-DELIVERY。
+>
+> 下游：F03 Runtime、F01 Blueprint Composer、F05 Restore、F06 Remix、F16 Correction。
+>
+> 本文件回答兩件事：
+> 1. Blueprint Candidate 必須長什麼樣，才能成為 appf2 可執行 App definition。
+> 2. Candidate 必須通過哪些 deterministic validation / trust gates，才准進 Runtime。
+
+# 1. Purpose / User Outcome
+
+User Outcome：
+
+> appf2 產生的 App 不只是 JSON 能 parse，而是所有 state、binding、rule、action、Capability、resource、permission、compatibility 都能被平台安全理解與執行。
+
+Canonical flow：
+
+~~~text
+Resolved Intent
+→ F04 Capability Coverage
+→ F01 Blueprint Candidate
+→ F02 Parse / Validate / Admit
+   ├─ REJECTED
+   ├─ INCOMPATIBLE
+   └─ VALIDATED
+→ immutable canonical Blueprint
+→ content_hash
+→ durable blueprint_content
+→ F03 Runtime
+~~~
+
+核心原則：
+
+> Schema Valid ≠ Semantic Correct，但 Schema / Trust Invalid 一定不能進 Runtime。
+
+# 2. Scope / Non-Scope
+
+Phase 1 定義：
+
+- Blueprint top-level contract
+- stable schema version
+- exact capability reference
+- state model
+- node composition
+- typed Value Source / Binding
+- pure Expression AST
+- Rule contract
+- Action contract
+- Event binding
+- result/output declarations
+- support / degradation metadata
+- canonical JSON serialization
+- content hash
+- deterministic validation pipeline
+- trust admission
+- compatibility
+- resource ceilings
+- security rejection
+- validation report
+- errors / evidence / acceptance
+
+F02 不負責：
+
+- 理解 raw Intent
+- 決定 clarification
+- 發明 Capability
+- React rendering
+- Runtime scheduling
+- User-facing recovery copy
+- semantic correctness 100% 判斷
+- external provider execution
+- arbitrary generated code
+
+# 3. Blueprint Lifecycle
+
+## F02-RQ-001 — Candidate vs Admitted Blueprint
+
+~~~text
+Blueprint Candidate
+= F01 / import / restore 提供、尚未被信任的 JSON
+
+Admitted Blueprint
+= Candidate 通過完整 F02 validation 後的 canonical immutable JSON
+~~~
+
+只有 Admitted Blueprint 才能：
+
+- 產生 canonical content_hash
+- 寫入 blueprint_content
+- 被 F03 正常 Runtime 執行
+- 成為 durable Share / Remix / Correct base
+
+Rejected Candidate body Phase 1 不預設 durable 保存。
+
+# 4. Top-level Executable Blueprint Contract
+
+Phase 1 logical shape：
+
+~~~json
+{
+  "schema_version": "1.0.0",
+  "registry_version": "1.0.0",
+  "kind": "APP",
+  "meta": {
+    "title": "聚餐分帳",
+    "description": "依角色權重計算每人金額"
+  },
+  "support": {
+    "coverage_status": "FULLY_SUPPORTED",
+    "degradations": []
+  },
+  "state": {},
+  "rules": [],
+  "actions": [],
+  "nodes": [],
+  "root_node_id": "node_root",
+  "result": {
+    "outputs": []
+  }
+}
+~~~
+
+Top-level allowed keys：
+
+~~~text
+schema_version
+registry_version
+kind
+meta
+support
+state
+rules
+actions
+nodes
+root_node_id
+result
+~~~
+
+Unknown top-level executable key → reject。
+
+理由：
+
+> 避免 LLM 用多塞欄位偷偷創造 Runtime semantics。
+
+# 5. Version Contract
+
+## F02-RQ-002 — schema_version
+
+Phase 1：
+
+~~~text
+schema_version = 1.0.0
+~~~
+
+規則：
+
+- PATCH：不改 executable meaning
+- MINOR：backward-compatible extension
+- MAJOR：breaking syntax / semantics
+- Runtime / Validator 必須明確聲明支援 range
+- 不允許未知新 version 自動通過
+
+## F02-RQ-003 — registry_version
+
+Blueprint 必須帶產生時使用的 F04 Registry snapshot version。
+
+每個 Node 另外引用 exact：
+
+~~~text
+capability_id
+capability_version
+~~~
+
+Registry version 不取代 capability version。
+
+# 6. Metadata Contract
+
+~~~text
+meta.title
+meta.description?
+~~~
+
+Rules：
+
+- title：1–120 Unicode chars
+- description：0–500 chars
+- metadata 屬於 canonical Blueprint 並參與 hash
+- creator、anonymous_id、created_at、ownership、share_id、prompt/model metadata 不得放進 Blueprint body
+
+# 7. Support / Degradation Contract
+
+~~~text
+support.coverage_status:
+  FULLY_SUPPORTED
+  PARTIALLY_SUPPORTED
+
+support.degradations[]:
+  requirement_id
+  description
+  capability_refs[]
+  preserves_semantic_core = true
+~~~
+
+Phase 1 Admitted Blueprint 不允許 EXTERNAL_OR_HEAVY_REQUIRED / UNSUPPORTED 冒充 local executable Blueprint。
+
+PARTIALLY_SUPPORTED 必須：
+
+1. 每個 material degradation user-visible
+2. preserves_semantic_core = true
+3. 引用合法 Registry Capability
+4. 不可藉 degradation 改掉核心業務結果
+
+F02 驗證結構與引用；是否真的符合原 Intent，仍由 F01 semantic process + F16 evidence 持續驗證。
+
+# 8. State Contract
+
+## F02-RQ-004 — State Key
+
+State key：
+
+~~~text
+^[a-z][a-z0-9_]{0,63}$
+~~~
+
+Reserved prefixes：
+
+~~~text
+nff_
+sys_
+__*
+~~~
+
+User Blueprint 不得使用。
+
+## 8.1 Mutable State
+
+~~~json
+{
+  "budget": {
+    "mode": "MUTABLE",
+    "type": "NUMBER",
+    "initial": 400,
+    "constraints": {
+      "min": 0,
+      "max": 1000000
+    }
+  }
+}
+~~~
+
+Allowed Phase 1 types：
+
+~~~text
+NUMBER
+STRING
+BOOLEAN
+ENUM
+LIST
+RECORD
+~~~
+
+。
+- initial object keys 必須與 declared fields **exactly equal**；missing / extra field 都 reject。
+- arbitrary undeclared object key 永遠 reject。
+
+Canonical reusable `TypeDescriptor`：
+
+~~~text
+TypeDescriptor
+= { type: NUMBER,  constraints?: { min?, max? } }
+| { type: STRING,  constraints:  { max_length } }
+| { type: BOOLEAN }
+| { type: ENUM,    constraints:  { allowed[] } }
+| { type: LIST,    constraints:  { item: TypeDescriptor, max_length } }
+| { type: RECORD,  constraints:  { fields: map<field, TypeDescriptor> } }
+~~~
+
+TypeDescriptor 遞迴 shape 受 canonical Blueprint bytes / total initial state bytes ceiling 限制，不建立第二套 hidden type system。
+
+Derived state 不攜帶 `constraints`。Validator 必須從 `expr` 做 static type inference；declared `type` 必須與 inferred top-level type 一致。若 inferred value 是 ENUM/LIST/RECORD，完整 descriptor 跟著 inference 傳遞，供後續 binding / result / action type-check 使用。
+
 ## 8.2 Derived State
 
 ~~~json
@@ -342,6 +756,40 @@ Expression：
   "args":[...]
 }
 ~~~
+
+### 9.1 Exact Value Source Variant Shape
+
+Allowed keys are exact：
+
+~~~text
+LITERAL = { kind, value }
+STATE   = { kind, key }
+RULE    = { kind, rule_id }
+EVENT   = { kind, path }
+SCOPE   = { kind, name, path }
+OP      = { kind, op, args }
+~~~
+
+Unknown key inside a Value Source → V02 schema reject。
+
+`LITERAL.value`：
+
+- null / undefined forbidden。
+- scalar = finite number / string / boolean。
+- bounded array / object literal is allowed **only when static typing can prove a concrete TypeDescriptor** from the receiving contract or from all contained values。
+- empty array/object without an expected TypeDescriptor is ambiguous → reject。
+- LIST literal items must unify to one compatible TypeDescriptor。
+- RECORD literal keys are exact declared keys under the receiving TypeDescriptor；no extra key。
+- no executable string interpretation；string 永遠只是 data。
+
+Static type inference owner：
+
+- operator signature：F03 §12。
+- STATE：F02 state descriptor。
+- RULE：rule inferred result descriptor。
+- EVENT：F04 event payload schema。
+- SCOPE：F02 repeat item descriptor。
+- Capability prop/binding/action target：F04 generated Validator contract。
 
 禁止：
 
@@ -449,7 +897,7 @@ Rules：
     "min": {"kind":"LITERAL","value":0}
   },
   "bindings": {
-    "value": {"kind":"STATE","key":"budget"}
+    "bind": {"kind":"STATE","key":"budget"}
   },
   "events": {
     "change": "action_set_budget"
@@ -469,13 +917,16 @@ Rules：
 1. Node ID unique
 2. exact capability ID/version 存在 F04 Registry
 3. props/bindings 只能使用 Capability Card 宣告 keys
-4. binding output type 匹配 target type
-5. event 必須由 Capability 宣告
+4. prop / binding Value Source 的 static type 必須符合 F04 machine contract；binding source-kind restriction 也必須符合
+5. event 必須由 Capability 宣告，EVENT payload type 由 F04 event schema 提供
 6. action ref 必須存在
-7. children 只有允許 composition 的 Capability 可用
-8. root_node_id 可達所有 executable node
-9. orphan executable node → reject
-10. child graph 不可 cycle
+7. `children` / `repeat` 是 **F02 structural composition fields，不是 binding names**
+8. children / repeat 只有 F04 `composition` 明確允許的 Capability 可用；不得用 magic binding name（例如 `children` / `items`）推導
+9. root_node_id 可達所有 executable node
+10. orphan executable node → reject
+11. child graph 不可 cycle
+
+F04 generated Validator artifact 是 prop/binding/event/action/composition 的唯一 Capability machine truth；F02 不維護第二份 Capability allowlist/schema。
 
 # 13. Repeat / List Scope
 
@@ -494,12 +945,15 @@ Phase 1 bounded repeat：
 
 Rules：
 
-- 只有 Registry 宣告支援 repeat/template 的 node 可用
-- max_items 不超過 platform / capability ceiling
-- aliases lexical scoped
-- scope path 符合 declared list item type
-- no arbitrary template code
-- nested repeat depth 有 global limit
+- `node.repeat` 是 Phase 1 **唯一 structural repeat syntax**。
+- 只有 F04 machine contract `composition.repeat = true` 的 Capability 可用。
+- `repeat.items` 必須 static type = LIST<T>；T 成為 item_alias 的 SCOPE TypeDescriptor。
+- `max_items` 不超過 F02 global ceiling、state/list descriptor max_length 與 Capability ceiling 的最小值。
+- aliases lexical scoped。
+- scope path 必須存在於 T；若 T 是 scalar，非空 path 一律 reject。
+- repeated template 由該 node 的 structural `children` 描述；不得再以 `bindings.item_template` 建立第二種 executable template syntax。
+- no arbitrary template code。
+- nested repeat depth 有 global limit。
 
 # 14. Action Contract
 
@@ -549,6 +1003,10 @@ args
 when?
 ~~~
 
+- `capability_action` 必須存在於 target node exact Capability 的 F04 machine contract。
+- `args` allowed keys / requiredness / TypeDescriptor 全部來自該 action schema；unknown arg reject。
+- `when` static type 必須 BOOLEAN。
+
 RESET_STATE：
 
 ~~~text
@@ -577,7 +1035,9 @@ Phase 1 禁止：
 - event → URL callback
 - dynamic action name
 
-Event payload schema 由 F04 Capability Card 提供，F02 type-check EVENT Value Source。
+Event payload schema 由 F04 generated Validator machine contract 提供，F02 type-check EVENT Value Source。
+
+`Node.events` 是 Phase 1 唯一 event → Blueprint Action reference mechanism。Capability props/bindings 不得另外定義可執行 `action_ref` 捷徑，避免第二條 dispatch semantics。
 
 # 16. Result Contract
 
