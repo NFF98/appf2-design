@@ -149,13 +149,11 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 
 依 `PFR-2026 — Product-First Phase Realignment`：
 
-1. Current Step = `PFR-02 — Complete SP-P1-002`。
-2. A0 first-pass 已找出 BF-014～BF-023；Human 已批准 BF-016～BF-023 resolution direction。
-3. A0 Phase 2 remediation 已進 Working；Evidence Registry = `3.0.0`。
-4. 第二輪 executable machine audit = **PASS**：35/35 SP2 Acceptance/Test mapping、0 reserved envelope collision、UUID v4 boundary、Capability ID grammar均通過。
-5. Scope-clean Freeze Source = `91894ae8bd6241bb5ee1897180db72e9e578d1bf`；由 BS-P1-003 source commit 派生，只包含 11 個 approved BF-014～BF-023 remediation paths，不含 F18/F19/F20 / Phase 4 / future Product work。
-6. Build current state = **HOLD**；active locked baseline 仍為 `BS-P1-003`；`BS-P1-004` **尚未建立**。
-7. Next Human Gate = **BS-P1-004 Build Freeze Approval**。
-8. 在 Human Freeze Approval + replacement baseline verification + SP2 rebind/activation 前，Cursor Product implementation 仍禁止。
+1. `BS-P1-004` Build Freeze 已由 Human 批准並完成；Build PR #113 merge commit = `3ef227f0a85d687788077648a2df6eb3c3c4a740`。
+2. `BS-P1-004 = LOCKED`，source = `91894ae8bd6241bb5ee1897180db72e9e578d1bf`，supersedes `BS-P1-003`。
+3. BF-014～BF-022 = **RESOLVED**；BF-023 = **OPEN implementation bug**。
+4. Build execution 仍為 **HOLD**；`CURRENT.active_baseline` 仍是 `BS-P1-003`，`implementation_enabled=false`。
+5. `SP-P1-002` 尚未 rebind；Cursor Product implementation 仍禁止。
+6. Next Human Gate = **SP2 Rebind + Activation Review**。
 
-> **A0 原則：Product correctness > Cursor resume speed。Freeze Candidate 不是 Build Freeze；只有 Human approval 後才能建立 locked replacement baseline。**
+> Build Freeze ≠ Activation。只有完成 rebind audit、Activation Review 並取得 Human Activation approval 後，才能把 CURRENT 切到 BS-P1-004 並恢復 Cursor。
