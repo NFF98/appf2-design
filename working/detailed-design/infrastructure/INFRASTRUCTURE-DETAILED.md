@@ -337,6 +337,7 @@ blueprint_content
 blueprint_lineage
 share
 product_event
+evidence_daily_aggregate
 semantic_feedback
 ~~~
 
