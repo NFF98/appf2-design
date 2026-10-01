@@ -41,19 +41,22 @@
 Program = PFR-2026
 Status = ACTIVE
 Current Step = PFR-02 — Complete SP-P1-002
-Step Status = BS-P1-004 BUILD FREEZE COMPLETE / ACTIVATION PENDING
+Step Status = SP2 REBIND PLAN + ACTIVATION REVIEW PASS / HUMAN ACTIVATION PENDING
 Current Build Execution = HOLD
-SP-P1-002 = BLOCKED PENDING REBIND + ACTIVATION
-T001 / T002 / T006 / T008 = BLOCKED UNTIL REBIND + REACTIVATION
+SP-P1-002 = HISTORICAL BLOCKED RECORD UNTIL ATOMIC ACTIVATION REBIND
 Current Active Baseline = BS-P1-003
 Frozen Replacement Baseline = BS-P1-004
 BS-P1-004 Freeze Commit = appf2-build@3ef227f0a85d687788077648a2df6eb3c3c4a740
+Activation Review Commit = appf2-build@bc874a8bb5e400f49f12d844bf756cacc0c0e700
 Scope-clean Freeze Source = 91894ae8bd6241bb5ee1897180db72e9e578d1bf
 BD-003 = APPROVED
 BD-004 = APPROVED
 BF-014..BF-022 = RESOLVED
-BF-023 = OPEN IMPLEMENTATION BUG
-Next Human Gate = SP2 REBIND + ACTIVATION REVIEW
+BF-023 = OPEN IMPLEMENTATION BUG / BOUND TO T001 ACTIVATION PLAN
+BF-024 = RESOLVED
+BF-025 = RESOLVED
+Atomic Rebind Plan = READY
+Next Human Gate = BS-P1-004 / SP-P1-002 ACTIVATION APPROVAL
 Cursor Product Implementation = NOT AUTHORIZED WHILE HOLD
 ~~~
 
@@ -63,7 +66,7 @@ Cursor Product Implementation = NOT AUTHORIZED WHILE HOLD
 |---|---|---|---|---:|---|
 | PFR-00 | Program Registration | 正式建立本重構與 tracker | No implementation | — | **COMPLETED — 2026-09-30** |
 | PFR-01 | Development Re-alignment Audit | 新 Product Spec 對舊 Build Plan；判斷保留 / 修改 / 延後 | Audit only | 0.5–1 day | **COMPLETED — 2026-10-01** |
-| PFR-02 | Complete `SP-P1-002 — Validation + Intent Foundation + Evidence Reliability` | 完成 Intent / Validation / Evidence 地基 | **Cursor implementation after BF-014 resolution** | 2–4 days | **CURRENT — BLOCKED / BF-014** |
+| PFR-02 | Complete `SP-P1-002 — Validation + Intent Foundation + Evidence Reliability` | 完成 Intent / Validation / Evidence 地基 | **Cursor implementation after Human Activation** | 2–4 days | **CURRENT — ACTIVATION REVIEW PASS / HUMAN ACTIVATION PENDING** |
 | PFR-03 | Complete `F19 — Shared App Data / Social Persistence` Detailed Design | 把 Shared Ranking 設計到可施工 | Design only | 1–2 days | PENDING |
 | PFR-04 | UI/UX Delta Review | 重新檢查 S03 / S04 / S05 的 Shared Data / Remix / Lineage 影響 | Design only | ~1 day | PENDING |
 | PFR-05 | Create `BS-P1-005 — Product Proof Baseline` | 最新 Product Truth Freeze 成新的施工圖；`BS-P1-004` 已保留給 BF-014 replacement rebaseline | Build planning / no product code | 0.5–1 day | PENDING |
@@ -184,3 +187,4 @@ A0 exit：blocking Findings resolved → cross-contract re-audit PASS → projec
 | 2026-10-01 | PFR-02 / A0 | Product correctness 優先；完成 A0 first-pass，Design PR #6 + Build PR #110；BF-014～BF-023 open，T001/T002/T006/T008 BLOCKED | HUMAN CONTRACT RESOLUTION GATE |
 | 2026-10-01 | PFR-02 / A0 | Human 批准 BF-016～BF-023 resolution direction；A0 Phase 2 remediation 落入 Working，Evidence Registry v3；第二輪 machine audit PASS；建立 scope-clean freeze source 91894ae8...，只含 11 個 approved remediation paths | BS-P1-004 BUILD FREEZE APPROVAL | 
 | 2026-10-01 | PFR-02 / A0 | Human 批准 BS-P1-004 Build Freeze；Build PR #113 全 checks PASS 後 merge，BS-P1-004 LOCKED，BF-014～022 RESOLVED，BF-023 保持 OPEN；CURRENT 仍 BS-P1-003/HOLD | CURRENT / SP2 REBIND + ACTIVATION REVIEW |
+| 2026-10-01 | PFR-02 | SP2 Rebind + Activation Review 完成；Build PR #114 全 required checks PASS 後 merge。Review 確認 atomic rebind precedent：Human Activation 時一次切 CURRENT + rebind 38 個 unfinished backlog + SP2 Tasks；BL-P1-032 保留 DONE 歷史並由 T001 revalidate F07-AC-008。BF-024/025 RESOLVED；BF-023 保持 OPEN | CURRENT / HUMAN ACTIVATION GATE |
