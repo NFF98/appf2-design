@@ -250,7 +250,6 @@ ENUM(allowed exact domain)
 LIST<T>(max_length)
 RECORD<declared fields>
 ONE_OF<T...>
-TYPEVAR<T>   // 只允許 Registry 明確宣告的 bounded generic relation
 ~~~
 
 其中 NUMBER / STRING / ENUM / LIST / RECORD 的 exact descriptor semantics 由 F02 §8.1.1 擁有。
@@ -921,20 +920,20 @@ actions:
     args.max = NUMBER
     invariant min <= max
 
-  choose_item<T>:
-    args.items = LIST<T>(500)
-    T = NUMBER | STRING | BOOLEAN | ENUM
+  choose_item:
+    args.items = LIST<STRING>(500)
 
 composition: children=false, repeat=false
 
 capability_state:
   RECORD{
     last_number?: NUMBER,
-    last_index?: NUMBER
+    last_index?: NUMBER,
+    last_item?: STRING
   }
 ~~~
 
-Random result is capability-local presentation/state in Phase 1；Blueprint不藉此發明同步 function-return semantics。若 future Blueprint需要把 random outcome寫入 app state，必須另開 Human-approved Capability contract，而不是 Cursor 自行加 event/output。
+Random result is capability-local presentation/state in Phase 1；`sample_number` 更新 last_number，`choose_item` 更新 last_index + last_item。Blueprint不藉此發明同步 function-return semantics。若 future Blueprint需要把 random outcome寫入 app state，必須另開 Human-approved Capability contract，而不是 Cursor 自行加 event/output。
 
 ### logic.timer@1.0.0
 
