@@ -149,11 +149,20 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 
 依 `PFR-2026 — Product-First Phase Realignment`：
 
-1. `BS-P1-004` Build Freeze 已由 Human 批准並完成；Build PR #113 merge commit = `3ef227f0a85d687788077648a2df6eb3c3c4a740`。
-2. `BS-P1-004 = LOCKED`，source = `91894ae8bd6241bb5ee1897180db72e9e578d1bf`，supersedes `BS-P1-003`。
-3. BF-014～BF-022 = **RESOLVED**；BF-023 = **OPEN implementation bug**。
-4. Build execution 仍為 **HOLD**；`CURRENT.active_baseline` 仍是 `BS-P1-003`，`implementation_enabled=false`。
-5. `SP-P1-002` 尚未 rebind；Cursor Product implementation 仍禁止。
-6. Next Human Gate = **SP2 Rebind + Activation Review**。
+1. `BS-P1-004` 已 LOCKED；Build Freeze merge commit = `3ef227f0a85d687788077648a2df6eb3c3c4a740`。
+2. SP2 Rebind + Activation Review 已由 Build PR #114 完成並 merge；review merge commit = `bc874a8bb5e400f49f12d844bf756cacc0c0e700`。
+3. Review required checks全部 PASS；Governance Attack Dry-run = `81 / 81` expected outcomes observed。
+4. BF-024（derived freeze provenance）與 BF-025（completed Acceptance revalidation）= **RESOLVED**。
+5. BF-023 = **OPEN implementation bug**，已綁定下一次 T001 execution plan；它不再是 Product/contract ambiguity。
+6. Rebind 必須依既有 precedent 與 Human Activation **atomic 落地**，不得在 HOLD 期間先做半套 canonical rebind。
+7. Human Activation 時將一次完成：
+   - CURRENT `BS-P1-003 → BS-P1-004`
+   - 38 個 unfinished backlog rebind `BS-P1-004`
+   - 保留 5 個 DONE 歷史；`BL-P1-032 / F07-AC-008` 由 SP2/T001 revalidate
+   - SP-P1-002 → ACTIVE
+   - T001 → IN_PROGRESS；其他 Tasks 保持 PLANNED
+   - 建立 append-only `build-spec/activations/BS-P1-004.json`
+8. Build execution 現在仍是 **HOLD**，Cursor Product implementation 仍禁止。
+9. Next Human Gate = **BS-P1-004 / SP-P1-002 Activation Approval**。
 
-> Build Freeze ≠ Activation。只有完成 rebind audit、Activation Review 並取得 Human Activation approval 後，才能把 CURRENT 切到 BS-P1-004 並恢復 Cursor。
+> Rebind Review PASS ≠ Activation。只有取得 Human Activation approval 並讓 atomic control transition 通過 repo gates 後，才能恢復 Cursor。
