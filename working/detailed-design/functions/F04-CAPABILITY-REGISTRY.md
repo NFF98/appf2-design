@@ -234,7 +234,84 @@ CapabilityDefinition
    └─ releaseRequirement
 ~~~
 
-正式 TypeScript/Zod shape 在 Spec / Cursor Implementation 建立，但不得改變以上語意。
+> **BF-031 remediation：Executable machine shape 不得留給 Cursor / implementation 自行決定。** Working 必須先固定 validator 可消費的 field/type/composition contract；TypeScript/Zod 只做機械翻譯，不得新增 Product semantics。
+
+## 5.1 Phase 1 Validator Machine Contract Vocabulary
+
+F04 與 F02 共用同一 typed vocabulary；F04 不建立第二套 state/value type system。
+
+Canonical value types：
+
+~~~text
+NUMBER
+STRING(max_length)
+BOOLEAN
+ENUM(allowed exact domain)
+LIST<T>(max_length)
+RECORD<declared fields>
+ONE_OF<T...>
+~~~
+
+其中 NUMBER / STRING / ENUM / LIST / RECORD 的 exact descriptor semantics 由 F02 §8.1.1 擁有。
+
+每個 Capability 的 executable validator contract 必須顯式提供：
+
+~~~text
+props:
+  key -> {
+    required,
+    type,
+    source_kinds[]
+  }
+
+bindings:
+  key -> {
+    required,
+    type,
+    source_kinds[],
+    mutable_state_required?
+  }
+
+events:
+  event_name -> {
+    payload_fields
+  }
+
+actions:
+  action_name -> {
+    args
+  }
+
+composition:
+  children: true | false
+  repeat: true | false
+  repeat_required?: true | false
+
+capability_state:
+  resolved TypeDescriptor | NONE
+~~~
+
+`source_kinds` 只可來自：
+
+~~~text
+LITERAL STATE RULE OP EVENT SCOPE
+~~~
+
+Reference-bearing fields另外宣告：
+
+~~~text
+reference = ACTION_ID | NODE_ID | NONE
+~~~
+
+Rules：
+
+1. `children` / `repeat` 是 F02 structural fields；**不得**塞進 `bindings[]` 後再靠 magic name 推導 composition。
+2. `Node.events` 是 event → Blueprint Action 的唯一 dispatch reference；Capability prop 不再建立 executable `action_ref` 捷徑。
+3. ENABLED Capability 的 props / bindings / events / actions / composition / capability_state 必須是 resolved machine contract；只有 `capability://...` ref 而無可解析 schema = Registry generation failure。
+4. Optional field 缺失與 explicit null 不等價；Phase 1 machine contract原則上不用 null。
+5. Unknown prop / binding / action arg / event payload field → F02 reject。
+6. Capability-specific cross-field relation可以用 canonical named invariant，但 invariant ID + semantics 必須在本 Working 固定，implementation 不得自創。
+7. `capability_state` 是 Runtime-local schema，不是 Blueprint app state；其 RECORD field 可明確標 optional，absence 由 F03 internal ABSENT/initialization semantics 處理，不得序列化成 Blueprint null。
 
 # 6. Enum Contracts
 
@@ -356,11 +433,12 @@ validator-registry.ts 提供：
 ~~~text
 capability existence
 exact version existence
-props schema
-state / port types
-allowed actions
-allowed events
-binding restrictions
+resolved props schema
+resolved capability-local state schema / port types
+resolved binding restrictions + expected Value Type
+resolved action args schema
+resolved event payload schema
+explicit composition.children / composition.repeat
 permission class
 resource budget
 compatibility metadata
@@ -368,6 +446,15 @@ degradation metadata
 ~~~
 
 F02 必須讀這份 generated artifact，不能維護第二份 schema。
+
+**Ref-only artifact 不合格：**
+
+~~~text
+propsSchema: { ref: "capability://..." }
+stateSchema: { ref: "capability://..." }
+~~~
+
+若 deployment artifact 只有上述 unresolved ref、沒有同 artifact 可直接解析的 canonical schema graph，對 ENABLED Capability 視為 `F04-ERR-007 REGISTRY_GENERATION_INVALID`。
 
 Unknown capability ID/version → REJECT。
 
@@ -470,7 +557,7 @@ layout.container：
 direction: ROW | COLUMN
 gap: bounded spacing token
 align: START | CENTER | END | STRETCH
-children: node refs
+F02 structural children: allowed
 permission: NONE
 shareability: FULL
 ~~~
@@ -485,23 +572,24 @@ content.card：
 ~~~text
 title?: text/binding
 description?: text/binding
-children: node refs
+F02 structural children: allowed
 ~~~
 
 content.list：
 ~~~text
-items: bounded list binding
-item_template: declarative child template
-max_items: platform-bounded
+F02 structural repeat.items: bounded LIST<T>
+F02 structural children: declarative repeated template
+repeat.max_items: platform-bounded
+no bindings.items / bindings.item_template executable alias
 no arbitrary template code
 ~~~
 
 action.button：
 ~~~text
 label
-action_ref
 disabled?: boolean/binding
 event: press
+Blueprint Action reference = F02 Node.events.press only
 permission: USER_GESTURE
 ~~~
 
@@ -597,6 +685,342 @@ message
 action_refs?: bounded next actions
 raw internal error details forbidden in consumer message
 ~~~
+
+
+## 13.1 Exact Phase 1 Core Validator Surface
+
+> 本節把 §13 的 semantic minimum 轉成 **Validator 必須能直接消費的 canonical machine truth**。以下未標 optional 的欄位皆 required。Props 預設只允許 `LITERAL`；Bindings 允許的 source kinds逐項列出。
+
+### layout.container@1.0.0
+
+~~~text
+props:
+  direction: ENUM[ROW,COLUMN]
+  gap: ENUM[NONE,XS,SM,MD,LG,XL]
+  align: ENUM[START,CENTER,END,STRETCH]
+
+bindings: {}
+events: {}
+actions: {}
+composition:
+  children = true
+  repeat = false
+capability_state = NONE
+~~~
+
+### content.text@1.0.0
+
+~~~text
+props:
+  role: ENUM[BODY,LABEL,HEADING,CAPTION]
+
+bindings:
+  text: STRING(8192)
+        source_kinds = LITERAL | STATE | RULE | OP | SCOPE
+
+events: {}
+actions: {}
+composition: children=false, repeat=false
+capability_state = NONE
+~~~
+
+### content.card@1.0.0
+
+~~~text
+bindings:
+  title?: STRING(120)
+  description?: STRING(500)
+  source_kinds = LITERAL | STATE | RULE | OP | SCOPE
+
+composition:
+  children = true
+  repeat = false
+
+events: {}
+actions: {}
+capability_state = NONE
+~~~
+
+### content.list@1.0.0
+
+~~~text
+props: {}
+bindings: {}
+composition:
+  children = true
+  repeat = true
+  repeat_required = true
+~~~
+
+Canonical list data source **只走 F02 node.repeat.items**；template **只走 structural children**。
+`bindings.items` / `bindings.item_template` 不再是 executable syntax，避免與 F02 repeat 建立第二套 template semantics。
+
+### action.button@1.0.0
+
+~~~text
+props:
+  label: STRING(120)
+
+bindings:
+  disabled?: BOOLEAN
+             source_kinds = LITERAL | STATE | RULE | OP | SCOPE
+
+events:
+  press: payload = {}
+
+actions: {}
+composition: children=false, repeat=false
+capability_state = NONE
+~~~
+
+Blueprint Action reference只存在 `Node.events.press -> action_id`；不另設 capability `action_ref` prop/binding。
+
+### input.number@1.0.0
+
+~~~text
+props:
+  label: STRING(120)
+  min?: NUMBER
+  max?: NUMBER
+  step?: NUMBER where step > 0
+  required?: BOOLEAN
+
+bindings:
+  bind: NUMBER
+        source_kinds = STATE
+        mutable_state_required = true
+
+events:
+  change:
+    payload.value = NUMBER
+
+cross-field invariant:
+  min/max/step若存在必須 finite
+  min <= max when both present
+  bound state's NUMBER constraints remain authoritative; Capability props可更嚴格，不可放寬 state constraint
+~~~
+
+### input.text@1.0.0
+
+~~~text
+props:
+  label: STRING(120)
+  max_length: NUMBER integer 0..8192
+  placeholder?: STRING(500)
+  required?: BOOLEAN
+
+bindings:
+  bind: STRING(max_length <= bound state's max_length)
+        source_kinds = STATE
+        mutable_state_required = true
+
+events:
+  change:
+    payload.value = STRING(max_length <= effective bound)
+~~~
+
+### input.select@1.0.0
+
+~~~text
+props:
+  label: STRING(120)
+  options:
+    LIST<RECORD{
+      label: STRING(120),
+      value: ENUM_LITERAL
+    }>(500)
+    source_kinds = LITERAL
+  required?: BOOLEAN
+
+bindings:
+  bind: ENUM<E>
+        source_kinds = STATE
+        mutable_state_required = true
+
+events:
+  change:
+    payload.value = E
+
+cross-field invariant SELECT_ENUM_DOMAIN:
+  options[].value 必須 unique 且全部同一 primitive type
+  E = exact ordered-insensitive domain set(options[].value)
+  bound ENUM state's constraints.allowed 必須與 E exact same domain
+~~~
+
+### input.toggle@1.0.0
+
+~~~text
+bindings:
+  bind: BOOLEAN
+        source_kinds = STATE
+        mutable_state_required = true
+
+events:
+  change:
+    payload.value = BOOLEAN
+
+props: {}
+actions: {}
+composition: children=false, repeat=false
+~~~
+
+### data.stat@1.0.0
+
+~~~text
+props:
+  label: STRING(120)
+  format?: ENUM[NUMBER,TEXT,PERCENT,CURRENCY_DISPLAY]
+
+bindings:
+  value: ONE_OF<NUMBER,STRING,BOOLEAN,ENUM>
+         source_kinds = LITERAL | STATE | RULE | OP | SCOPE
+
+cross-field invariant STAT_FORMAT:
+  NUMBER | PERCENT | CURRENCY_DISPLAY require value type NUMBER
+  TEXT accepts NUMBER | STRING | BOOLEAN | ENUM
+
+events: {}
+actions: {}
+composition: children=false, repeat=false
+~~~
+
+### data.table_basic@1.0.0
+
+~~~text
+props:
+  columns:
+    LIST<RECORD{
+      key: STRING(64),
+      label: STRING(120),
+      format: ENUM[TEXT,NUMBER,PERCENT,CURRENCY_DISPLAY]
+    }>(500)
+    source_kinds = LITERAL
+  max_rows: NUMBER integer 0..500
+
+bindings:
+  rows: LIST<RECORD<declared row fields>>(max_length <= max_rows)
+        source_kinds = LITERAL | STATE | RULE | OP | SCOPE
+
+cross-field invariant TABLE_COLUMNS:
+  column.key unique
+  every declared column.key must exist in row descriptor
+  numeric display formats require NUMBER row field
+~~~
+
+### logic.random@1.0.0
+
+~~~text
+props: {}
+bindings: {}
+events: {}
+
+actions:
+  sample_number:
+    args.min = NUMBER
+    args.max = NUMBER
+    invariant min <= max
+
+  choose_item:
+    args.items = LIST<STRING>(500)
+
+composition: children=false, repeat=false
+
+capability_state:
+  RECORD{
+    last_number?: NUMBER,
+    last_index?: NUMBER,
+    last_item?: STRING
+  }
+~~~
+
+Random result is capability-local presentation/state in Phase 1；`sample_number` 更新 last_number，`choose_item` 更新 last_index + last_item。Blueprint不藉此發明同步 function-return semantics。若 future Blueprint需要把 random outcome寫入 app state，必須另開 Human-approved Capability contract，而不是 Cursor 自行加 event/output。
+
+### logic.timer@1.0.0
+
+~~~text
+props:
+  duration_ms: NUMBER integer >= 0
+
+bindings: {}
+
+actions:
+  start: {}
+  pause: {}
+  resume: {}
+  reset: {}
+
+events:
+  complete: payload = {}
+
+capability_state:
+  RECORD{
+    status: ENUM[IDLE,RUNNING,PAUSED,COMPLETE],
+    duration_ms: NUMBER,
+    remaining_ms: NUMBER
+  }
+
+composition: children=false, repeat=false
+~~~
+
+### logic.score@1.0.0
+
+~~~text
+props:
+  initial?: NUMBER
+  min?: NUMBER
+  max?: NUMBER
+
+actions:
+  increment:
+    args.delta = NUMBER
+  set:
+    args.value = NUMBER
+  reset: {}
+
+events:
+  change:
+    payload.value = NUMBER
+
+capability_state:
+  RECORD{ value: NUMBER }
+
+cross-field invariant SCORE_BOUNDS:
+  initial defaults to 0
+  min <= max when both present
+  initial / set / increment result must stay within declared bounds when present
+
+composition: children=false, repeat=false
+~~~
+
+### system.notice@1.0.0
+
+~~~text
+props:
+  severity: ENUM[INFO,SUCCESS,WARNING,ERROR]
+
+bindings:
+  title?: STRING(120)
+  message: STRING(1000)
+  source_kinds = LITERAL | STATE | RULE | OP | SCOPE
+
+  action_refs?:
+    LIST<STRING(64)>(16)
+    source_kinds = LITERAL
+    reference = ACTION_ID
+
+events: {}
+actions: {}
+composition: children=false, repeat=false
+capability_state = NONE
+~~~
+
+### Canonical structural rules
+
+1. `children` 不得出現在 generated `bindings`。
+2. `items` / `item_template` 不得作為 content.list executable bindings；F02 `repeat` 是唯一 repeat data/template contract。
+3. input controls 一律使用 binding key `bind`；F02 範例與 fixtures不得使用 `value` alias。
+4. event payload / action args 都必須投影到 generated Validator artifact；只有名稱 list 不足以 ENABLE。
+5. `action_refs` 是 data reference list，不是 executable handler；F02 必須驗證 referenced Blueprint Action IDs存在。
 
 # 14. Capability Dependency Rules
 
@@ -731,6 +1155,11 @@ Build hard fail：
 - invalid version
 - duplicate registrationKey
 - missing required schema
+- unresolved props/state schema ref for an ENABLED capability
+- missing binding type/source restriction
+- declared event missing payload schema
+- declared action missing args schema
+- missing explicit composition metadata
 - dependency cycle
 - ENABLED capability missing runtime handler
 - ENABLED capability missing validator schema
@@ -944,7 +1373,7 @@ Registry update：
 
 # 30. Open Decisions
 
-目前沒有阻擋 Phase 1 Build Freeze Gate 的 open decision。
+BF-030 / BF-031 remediation branch 尚待 Human 對本次 exact machine contract 做 review / approval；在 replacement Build Freeze 完成前，T002 必須保持 BLOCKED。
 
 已閉合：
 
