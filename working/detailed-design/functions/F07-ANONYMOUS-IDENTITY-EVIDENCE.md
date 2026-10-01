@@ -878,7 +878,7 @@ CI rules：
 - prefix / function mismatch → fail
 - allowed property缺 property_schemas contract → fail
 - event_property_constraints放寬 base schema → fail
-- `property_schemas.*.pattern` 採 JSON string encoding，但 JSON parse 後必須直接是可交給 RegExp engine 的 logical pattern；不得多保留一層 backslash escaping
+- `property_schemas.*.pattern` 採 JSON string encoding，但 JSON parse 後必須直接是可交給 RegExp engine 的 logical pattern；不得多保留一層 backslash escaping；canonical Capability ID smoke set 必須包含帶 underscore 的既有 ID（至少 `data.table_basic`）
 - canonical regex smoke examples（例如 `layout.container`、`1.0.0`、`F04-ERR-001`、`F12-POL-001`、`F04`）必須在 Freeze Audit / CI 通過
 - hash 類 Evidence property 採 `sha256:<64 lowercase hex>` canonical string representation
 - CORE_OUTCOME缺 trigger / metric mapping → fail

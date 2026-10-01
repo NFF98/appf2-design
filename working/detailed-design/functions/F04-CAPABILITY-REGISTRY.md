@@ -138,7 +138,147 @@ system.notice
 
 規則：
 
-- lowercase ASCII
+- exact grammar = `^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*# F04 — Capability Registry / Resolution
+
+> **PHASE 1 FREEZE AUDIT：PASS — Phase 1 applicable truth passed Final Audit and is eligible for Human-approved Build Freeze; Phase 2/3+ and deferred content are excluded.**
+
+> 狀態：BUILD_FREEZE_READY / STEP2_REVIEWED
+> Governance：Current Truth = this Working file；Build Freeze / implementation boundary 以 `working/common-core/DESIGN-TO-DELIVERY.md` 為準。
+>
+> Canonical Role：Phase 1 Concrete Capability Registry 的 Working Current Truth。
+>
+> 上游：APP-ARCHITECTURE、APP-DETAILED-DESIGN-OVERVIEW、CAPABILITY-FABRIC、DATA-MODEL、INFRA-ARCHITECTURE、DESIGN-TO-DELIVERY。
+>
+> 本文件把 Capability Fabric 的概念模型落成 Compiler / Validator / Runtime 共用的具體 Registry Contract。完整 LegoSpec / Blueprint executable contract 由 F02 承接。
+
+# 1. Purpose / User Outcome
+
+F04 的結果不是讓 User 看見 Registry，而是：
+
+> User 的 Intent 只能被組成 appf2 真正會、安全會、目前可執行的能力；Compiler 不幻想不存在的能力，Validator 與 Runtime 也不各自有不同答案。
+
+Canonical flow：
+
+~~~text
+Resolved Intent
+→ Capability Resolution
+→ Coverage Result
+→ Blueprint Composition
+→ F02 Validation
+→ F03 Runtime
+~~~
+
+共同真相：
+
+~~~text
+One Canonical Registry Source
+        ↓
+Compiler Metadata
+Validator Contract
+Runtime Registration
+Compatibility Metadata
+Docs / Tests
+~~~
+
+# 2. Scope / Non-Scope
+
+Phase 1 必須提供：
+
+- stable Capability ID 與 per-capability version
+- Registry snapshot version / digest
+- semantic meaning / selection hints
+- typed props / state contract reference
+- actions / events / bindings
+- runtime registration key
+- determinism / replay class
+- permissions / resource budget
+- serialization / shareability / remixability
+- compatibility / degradation
+- maturity / availability
+- capability dependencies
+- Coverage Resolution contract
+- deterministic generated artifacts
+- drift prevention
+- Registry error / evidence / acceptance
+
+Phase 1 不做：
+
+- Registry database service
+- Marketplace / third-party provider registry
+- dynamic remote capability installation
+- user-uploaded executable plugin
+- arbitrary JavaScript capability
+- runtime network discovery
+- paid provider execution
+- semantic vector retrieval
+
+Future External / Paid Capability 必須延伸同一 Contract，不能另建第二套執行語意。
+
+# 3. Registry Architecture
+
+## F04-RQ-001 — Single Canonical Source
+
+Phase 1 Registry：
+
+> versioned source artifact in code repository → deterministic generated artifacts
+
+Target implementation layout：
+
+~~~text
+src/platform/capabilities/
+├─ schema/
+│  └─ capability-definition.ts
+├─ definitions/
+│  ├─ layout.container.ts
+│  ├─ content.text.ts
+│  ├─ input.number.ts
+│  └─ ...
+├─ registry.ts
+└─ generate-registry.ts
+~~~
+
+Generated outputs：
+
+~~~text
+generated/capabilities/
+├─ registry-manifest.json
+├─ compiler-catalog.json
+├─ validator-registry.ts
+├─ runtime-registry.ts
+└─ compatibility-manifest.json
+~~~
+
+規則：
+
+1. definitions + CapabilityDefinition schema 是唯一人工維護 source。
+2. generated files 不得手工修改。
+3. CI / build 必須可從 canonical source 重建相同 artifacts。
+4. Compiler、Validator、Runtime 不得各自維護 allowlist。
+5. Phase 1 Registry 不存 PostgreSQL。
+
+# 4. Identity / Versioning
+
+## F04-RQ-002 — Capability ID
+
+格式：
+
+~~~text
+namespace.name
+~~~
+
+例：
+
+~~~text
+layout.container
+content.text
+input.number
+logic.random
+system.notice
+~~~
+
+
+- namespace / name 各自以 lowercase ASCII letter 開頭，可包含 lowercase ASCII digit / underscore
+- `data.table_basic` / `data.chart_basic` 是合法 canonical Capability ID
 - semantic identity 不包含 vendor
 - ID 一旦進正式 Spec / Released snapshot，不得改作另一種語意
 - breaking semantic change 使用新 major version
