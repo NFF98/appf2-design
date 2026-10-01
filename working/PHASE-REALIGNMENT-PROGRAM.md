@@ -41,14 +41,15 @@
 Program = PFR-2026
 Status = ACTIVE
 Current Step = PFR-02 — Complete SP-P1-002
-Step Status = BLOCKED — BF-014 DESIGN FIX COMPLETE / REPLACEMENT FREEZE SCOPE BLOCKED
+Step Status = A0 COMPREHENSIVE CONTRACT RE-AUDIT — FIRST PASS COMPLETE / FINDINGS OPEN
 Current Build Execution = HOLD
 SP-P1-002 = BLOCKED
-T001 = BLOCKED
+T001 / T002 / T006 / T008 = BLOCKED
 Active Locked Baseline = BS-P1-003
-Planned Replacement Baseline = BS-P1-004
-BD-003 = APPROVED
-Next Human Gate = BF-014 Scope-safe Replacement Freeze Decision
+Planned Clean Replacement Baseline = BS-P1-004
+BD-003 = APPROVED (BF-014)
+A0 Findings = BF-014..BF-023
+Next Human Gate = A0 Contract Resolution Decisions
 Cursor Product Implementation = NOT AUTHORIZED WHILE HOLD
 ~~~
 
@@ -158,6 +159,12 @@ PFR-2026 只有在以下都成立後才可標為 `COMPLETED`：
 5. Cross-Phase Final Consistency Review PASS。
 6. Business Plan / Function portfolio / UI/UX / Data / Infrastructure / Build handoff 沒有互相矛盾的 active truth。
 
+# 7A. A0 — SP2 Comprehensive Contract Re-Audit
+
+A0 由 BF-014 觸發。First-pass 已完成：35/35 SP2 Acceptance/Test mapping PASS、Phase 1 registry index consistency PASS；同時發現 BF-015～BF-023。Design PR #6 已修正 canonical Capability ID grammar；Build PR #110 已正規化 A0 findings。T001 / T002 / T006 / T008 直接 BLOCKED，Build 保持 HOLD。BS-P1-004 尚未建立。
+
+A0 exit：blocking Findings resolved → cross-contract re-audit PASS → projection scope clean → Human Build Freeze approval。
+
 # 8. Update Log
 
 | Date | Step | Update | Result |
@@ -170,3 +177,4 @@ PFR-2026 只有在以下都成立後才可標為 `COMPLETED`：
 | 2026-10-01 | PFR-02 | T001 發現 BF-014：BS-P1-003 evidence registry regex serialization defect 使 F04-AC-018 無法誠實達成；SP2/T001 fail-closed BLOCKED，Build execution 轉 HOLD，等待 Human resolution | BLOCKED |
 | 2026-10-01 | PFR-02 | Human 同意沿用 Sprint 1 Build Constitution 繼續 BF-014 Option A；Working 修正 9 個 regex serialization defects、固定 registry_digest wire format，planned replacement = BS-P1-004；原 PFR-05 Product Proof Baseline 順延 BS-P1-005 | DESIGN DELTA |
 | 2026-10-01 | PFR-02 | appf2-design PR #5 merge；targeted registry audit PASS；BD-003 merge。Replacement Freeze audit 發現 latest Working 相對 BS-P1-003 有 11 個 projected output changes，其中只有 3 個屬 BF-014、另 8 個屬 PFR/F19/future compatibility，禁止 silent freeze | CURRENT / FREEZE SCOPE BLOCKED |
+| 2026-10-01 | PFR-02 / A0 | Product correctness 優先；完成 A0 first-pass，Design PR #6 + Build PR #110；BF-014～BF-023 open，T001/T002/T006/T008 BLOCKED | CURRENT / HUMAN CONTRACT RESOLUTION GATE |
