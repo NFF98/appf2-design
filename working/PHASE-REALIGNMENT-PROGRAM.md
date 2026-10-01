@@ -41,17 +41,19 @@
 Program = PFR-2026
 Status = ACTIVE
 Current Step = PFR-02 — Complete SP-P1-002
-Step Status = A0 PHASE 2 REMEDIATION COMPLETE / SECOND RE-AUDIT PASS / FREEZE CANDIDATE READY
+Step Status = BS-P1-004 BUILD FREEZE COMPLETE / ACTIVATION PENDING
 Current Build Execution = HOLD
-SP-P1-002 = BLOCKED
-T001 / T002 / T006 / T008 = BLOCKED UNTIL REBASELINE + REACTIVATION
-Active Locked Baseline = BS-P1-003
-Planned Clean Replacement Baseline = BS-P1-004
+SP-P1-002 = BLOCKED PENDING REBIND + ACTIVATION
+T001 / T002 / T006 / T008 = BLOCKED UNTIL REBIND + REACTIVATION
+Current Active Baseline = BS-P1-003
+Frozen Replacement Baseline = BS-P1-004
+BS-P1-004 Freeze Commit = appf2-build@3ef227f0a85d687788077648a2df6eb3c3c4a740
 Scope-clean Freeze Source = 91894ae8bd6241bb5ee1897180db72e9e578d1bf
-BD-003 = APPROVED (BF-014)
-A0 Resolution = HUMAN APPROVED BF-016..BF-023
-A0 Findings = BF-014..BF-023
-Next Human Gate = BS-P1-004 BUILD FREEZE APPROVAL
+BD-003 = APPROVED
+BD-004 = APPROVED
+BF-014..BF-022 = RESOLVED
+BF-023 = OPEN IMPLEMENTATION BUG
+Next Human Gate = SP2 REBIND + ACTIVATION REVIEW
 Cursor Product Implementation = NOT AUTHORIZED WHILE HOLD
 ~~~
 
@@ -180,4 +182,5 @@ A0 exit：blocking Findings resolved → cross-contract re-audit PASS → projec
 | 2026-10-01 | PFR-02 | Human 同意沿用 Sprint 1 Build Constitution 繼續 BF-014 Option A；Working 修正 9 個 regex serialization defects、固定 registry_digest wire format，planned replacement = BS-P1-004；原 PFR-05 Product Proof Baseline 順延 BS-P1-005 | DESIGN DELTA |
 | 2026-10-01 | PFR-02 | appf2-design PR #5 merge；targeted registry audit PASS；BD-003 merge。Replacement Freeze audit 發現 latest Working 相對 BS-P1-003 有 11 個 projected output changes，其中只有 3 個屬 BF-014、另 8 個屬 PFR/F19/future compatibility，禁止 silent freeze | CURRENT / FREEZE SCOPE BLOCKED |
 | 2026-10-01 | PFR-02 / A0 | Product correctness 優先；完成 A0 first-pass，Design PR #6 + Build PR #110；BF-014～BF-023 open，T001/T002/T006/T008 BLOCKED | HUMAN CONTRACT RESOLUTION GATE |
-| 2026-10-01 | PFR-02 / A0 | Human 批准 BF-016～BF-023 resolution direction；A0 Phase 2 remediation 落入 Working，Evidence Registry v3；第二輪 machine audit PASS；建立 scope-clean freeze source 91894ae8...，只含 11 個 approved remediation paths | CURRENT / BS-P1-004 BUILD FREEZE APPROVAL |
+| 2026-10-01 | PFR-02 / A0 | Human 批准 BF-016～BF-023 resolution direction；A0 Phase 2 remediation 落入 Working，Evidence Registry v3；第二輪 machine audit PASS；建立 scope-clean freeze source 91894ae8...，只含 11 個 approved remediation paths | BS-P1-004 BUILD FREEZE APPROVAL | 
+| 2026-10-01 | PFR-02 / A0 | Human 批准 BS-P1-004 Build Freeze；Build PR #113 全 checks PASS 後 merge，BS-P1-004 LOCKED，BF-014～022 RESOLVED，BF-023 保持 OPEN；CURRENT 仍 BS-P1-003/HOLD | CURRENT / SP2 REBIND + ACTIVATION REVIEW |
