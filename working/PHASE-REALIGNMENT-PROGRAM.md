@@ -41,23 +41,25 @@
 Program = PFR-2026
 Status = ACTIVE
 Current Step = PFR-02 — Complete SP-P1-002
-Step Status = SP2 REBIND PLAN + ACTIVATION REVIEW PASS / HUMAN ACTIVATION PENDING
-Current Build Execution = HOLD
-SP-P1-002 = HISTORICAL BLOCKED RECORD UNTIL ATOMIC ACTIVATION REBIND
-Current Active Baseline = BS-P1-003
-Frozen Replacement Baseline = BS-P1-004
+Step Status = BS-P1-004 / SP-P1-002 ACTIVATED
+Current Build Execution = ACTIVE
+SP-P1-002 = ACTIVE
+T001 = IN_PROGRESS
+T002–T009 = PLANNED
+Current Active Baseline = BS-P1-004
 BS-P1-004 Freeze Commit = appf2-build@3ef227f0a85d687788077648a2df6eb3c3c4a740
 Activation Review Commit = appf2-build@bc874a8bb5e400f49f12d844bf756cacc0c0e700
+Activation Commit = appf2-build@24d37a43be8b79bafceaf96c45c60d2599e5bcb8
 Scope-clean Freeze Source = 91894ae8bd6241bb5ee1897180db72e9e578d1bf
 BD-003 = APPROVED
 BD-004 = APPROVED
 BF-014..BF-022 = RESOLVED
-BF-023 = OPEN IMPLEMENTATION BUG / BOUND TO T001 ACTIVATION PLAN
+BF-023 = OPEN IMPLEMENTATION BUG / ACTIVE T001 SCOPE
 BF-024 = RESOLVED
 BF-025 = RESOLVED
-Atomic Rebind Plan = READY
-Next Human Gate = BS-P1-004 / SP-P1-002 ACTIVATION APPROVAL
-Cursor Product Implementation = NOT AUTHORIZED WHILE HOLD
+BL-P1-032 / F07-AC-008 Revalidation = IN_PROGRESS under T001
+Cursor Product Implementation = AUTHORIZED ONLY FOR ACTIVE T001 SCOPE
+Next Step = T001 Cursor Execution
 ~~~
 
 # 4. Phase 1 Product-First Re-alignment
@@ -187,4 +189,5 @@ A0 exit：blocking Findings resolved → cross-contract re-audit PASS → projec
 | 2026-10-01 | PFR-02 / A0 | Product correctness 優先；完成 A0 first-pass，Design PR #6 + Build PR #110；BF-014～BF-023 open，T001/T002/T006/T008 BLOCKED | HUMAN CONTRACT RESOLUTION GATE |
 | 2026-10-01 | PFR-02 / A0 | Human 批准 BF-016～BF-023 resolution direction；A0 Phase 2 remediation 落入 Working，Evidence Registry v3；第二輪 machine audit PASS；建立 scope-clean freeze source 91894ae8...，只含 11 個 approved remediation paths | BS-P1-004 BUILD FREEZE APPROVAL | 
 | 2026-10-01 | PFR-02 / A0 | Human 批准 BS-P1-004 Build Freeze；Build PR #113 全 checks PASS 後 merge，BS-P1-004 LOCKED，BF-014～022 RESOLVED，BF-023 保持 OPEN；CURRENT 仍 BS-P1-003/HOLD | CURRENT / SP2 REBIND + ACTIVATION REVIEW |
-| 2026-10-01 | PFR-02 | SP2 Rebind + Activation Review 完成；Build PR #114 全 required checks PASS 後 merge。Review 確認 atomic rebind precedent：Human Activation 時一次切 CURRENT + rebind 38 個 unfinished backlog + SP2 Tasks；BL-P1-032 保留 DONE 歷史並由 T001 revalidate F07-AC-008。BF-024/025 RESOLVED；BF-023 保持 OPEN | CURRENT / HUMAN ACTIVATION GATE |
+| 2026-10-01 | PFR-02 | SP2 Rebind + Activation Review 完成；Build PR #114 全 required checks PASS 後 merge。Review 確認 atomic rebind precedent：Human Activation 時一次切 CURRENT + rebind 38 個 unfinished backlog + SP2 Tasks；BL-P1-032 保留 DONE 歷史並由 T001 revalidate F07-AC-008。BF-024/025 RESOLVED；BF-023 保持 OPEN | HUMAN ACTIVATION GATE |
+| 2026-10-01 | PFR-02 | Human 批准 BS-P1-004 / SP-P1-002 Activation；Build PR #115 全 gates PASS 後 merge。CURRENT=BS-P1-004、implementation_enabled=true、SP2 ACTIVE、T001 IN_PROGRESS、38 unfinished backlog rebind，BL-P1-032/F07-AC-008 revalidation IN_PROGRESS | CURRENT / T001 EXECUTION |
