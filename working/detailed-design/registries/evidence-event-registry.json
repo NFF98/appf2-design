@@ -1,5 +1,5 @@
 {
-  "registry_version": "2.0.1",
+  "registry_version": "2.0.2",
   "phase_1_freeze_audit": {
     "status": "PASS",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
@@ -9,7 +9,7 @@
       "DEFERRED_CONTENT"
     ],
     "audited_on": "2026-10-01",
-    "change_ref": "BF-014"
+    "change_ref": "A0-SP2-REAUDIT/BF-014"
   },
   "owner": "working/detailed-design/registries/evidence-event-registry.json",
   "source_of_truth": "Fxx event contracts + F07 evidence policy",
@@ -2898,7 +2898,7 @@
       "type": "string",
       "minLength": 3,
       "maxLength": 256,
-      "pattern": "^[a-z0-9]+(?:\\.[a-z0-9]+)+$"
+      "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
     },
     "capability_version": {
       "type": "string",

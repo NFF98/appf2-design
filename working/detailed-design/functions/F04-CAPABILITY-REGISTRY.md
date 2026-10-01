@@ -138,7 +138,9 @@ system.notice
 
 規則：
 
-- lowercase ASCII
+- exact grammar = `^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$`
+- namespace / name 各自以 lowercase ASCII letter 開頭，可包含 lowercase ASCII digit / underscore
+- `data.table_basic` / `data.chart_basic` 是合法 canonical Capability ID
 - semantic identity 不包含 vendor
 - ID 一旦進正式 Spec / Released snapshot，不得改作另一種語意
 - breaking semantic change 使用新 major version
