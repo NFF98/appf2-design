@@ -222,7 +222,7 @@ otherwise
 
 Capability REVOKED 在 fresh execution check造成 Blueprint **currently incompatible to execute**，使用 F02-ERR-017；F02-ERR-016只保留給 blueprint_content 自身 durable trust_status=REVOKED，避免兩種 revocation identity混淆。
 
-Current Registry policy update不得偷偷覆寫 same-version snapshot：例如 `5.0.0/digest-A ACTIVE` 要 revoke時，必須發布新 Registry version/digest（例如下一合法 SemVer）成為 deployment current execution snapshot。Test fixture也必須遵守此規則；禁止「改 execution_status但保留同 registry_version/digest」。
+Current Registry policy update不得偷偷覆寫 same-version snapshot：例如 `6.0.0/digest-A ACTIVE` 要 revoke時，必須發布 policy PATCH snapshot `6.0.1/digest-B REVOKED`（execution_contract_digest不變）並將其設為 deployment current execution snapshot。Test fixture也必須遵守此規則；禁止「改 execution_status但保留同 registry_version/digest」。
 
 Temporary admission failure不得 fallback成 allow。Content body cache hit、Share ACTIVE、validation曾經PASSED、same-hash content REUSED都不是 allow substitute。
 
