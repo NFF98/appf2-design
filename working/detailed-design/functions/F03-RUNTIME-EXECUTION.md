@@ -126,8 +126,11 @@ admission content_hash = Blueprint hash
 admission not expired
 Blueprint trust = VALIDATED
 Blueprint schema supported
-Registry snapshot compatible
-All capability refs executable by current Runtime
+admission registry_version / registry_digest / validator_registry_digest / runtime_registry_digest
+  = exact trusted pinned Registry v7 release bundle
+pinned RuntimeRegistry artifact integrity verified
+every direct Node CapabilityRef has exact trusted bundled handler mapping in pinned RuntimeRegistry
+fresh E07 current-eligibility already PASS
 ~~~
 
 不符合 → 不 hydrate 正常 App，交 F12 Recovery。
@@ -228,7 +231,7 @@ UNINITIALIZED
 ~~~text
 H01 Load admitted Blueprint
 ↓
-H02 Assert fresh ExecutionAdmission / trust / schema / registry / runtime compatibility
+H02 Assert fresh ExecutionAdmission / trust / schema / pinned Registry v7 release identity / runtime compatibility
 ↓
 H03 Build immutable execution indexes
 ↓
@@ -268,7 +271,7 @@ rule_by_id
 action_by_id
 node_by_id
 event_binding_by_node
-capability_handler_by_ref
+capability_handler_by_ref   // built only from the pinned trusted RuntimeRegistry identified by ExecutionAdmission
 result_output_by_id
 ~~~
 
@@ -763,7 +766,7 @@ target static node_id
 → assert F02-admitted singleton target
 → resolve NodeInstanceKey{node_id, repeat_coordinates=[]}
 → exact CapabilityRef
-→ trusted runtime-registry handler
+→ exact handler from Blueprint pinned Registry v7 RuntimeRegistry
 → validate action + resolved args + applicable invariant_ids
 → invoke through RuntimeContext
 → CapabilityInvocationResult
@@ -778,6 +781,14 @@ dispose(node_instance_key, capability_state, runtime_context)
 ~~~
 
 Blueprint 永遠不能提供 handler。
+
+BF-040 pinned Runtime binding rule：
+
+1. Fresh ExecutionAdmission在進 H02 前已證明 pinned `runtime_registry_digest` 與 trusted release ledger一致，且 direct Node exact CapabilityRef有 handler mapping。
+2. H03 `capability_handler_by_ref` **只能**從 admission所指 pinned RuntimeRegistry建立；不得從 deployment current Registry重新 resolve或替換 handler。
+3. Current execution Registry只在 fresh admission E07決定「現在是否允許執行」；它不改 old Blueprint pinned executable binding。
+4. H02/H03若發現 pinned RuntimeRegistry artifact / release tuple / handler mapping與 admission不一致，視為 runtime/deployment integrity failure，Instance不得READY；不得 dynamic fallback、不得拿 current handler頂替。
+
 
 BF-037 singleton invoke invariant：Phase 1 Blueprint `INVOKE_CAPABILITY.target_node_id` 已由 F02 保證沒有 repeat ancestor，因此 Runtime invocation 只能解析成 `repeat_coordinates=[]` 的單一 NodeInstanceKey。若 admitted content 出現 multi-instance target，視為 `F03-ERR-018 RUNTIME_INVARIANT_BROKEN`，不得自行選 first/current/nearest clone。
 
@@ -1696,6 +1707,10 @@ Downstream：
 - F07 runtime evidence
 - F12 runtime recovery
 - F16 result snapshot / rerun / compare
+
+## BF-040 Runtime Boundary Closure
+
+BF-040 不新增一般 Runtime feature semantics；只收斂 F02/F04 fresh-admission與F03既有 trusted-handler boundary：ExecutionAdmission必須綁 pinned Registry v7 release tuple，Runtime只使用該 pinned RuntimeRegistry建立 handler index。這是 H02/H03 safety precondition，不是新的 dynamic registry service。
 
 # 46. Release / Migration
 
