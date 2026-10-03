@@ -211,7 +211,9 @@ CapabilityDefinition
 │  ├─ deterministic
 │  ├─ replayClass
 │  ├─ permissionClass
-│  └─ resourceBudget
+│  ├─ resourceBudget
+│  └─ resourceUsage
+
 ├─ product
 │  ├─ shareability
 │  ├─ remixability
@@ -232,12 +234,13 @@ CapabilityDefinition
    ├─ targetHorizon
    ├─ maturity
    ├─ availability
+   ├─ executionStatus
    └─ releaseRequirement
 ~~~
 
 > **BF-031 remediation：Executable machine shape 不得留給 Cursor / implementation 自行決定。** Working 必須先固定 validator 可消費的 field/type/composition contract；TypeScript/Zod 只做機械翻譯，不得新增 Product semantics。
 
-Registry machine-source rule（v2+，current v4）：
+Registry machine-source rule（v2+，current v5）：
 
 - `CapabilityDefinition.contract.validator` 是 executable Validator machine truth 的 canonical source field。
 - `propsSchema` / `stateSchema` 可保留供 semantic/documentation/runtime schema reference，但 **不得**取代或覆蓋 `contract.validator`。
@@ -499,24 +502,40 @@ TIME_DEPENDENT
 
 SEEDED capability 必須使用 Runtime seed / RNG service，不得散落不可追蹤 random source。
 
-# 7. Resource Budget Contract
+# 7. Resource Budget / Usage Contract
 
-每張 Capability 至少有：
+每張 Capability 至少有 immutable budget：
 
 ~~~text
-maxInstancesPerBlueprint
-maxSerializedPropsBytes
-maxLocalStateBytes
-maxEventBindings
-maxActionBindings
-maxConcurrentTimers
-mediaAutoplayAllowed
-networkAccessAllowed
+ResourceBudget = {
+  maxInstancesPerBlueprint
+  maxSerializedPropsBytes
+  maxLocalStateBytes
+  maxEventBindings
+  maxActionBindings
+  maxConcurrentTimers
+  mediaAutoplayAllowed
+  networkAccessAllowed
+}
 ~~~
 
-F02 / F03 定義 platform global hard ceiling。
+以及 validator可直接消費的 static resource-usage profile：
 
-> Capability Card 可以更嚴格，不能自行提高 global ceiling。
+~~~text
+ResourceUsageProfile = {
+  timerSlotsPerInstance: integer >= 0
+}
+~~~
+
+Canonical rules：
+
+1. Budget是「上限」，Usage是「這個 Capability 每 instance 的 machine resource requirement」；兩者不得混用。
+2. `timerSlotsPerInstance` 必須由 canonical Capability source explicit 宣告並投影到 Validator artifact；不得從 capability ID、`replayClass`、handler source或 prose反推。
+3. Phase 1 current Core：`logic.timer@1.0.0 timerSlotsPerInstance=1`；其餘 current Core exact definitions = 0。未宣告 usage的 ENABLED Capability → Registry generation hard fail。
+4. `maxInstancesPerBlueprint` / `maxSerializedPropsBytes` / `maxEventBindings` / `maxActionBindings` / `maxConcurrentTimers` 的 exact V09 measurement由 F02 §19.1/19.2擁有。
+5. `maxLocalStateBytes` 是 F03 per-concrete-NodeInstanceKey dynamic guard；F03 exact measurement見 F03 §37。它不能取代 F02可 static proof的 resource checks。
+6. `mediaAutoplayAllowed` / `networkAccessAllowed` 是 permission/security policy，F02 V10 / F03 enforcement共同遵守。
+7. Capability Card 可以更嚴格，不能自行提高 platform global ceiling；source budget若高於 platform ceiling且該維度有 global ceiling → generation hard fail，不 clamp。
 
 # 8. Generated Compiler Artifact
 
@@ -551,6 +570,7 @@ Compiler artifact 禁止包含：
 ValidatorRegistry = {
   registry_version: string,
   registry_digest: "sha256:<64 lowercase hex>",
+  runtime_version: string,
   capabilities: map<capability_id, map<capability_version, GeneratedCapabilityValidator>>
 }
 
@@ -560,6 +580,10 @@ GeneratedCapabilityValidator = {
   validator: ValidatorContract,   // exact §5.1 shape
   permission_class: PermissionClass,
   resource_budget: ResourceBudget,
+  resource_usage: ResourceUsageProfile,
+  availability: DISABLED | EXPERIMENTAL | ENABLED,
+  execution_status: ACTIVE | REVOKED,
+  execution_class: LOCAL_REACT | LOCAL_RULE | LOCAL_EFFECT,
   compatibility: CompatibilityContract,
   degradation: DegradationContract
 }
@@ -617,6 +641,8 @@ runtime_version
 blueprint_schema range
 capability id/version
 availability
+execution_status
+execution_class
 compatibility range
 deprecated / replacement metadata
 ~~~
@@ -630,7 +656,7 @@ INCOMPATIBLE
 REVOKED
 ~~~
 
-REVOKED 可因 security / critical correctness 發生。舊 Blueprint body 不修改，但 Resolver / Runtime 可拒絕執行並交 F12 Recovery。
+`execution_status` 是 canonical current machine source：`ACTIVE | REVOKED`。REVOKED 可因 security / critical correctness 發生；它與 selection `availability` 分離。舊 Blueprint body 不修改，但 Validator / Resolver / fresh Execution Admission / Runtime 必須拒絕 current REVOKED capability並交 F12 Recovery。
 
 # 12. Phase 1 Concrete Capability Set
 
@@ -1101,6 +1127,9 @@ Random result is capability-local presentation/state in Phase 1；`sample_number
 ### logic.timer@1.0.0
 
 ~~~text
+resource_usage:
+  timerSlotsPerInstance: 1
+
 props:
   duration_ms: NUMBER
     invariant_ids = [NUM_INTEGER, NUM_GTE_ZERO]
@@ -1229,12 +1258,21 @@ EXPERIMENTAL
 ENABLED
 ~~~
 
+Execution Status：
+
+~~~text
+ACTIVE
+REVOKED
+~~~
+
 Production Registry：
 
 - PROPOSED / POC 不得 ENABLED
 - 至少 TESTED 才可 production ENABLED
-- security incident 可 DISABLED / REVOKED
-- maturity 是證據；availability 是該 snapshot 能不能選
+- `availability` 回答「此 snapshot是否可被正常選用」；`executionStatus` 回答「current security/correctness是否仍允許執行」。
+- security / critical-correctness incident 可把 executionStatus改為 REVOKED；不得靠 availability=ENABLED 繞過。
+- DISABLED / EXPERIMENTAL production-unavailable；REVOKED 在所有 context都不可執行。
+- maturity 是證據；availability不是 revocation substitute。
 
 # 16. Capability Resolution Contract
 
@@ -1520,7 +1558,7 @@ Phase 1：
 
 ~~~text
 Static Trusted Registry only
-Current registry_version = 4.0.0
+Current registry_version = 5.0.0
 ~~~
 
 Deployment bind：
@@ -1540,14 +1578,17 @@ Registry update：
 - BF-034 validator-machine remediation = breaking contract；Registry `1.x → 2.0.0`
 - BF-035 event-payload resolver machine shape + `input.select` STRING-only contract = breaking contract；Registry `2.0.0 → 3.0.0`，且 `input.select 1.0.0 → 2.0.0`
 - BF-036 RECORD `optional_fields` TypeDescriptor machine token + Blueprint/SCOPE schema closure = breaking validator contract；Registry `3.0.0 → 4.0.0`。Core capability semantic versions不因純 Registry machine representation rebaseline自動改號。
+- BF-038 execution eligibility + resource-usage Validator projection = breaking machine contract；Registry `4.0.0 → 5.0.0`。Current Core Capability semantic versions維持不變；`logic.timer@1.0.0` explicit usage=1，其餘 current Core explicit usage=0。
 - old validated Blueprint 保留原 capability refs / registry_version
 - compatibility layer 判斷是否仍可執行
 
 # 30. Open Decisions
 
-BF-030 / BF-031 / BF-034 / BF-035 已完成前次 remediation。BF-036 Blueprint machine-schema completeness 已於 2026-10-03 Human blanket-approved through re-activation：F02 exact nested schema closure、RECORD optional_fields canonical token、all-dispatch-site SCOPE typing、F03 lexical runtime context、Registry validator contract MAJOR bump to 4.0.0。T002 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
+BF-030 / BF-031 / BF-034 / BF-035 / BF-036 已完成前次 remediation。
 
-目前沒有其他同類 F04/F02 machine-schema completeness open decision。
+BF-038 已於 2026-10-04 Human blanket-approved through pre-Cursor re-execution：Registry v5 必須 machine-project availability、executionStatus、execution class與ResourceUsageProfile，讓 F02 V04/V09及 fresh Execution Admission不靠 implementation guess。T003 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
+
+目前沒有其他同類 T003 F04/F02 execution-eligibility/resource machine completeness open decision。
 
 已閉合：
 
