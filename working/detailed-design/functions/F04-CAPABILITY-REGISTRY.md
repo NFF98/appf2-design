@@ -534,7 +534,7 @@ Canonical rules：
 3. Phase 1 current Core：`logic.timer@1.0.0 timerSlotsPerInstance=1`；其餘 current Core exact definitions = 0。未宣告 usage的 ENABLED Capability → Registry generation hard fail。
 4. `maxInstancesPerBlueprint` / `maxSerializedPropsBytes` / `maxEventBindings` / `maxActionBindings` / `maxConcurrentTimers` 的 exact V09 measurement由 F02 §19.1/19.2擁有。
 5. `maxLocalStateBytes` 是 F03 per-concrete-NodeInstanceKey dynamic guard；F03 exact measurement見 F03 §37。它不能取代 F02可 static proof的 resource checks。
-6. `mediaAutoplayAllowed` / `networkAccessAllowed` 是 permission/security policy，F02 V10 / F03 enforcement共同遵守。
+6. `mediaAutoplayAllowed` / `networkAccessAllowed` 是 permission/security policy，F02 V10 / F03 enforcement共同遵守。Phase 1 Release 1 exact policy：兩者都必須為 `false`；任一為 `true` 都不是 current Phase 1 executable contract，F02 V10 以 `F02-ERR-012` reject。`USER_GESTURE` 不形成 autoplay/network 隱含例外；未來若啟用必須走 versioned contract。
 7. Capability Card 可以更嚴格，不能自行提高 platform global ceiling；source budget若高於 platform ceiling且該維度有 global ceiling → generation hard fail，不 clamp。
 
 # 8. Generated Compiler Artifact
@@ -656,7 +656,7 @@ INCOMPATIBLE
 REVOKED
 ~~~
 
-`execution_status` 是 canonical current machine source：`ACTIVE | REVOKED`。REVOKED 可因 security / critical correctness 發生；它與 selection `availability` 分離。舊 Blueprint body 不修改，但 Validator / Resolver / fresh Execution Admission / Runtime 必須拒絕 current REVOKED capability並交 F12 Recovery。
+`availability` / `execution_status` 在 compatibility-manifest 與 Validator Registry 中代表**該 immutable Registry snapshot生成當下的 lifecycle truth**。同一 `registry_version + registry_digest` 下不得 mutation 這些欄位。Fresh current execution authority由 §15.1 `CapabilityExecutionPolicySnapshot` 另行提供；effective eligibility 必須同時滿足 pinned snapshot與 current policy，REVOKED / unavailable 交 F12 Recovery。
 
 # 12. Phase 1 Concrete Capability Set
 
@@ -1232,10 +1232,12 @@ required
 Rules：
 
 1. Dependency graph Phase 1 必須 acyclic。
-2. Required dependency unavailable → dependent capability unavailable。
-3. Optional degradation 必須 Card 明確宣告。
-4. Blueprint 不自行描述 npm / package implementation dependencies。
-5. Transitive dependency 由 Registry / Validator resolution。
+2. Required dependency resolution只在同一 immutable Validator Registry snapshot中使用 canonical dependency `id + versionRange + required` truth；不得從 current policy invent dependency edge。
+3. 對 required dependency：取 snapshot中符合 `versionRange` 的 exact versions，SemVer由高到低；候選必須通過 execution class、Blueprint schema/runtime compatibility與 transitive required dependencies。Validation-time另要求 snapshot availability=ENABLED + execution_status=ACTIVE；fresh execution-time再額外套用 §15.1 current policy。第一個 fully eligible candidate才滿足 dependency；沒有 candidate → dependent capability unavailable。
+4. Dependency candidate 自身 schema/runtime incompatible、current disabled/revoked、或 transitive required dependency失敗，都只代表此 dependency candidate unavailable；若沒有其他候選，parent internal reason = `CAPABILITY_DEPENDENCY_UNAVAILABLE`。
+5. Optional degradation 必須 Card 明確宣告。
+6. Blueprint 不自行描述 npm / package implementation dependencies。
+7. Transitive dependency 由 Registry / Validator deterministic resolution。
 
 # 15. Maturity vs Availability
 
@@ -1269,10 +1271,36 @@ Production Registry：
 
 - PROPOSED / POC 不得 ENABLED
 - 至少 TESTED 才可 production ENABLED
-- `availability` 回答「此 snapshot是否可被正常選用」；`executionStatus` 回答「current security/correctness是否仍允許執行」。
-- security / critical-correctness incident 可把 executionStatus改為 REVOKED；不得靠 availability=ENABLED 繞過。
+- Registry source中的 `availability` / `executionStatus` 是生成該 **immutable snapshot** 時的 lifecycle truth；同一 registry_version/digest 不可後改。
+- 新 Registry snapshot可反映新的 lifecycle state；security / critical-correctness emergency 在不重寫歷史 snapshot 的情況下，使用 §15.1 current execution policy立即收緊。
 - DISABLED / EXPERIMENTAL production-unavailable；REVOKED 在所有 context都不可執行。
 - maturity 是證據；availability不是 revocation substitute。
+
+## 15.1 CapabilityExecutionPolicySnapshot — Fresh Current Authority
+
+Fresh execution 不得 mutation historical Validator Registry。F04 另外定義 current server/deployment policy snapshot：
+
+~~~text
+CapabilityExecutionPolicySnapshot = {
+  policy_version: SemVer,
+  policy_digest: "sha256:<64 lowercase hex>",
+  capabilities: map<capability_id, map<capability_version, {
+    availability: DISABLED | EXPERIMENTAL | ENABLED,
+    execution_status: ACTIVE | REVOKED
+  }>>
+}
+~~~
+
+Canonical rules：
+
+1. `policy_digest` 由 policy body canonical JSON計算；同一 `policy_version` 若 body/digest改變 → deployment/build hard fail。每次 policy變更必須新 policy version + digest。
+2. Policy keyed by exact CapabilityRef，可涵蓋多個仍受支援的 historical Registry snapshots；它**不**改變任何 historical `registry_digest`。
+3. Fresh execution effective state = immutable Registry snapshot state AND current policy state。兩邊任一 deny即 deny。
+4. Policy只能收緊：不得把 pinned snapshot `DISABLED/EXPERIMENTAL → ENABLED`，不得把 pinned `REVOKED → ACTIVE`。若 policy entry缺少 referenced exact CapabilityRef，fresh execution fail closed。
+5. Policy只擁有 current `availability` / `execution_status`。Execution class、dependency graph/version range、compatibility range、validator contract、ResourceBudget、ResourceUsageProfile都仍由 pinned immutable Registry snapshot擁有；policy不得覆寫。
+6. Required dependency fresh resolution沿用 §14 pinned dependency graph + version candidates，並對每個 candidate recursively套用 current policy與其 pinned compatibility。Dependency current incompatible / disabled / revoked / transitive failure → candidate unavailable。
+7. Public client不得提供、選擇或覆寫 policy version/digest/body；只由 trusted server/deployment注入 ExecutionRuntimeContext。
+8. Security/admin revoke應更新 current policy並 purge admission metadata cache；fresh admission最晚依 EXECUTION-ADMISSION的15秒 internal metadata cache上限看到新 policy。
 
 # 16. Capability Resolution Contract
 
@@ -1370,6 +1398,8 @@ Build hard fail：
 - ENABLED capability missing runtime handler
 - ENABLED capability missing validator schema
 - same registry_version with changed digest
+- same execution policy_version with changed policy_digest
+- execution policy state token非法 / referenced current exact ref缺失時不得 fail-open
 
 # 19. Frontend Behavior
 
@@ -1579,14 +1609,17 @@ Registry update：
 - BF-035 event-payload resolver machine shape + `input.select` STRING-only contract = breaking contract；Registry `2.0.0 → 3.0.0`，且 `input.select 1.0.0 → 2.0.0`
 - BF-036 RECORD `optional_fields` TypeDescriptor machine token + Blueprint/SCOPE schema closure = breaking validator contract；Registry `3.0.0 → 4.0.0`。Core capability semantic versions不因純 Registry machine representation rebaseline自動改號。
 - BF-038 execution eligibility + resource-usage Validator projection = breaking machine contract；Registry `4.0.0 → 5.0.0`。Current Core Capability semantic versions維持不變；`logic.timer@1.0.0` explicit usage=1，其餘 current Core explicit usage=0。
+- BF-039 不改 Validator Registry v5 machine shape，因此 Registry仍為 `5.0.0`；新增獨立 `CapabilityExecutionPolicySnapshot 1.0.0` current-authority contract，並把 F02 timer usage machine token統一為 F04-owned camelCase `timerSlotsPerInstance`。
 - old validated Blueprint 保留原 capability refs / registry_version
-- compatibility layer 判斷是否仍可執行
+- compatibility layer + fresh current execution policy共同判斷是否仍可執行
 
 # 30. Open Decisions
 
 BF-030 / BF-031 / BF-034 / BF-035 / BF-036 已完成前次 remediation。
 
-BF-038 已於 2026-10-04 Human blanket-approved through pre-Cursor re-execution：Registry v5 必須 machine-project availability、executionStatus、execution class與ResourceUsageProfile，讓 F02 V04/V09及 fresh Execution Admission不靠 implementation guess。T003 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
+BF-038 已完成前次 Registry v5 execution eligibility/resource-usage remediation。BF-039 於 T003 candidate independent review 發現 historical Registry snapshot 被當作 mutable current revocation source、required dependency compatibility漏檢、V10 media policy未閉合與 usage token命名不一致；Human 已批准 same-class remediation through pre-Cursor re-execution。
+
+BF-039 resolution：Registry v5 snapshot保持 immutable；current availability/revocation由獨立 `CapabilityExecutionPolicySnapshot 1.0.0` 只收緊；dependency fresh eligibility遞迴包含 schema/runtime compatibility；Phase 1 media/network flags均必須 false；ResourceUsageProfile唯一 token = `timerSlotsPerInstance`。T003 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
 
 目前沒有其他同類 T003 F04/F02 execution-eligibility/resource machine completeness open decision。
 
