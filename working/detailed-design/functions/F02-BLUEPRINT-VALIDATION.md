@@ -107,7 +107,7 @@ Phase 1 logical shape：
 ~~~json
 {
   "schema_version": "1.0.0",
-  "registry_version": "2.0.0",
+  "registry_version": "3.0.0",
   "kind": "APP",
   "meta": {
     "title": "聚餐分帳",
@@ -183,8 +183,8 @@ Registry version 不取代 capability version。
 
 BF-034 resolution：
 
-- Current Phase 1 Registry snapshot version = `2.0.0`。
-- `1.x` 與 `2.0.0` 的 validator machine contract 不視為同一 executable contract；未知或不相容 snapshot 必須在 V03 reject。
+- Current Phase 1 Registry snapshot version = `3.0.0`。
+- `1.x` / `2.0.0` 與 `3.0.0` 的 validator machine contract 不視為同一 executable contract；未知或不相容 snapshot 必須在 V03 reject。
 - Capability 自身的 `capability_version` 不因 Registry machine-contract rebaseline 自動改號；只有該 Capability contract 本身 breaking 時才另行 bump。
 
 # 6. Metadata Contract
@@ -710,11 +710,11 @@ Rules：
 5. event 必須由 Capability 宣告；F04 generated event contract 提供 `EventPayloadDescriptorResolver`。F02 必須先以同 node 已驗證的 props/bindings deterministic resolve 成 concrete F02 TypeDescriptor，之後該 descriptor 才是 EVENT root type。
 6. event payload resolver 若引用不存在/錯誤 kind 的 binding/prop、無法得到 concrete descriptor、或違反其 canonical invariant → node validation reject；不得 fallback 成 ANY / inferred object shape。
 7. action ref 必須存在
-7. `children` / `repeat` 是 **F02 structural composition fields，不是 binding names**
-8. children / repeat 只有 F04 `composition` 明確允許的 Capability 可用；不得用 magic binding name（例如 `children` / `items`）推導
-9. root_node_id 可達所有 executable node
-10. orphan executable node → reject
-11. child graph 不可 cycle
+8. `children` / `repeat` 是 **F02 structural composition fields，不是 binding names**
+9. children / repeat 只有 F04 `composition` 明確允許的 Capability 可用；不得用 magic binding name（例如 `children` / `items`）推導
+10. root_node_id 可達所有 executable node
+11. orphan executable node → reject
+12. child graph 不可 cycle
 
 F04 generated Validator artifact 是 prop/binding/event/action/composition 的唯一 Capability machine truth；F02 不維護第二份 Capability allowlist/schema。
 
@@ -840,21 +840,21 @@ STATIC(descriptor)
 BOUND_STATE_DESCRIPTOR(binding_key)
 → resolve node.bindings[binding_key]
 → required source kind = STATE
-→ concrete bound mutable state TypeDescriptor
+→ payload root = RECORD{ value: concrete bound mutable state TypeDescriptor }
 
 BOUND_STRING_NARROWED_BY_PROP(binding_key, prop_key)
 → resolve node.bindings[binding_key] as concrete mutable STRING descriptor
 → resolve node.props[prop_key] as validated LITERAL NUMBER
-→ concrete STRING(max_length = literal prop value)
+→ payload root = RECORD{ value: STRING(max_length = literal prop value) }
 ~~~
 
 Rules：
 
 1. Resolver 只能引用同一 node 的已宣告 machine binding/prop key。
 2. props/bindings 的 requiredness、source kind、TargetMatcher、named invariant 必須先 PASS。
-3. `BOUND_STATE_DESCRIPTOR` 不允許 RULE/OP/EVENT/SCOPE/LITERAL 代替 STATE，也不允許 abstract matcher（例如 ANY_ENUM）直接充當 payload descriptor；必須取得 Blueprint 中實際 concrete state descriptor。
-4. `BOUND_STRING_NARROWED_BY_PROP` 的 prop value 必須是已通過 invariant 的 literal integer；若大於 bound STRING 的 max_length → reject。
-5. resolver 完成後 event payload 必須是完整 concrete F02 TypeDescriptor；任何 unresolved state / missing key / non-concrete descriptor → V06/V08 reject。
+3. `BOUND_STATE_DESCRIPTOR` 不允許 RULE/OP/EVENT/SCOPE/LITERAL 代替 STATE，也不允許 abstract matcher（例如 ANY_ENUM）直接充當 payload descriptor；必須取得 Blueprint 中實際 concrete state descriptor，並包成 canonical payload-root `RECORD{value: ...}`。
+4. `BOUND_STRING_NARROWED_BY_PROP` 的 prop value 必須是已通過 invariant 的 literal integer；若大於 bound STRING 的 max_length → reject；resolved payload-root 固定為 `RECORD{value: STRING(max_length=n)}`。
+5. resolver 完成後 event payload root 必須是完整 concrete F02 RECORD TypeDescriptor；任何 unresolved state / missing key / non-concrete descriptor → V06/V08 reject。
 6. resolver metadata 不寫入 Blueprint body，也不成為 Runtime type system；它只決定 Admission 時的 event concrete descriptor。
 7. 相同 Blueprint + Registry snapshot 必須 resolve 成相同 descriptor。
 
