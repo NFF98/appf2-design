@@ -180,7 +180,7 @@ Top-level exact shape（**11 keys 全部 required**，不得省略 empty object 
 ~~~text
 Blueprint = {
   schema_version: "1.0.0",
-  registry_version: "5.0.0",
+  registry_version: "6.0.0",
   kind: "APP",
   meta: Meta,
   support: Support,
@@ -1216,7 +1216,7 @@ Capability Card 可以更低，不可更高。
 12. **event bindings** = 所有 static `Node.events` map entry 的總和；repeat runtime multiplicity不改這個 static metric。
 13. **result outputs / support degradations / capability refs per degradation / children refs per node** = 對應 canonical array length；後兩者逐 container individually 檢查。
 14. **node runtime instance upper bound**：某 static Node 的 `instance_upper_bound` = 該 Node **strict structural ancestors** 中所有帶 `repeat` Node 的 admitted `repeat.max_items` 乘積；沒有 repeat ancestor時=1。Node自己的 repeat不乘自己。
-15. **concurrent timers**：F04 Registry v5 每個 exact CapabilityRef 必須 machine-declare `resource_usage.timerSlotsPerInstance`。Blueprint `timer_count = Σ(node.instance_upper_bound × capability.resource_usage.timerSlotsPerInstance)`。不得從 `TIME_DEPENDENT`、名稱 `logic.timer` 或 handler實作反推。Phase 1 Core truth：`logic.timer@1.0.0 = 1`，其餘 current Core = 0。
+15. **concurrent timers**：F04 Registry v6 每個 exact CapabilityRef 必須 machine-declare `resource_usage.timerSlotsPerInstance`。Blueprint `timer_count = Σ(node.instance_upper_bound × capability.resource_usage.timerSlotsPerInstance)`。不得從 `TIME_DEPENDENT`、名稱 `logic.timer` 或 handler實作反推。Phase 1 Core truth：`logic.timer@1.0.0 = 1`，其餘 current Core = 0。
 16. 所有 integer count 使用 mathematical integer；乘積或總和若超出 safe implementation integer range，直接視為超 ceiling reject，不 wrap / clamp。
 
 ### 19.2 F04 ResourceBudget Enforcement Split
