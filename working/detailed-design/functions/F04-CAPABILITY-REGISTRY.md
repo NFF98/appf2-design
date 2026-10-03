@@ -102,6 +102,7 @@ Generated outputs：
 ~~~text
 generated/capabilities/
 ├─ registry-manifest.json
+├─ registry-release-ledger.json
 ├─ compiler-catalog.json
 ├─ validator-registry.ts
 ├─ runtime-registry.ts
@@ -633,6 +634,39 @@ Rules：
 12. F02 只讀此 generated `validator` contract 做 capability validation；不得維護第二份 capability schema / invariant table。
 13. `validator_registry_digest` canonical input包含 lifecycle fields，因此 same-version原地 ACTIVE↔REVOKED / ENABLED↔DISABLED 一定使 artifact digest改變並被 release identity gate拒絕。
 14. Generator 必須 deterministic；相同 canonical definitions + historical ledger輸入生成 byte-equivalent artifacts、相同 execution/runtime binding/artifact/source digests。
+
+### 9.1 BF-040 RegistryReleaseLedger
+
+`registry-release-ledger.json` 是 release pipeline 的 append-only machine truth，exact logical shape：
+
+~~~text
+RegistryReleaseLedger = {
+  schema_version: "1.0.0",
+  releases: [
+    {
+      registry_version: SemVer,
+      registry_digest: sha256,
+      validator_registry_digest: sha256,
+      runtime_registry_digest: sha256
+    }
+  ],
+  capability_identities: map<capability_id, map<capability_version, {
+    execution_contract_digest: sha256,
+    runtime_binding_digest: sha256
+  }>>
+}
+~~~
+
+Canonical rules：
+
+1. `releases[]` 依 SemVer strictly ascending；同一 `registry_version` 只能出現一次。
+2. 已存在 release entry不得 rewrite/delete；新 release只可 append。
+3. `capability_identities` 是歷史 union，不因 capability暫時從 current Registry移除而刪除。
+4. Current exact `id@version` 若 ledger已有 identity，execution/runtime兩個 digest必須 exact equal；不同即 `CAPABILITY_VERSION_REUSE` hard fail。
+5. 新 exact Capability version可新增 identity；一旦寫入不可改。
+6. Ledger serialization使用與 §4 digest相同 canonical JSON；build/deployment把 ledger當 trusted immutable release artifact，不從 public client載入。
+7. Release bundle verification順序：先重算 Validator/Runtime artifact digest，再要求完整 four-field release tuple存在於 ledger；任一 mismatch fail closed。
+
 
 **Ref-only artifact 不合格：**
 
