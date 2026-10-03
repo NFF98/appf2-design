@@ -50,7 +50,7 @@ content_hash
 → select exact pinned Registry v7 release bundle for Blueprint.registry_version + admitted registry_digest
 → select deployment current execution Registry v7 release bundle
 → verify both bundles against trusted append-only RegistryReleaseLedger
-→ verify pinned RuntimeRegistry artifact + direct Node handler completeness
+→ verify pinned RuntimeRegistry artifact + direct Node registration keys against actual TrustedRuntimeHandlerCatalog
 → construct trusted ExecutionRuntimeContext
 → F02 assertExecutable(contentHash, runtimeContext)
 → schema / pinned release identity / runtime compatibility
@@ -80,6 +80,7 @@ ExecutionRuntimeContext = {
   registry_snapshot: RegistryReleaseBundle,
   current_registry_snapshot: RegistryReleaseBundle,
   trusted_release_ledger: trusted append-only RegistryReleaseLedger,
+  trusted_runtime_handler_catalog: server/deployment-owned actual bundled handler keys,
   now: trusted server time
 }
 ~~~
@@ -248,7 +249,7 @@ E08 temporary/deployment infrastructure failure at any admission read/load bound
       OR pinned release lookup/load throws/times out
       OR current release lookup/load/integrity verification fails
       OR trusted release ledger cannot be loaded/verified
-      OR pinned RuntimeRegistry / bundled-handler verification cannot be completed
+      OR pinned RuntimeRegistry / TrustedRuntimeHandlerCatalog verification cannot be completed
     → HTTP 503 / retry, never executable=true
 
 otherwise
