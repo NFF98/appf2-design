@@ -588,7 +588,7 @@ TypeDescriptor
 | { type: RECORD,  constraints:  { fields: map<field, TypeDescriptor>, optional_fields?: field[] } }
 ~~~
 
-TypeDescriptor 遞迴 shape 受 canonical Blueprint bytes / total initial state bytes ceiling 限制，不建立第二套 hidden type system。
+TypeDescriptor 遞迴 shape 受 §19 `TypeDescriptor / composite literal nesting depth = 12`、canonical Blueprint bytes / total initial state bytes ceiling共同限制，不建立第二套 hidden type system；composite LITERAL nesting 必須跟 receiving expected descriptor同步計 depth。
 
 ### 8.1.2 Canonical Static Assignability / Descriptor Join
 
@@ -1177,6 +1177,7 @@ Rules：
 | action steps / action | 16 |
 | expression AST nodes / expression | 64 |
 | expression nesting depth | 12 |
+| TypeDescriptor / composite literal nesting depth | 12 |
 | UI child nesting depth | 12 |
 | repeat nesting depth | 2 |
 | initial LIST items | 500 |
