@@ -295,8 +295,13 @@ BindingContract = {
   invariant_ids: InvariantId[]
 }
 
+EventPayloadDescriptorResolver
+= { kind: "STATIC", descriptor: TypeDescriptor }
+| { kind: "BOUND_STATE_DESCRIPTOR", binding_key: string }
+| { kind: "BOUND_STRING_NARROWED_BY_PROP", binding_key: string, prop_key: string }
+
 EventContract = {
-  payload: TypeDescriptor,
+  payload: EventPayloadDescriptorResolver,
   invariant_ids: InvariantId[]
 }
 
@@ -312,7 +317,8 @@ Canonical defaults：
 - `invariant_ids` is always an array；none = `[]`。
 - `mutable_state_required` is always boolean；default `false`。
 - `reference` is always explicit；default `NONE`。
-- `source_kinds` is always explicit in generated machine truth。Human-readable §13.1 prop shorthand defaults to `[LITERAL]` only。
+- `source_kinds` is always explicit in generated machine truth。Human-readable §13.1 prop shorthand defaults to `[LITERAL]` only；**action arg shorthand has no implicit source-kind default**，每個 action arg 必須在 §13.1 明示。
+- event `payload` 一律使用 `EventPayloadDescriptorResolver`；`STATIC` 直接攜帶完整 payload-root concrete F02 TypeDescriptor。§13.1 human-readable `payload.value = T` / `payload = {}` 只是不改語意的 shorthand，canonical source 必須 normalize 成 `STATIC(RECORD{...})`；node-dependent payload 只能使用本節列出的 resolver kind，不得由 implementation 自創 resolver token。
 - empty props / bindings / events / actions are `{}`，never omitted。
 - `capability_state` must be explicit resolved TypeDescriptor or `NONE`。
 - `composition.children` and `composition.repeat` are always explicit booleans；`repeat_required` exists only when repeat=true and is otherwise omitted。
@@ -368,7 +374,16 @@ InvariantId = one of the canonical IDs listed below
 SourceKind = LITERAL | STATE | RULE | OP | EVENT | SCOPE
 ~~~
 
-Rules：
+Event payload resolver rules：
+
+1. `STATIC`：generated artifact 已攜帶完整 concrete F02 TypeDescriptor；F02 直接使用。
+2. `BOUND_STATE_DESCRIPTOR`：`binding_key` 必須指向同一 node 已驗證、`source_kinds=[STATE]` 且可解析為 concrete mutable state descriptor 的 binding；resolver 的 **payload root** 固定產生 `RECORD{ value: <bound concrete descriptor> }`。
+3. `BOUND_STRING_NARROWED_BY_PROP`：`binding_key` 必須解析為 concrete mutable STRING descriptor；`prop_key` 必須是同 node 已驗證的 LITERAL NUMBER prop，且其 canonical invariant 保證為合法 max_length。resolver 的 **payload root** 固定產生 `RECORD{ value: STRING(max_length = prop value) }`；若該值大於 bound STRING max_length，node validation reject。
+4. resolver 解析發生在 F02 node props/bindings 驗證之後、EVENT dispatch-site typing 之前；任何 unresolved / wrong-kind / non-concrete descriptor → F02 reject。
+5. resolver 只是 generated Validator machine metadata，不可序列化進 Blueprint、state、Rule、Result 或 Runtime value。
+6. 同一 node/event 在相同 Blueprint + Registry snapshot 下必須 deterministic resolve 為同一 concrete TypeDescriptor。
+
+Target matcher rules：
 
 1. `EXACT(D)` 使用 F02 §8.1.2 `Assignable(source,D)`。
 2. `ONE_OF`：source 至少 assignable / match 一個 branch。
@@ -405,12 +420,12 @@ Semantics：
 - `NUM_INT_RANGE_0_500`：integer 且 0 <= value <= 500。
 - `INPUT_NUMBER_BOUNDS`：min/max/step finite；min<=max；step 若存在 >0；bound state NUMBER constraints authoritative，props 只能收窄有效輸入，不可放寬 state contract。
 - `INPUT_TEXT_BOUND`：bound state 必須是 mutable STRING；prop.max_length <= bound state's max_length；event payload effective bound = prop.max_length。
-- `SELECT_ENUM_DOMAIN`：options value unique、同 primitive type；E = exact ordered-insensitive options domain；bound ENUM allowed domain == E。
+- `SELECT_ENUM_DOMAIN`：Phase 1 `input.select` is STRING-valued only。options 每個 `value` 必須是 STRING(max 8192)、value unique；E = exact ordered-insensitive STRING option-value domain；bound state 必須是 mutable ENUM whose members are STRING values，且 `allowed` domain == E。NUMBER/BOOLEAN-valued select 不屬於 Phase 1 contract。
 - `STAT_FORMAT`：NUMBER/PERCENT/CURRENCY_DISPLAY 只接受 NUMBER；TEXT 接受 NUMBER/STRING/BOOLEAN/concrete ENUM。
 - `TABLE_COLUMNS`：column.key unique 且存在於 concrete row RECORD；numeric display format要求 NUMBER field。
 - `TABLE_ROWS_BOUND`：rows concrete LIST max_length <= prop.max_rows。
-- `RANDOM_MIN_MAX`：sample_number args.min <= args.max。
-- `SCORE_BOUNDS`：initial default 0；min<=max；initial/set/increment result 必須留在 declared bounds。
+- `RANDOM_MIN_MAX`：sample_number args.min <= args.max。Admission 必須證明 **所有** 可能的 resolved values 都滿足 relation；LITERAL 視為 singleton descriptor，dynamic NUMBER source 只有在 descriptor bounds 能證明 `max_possible(min) <= min_possible(max)` 時可 admission，任一缺失必要 bound / 無法證明 → reject。Runtime invoke 前仍以 exact resolved values 重驗，失敗則 current Action rollback。
+- `SCORE_BOUNDS`：initial default 0；min<=max；initial/reset target 必須在 bounds。若 `set` 使用 dynamic source 且有 declared min/max，source NUMBER descriptor 必須是該 bounds 的安全子集合，否則 admission reject。對 `increment`，因結果依賴 current capability state，F02 只驗證 NUMBER type/source kind；F03 在 transaction pre-commit 以前以 exact current score + delta 強制檢查 result bounds，超界則 invocation failure + current Action rollback。Runtime 對 `set` / `reset` 亦重驗 exact result。
 
 Generated validator artifact 必須攜帶 invariant ID；不得只攜帶自由文字。
 
@@ -554,10 +569,11 @@ Rules：
 1. `validator` 必須是 §5.1 resolved exact shape；不得只保留名稱 list、schema ref 或自由文字。
 2. TargetMatcher 必須使用 §5.2 exact machine representation。
 3. 所有 named invariant 必須出現在其 canonical `invariant_ids[]` location；generator 不得把 invariant semantics埋成 hand-written validator branch。
-4. event `payload` 必須是 resolved F02 TypeDescriptor；empty payload = `RECORD{fields:{}}`，不得用 implementation-defined `{}` special case。
-5. action `args` empty = `{}`。
-6. F02 只讀此 generated `validator` contract 做 capability validation；不得維護第二份 capability schema / invariant table。
-7. Generator 必須 deterministic；相同 canonical definitions輸入生成 byte-equivalent semantic artifact與相同 registry_digest。
+4. event `payload` 必須使用 §5.1 `EventPayloadDescriptorResolver` exact machine representation。Static event 使用 `{kind:"STATIC", descriptor: ...}`；empty payload = STATIC `RECORD{fields:{}}`，不得用 implementation-defined `{}` special case。
+5. Node-dependent event payload 只允許 `BOUND_STATE_DESCRIPTOR` 或 `BOUND_STRING_NARROWED_BY_PROP`；F02 必須在 node validation 時先 resolve 為 concrete TypeDescriptor，之後才進 EVENT dispatch-site typing。
+6. action `args` empty = `{}`。
+7. F02 只讀此 generated `validator` contract 做 capability validation；不得維護第二份 capability schema / invariant table。
+8. Generator 必須 deterministic；相同 canonical definitions輸入生成 byte-equivalent semantic artifact與相同 registry_digest。
 
 **Ref-only artifact 不合格：**
 
@@ -628,7 +644,7 @@ REVOKED 可因 security / critical correctness 發生。舊 Blueprint body 不�
 | action.button | 1.0.0 | INPUT | INPUT | user gesture 觸發 action | LOCAL_REACT | DETERMINISTIC |
 | input.number | 1.0.0 | INPUT | INPUT | 編輯 typed number state | LOCAL_REACT | DETERMINISTIC |
 | input.text | 1.0.0 | INPUT | INPUT | 編輯 bounded text state | LOCAL_REACT | DETERMINISTIC |
-| input.select | 1.0.0 | INPUT | INPUT | 從 bounded options 選值 | LOCAL_REACT | DETERMINISTIC |
+| input.select | 2.0.0 | INPUT | INPUT | 從 bounded STRING options 選值 | LOCAL_REACT | DETERMINISTIC |
 | input.toggle | 1.0.0 | INPUT | INPUT | 編輯 boolean state | LOCAL_REACT | DETERMINISTIC |
 | data.stat | 1.0.0 | DATA | VIEW | 呈現重要 value / metric | LOCAL_REACT | DETERMINISTIC |
 | data.table_basic | 1.0.0 | DATA | VIEW | 呈現 bounded rows / columns | LOCAL_REACT | DETERMINISTIC |
@@ -731,8 +747,8 @@ bound type: string
 input.select：
 ~~~text
 label
-bind
-options: bounded label/value list
+bind: mutable STRING-domain ENUM
+options: bounded label/STRING-value list
 required?
 event: change
 no remote option loader in Phase 1
@@ -936,8 +952,11 @@ bindings:
 
 events:
   change:
-    payload.value = STRING
-    effective_descriptor = bound state's STRING descriptor narrowed to prop.max_length
+    payload:
+      kind = BOUND_STRING_NARROWED_BY_PROP
+      binding_key = bind
+      prop_key = max_length
+    resolved shape = RECORD{ value: STRING(max_length = validated literal prop.max_length) }
 
 actions: {}
 composition: children=false, repeat=false
@@ -946,7 +965,7 @@ capability_state = NONE
 invariant_ids = [INPUT_TEXT_BOUND]
 ~~~
 
-### input.select@1.0.0
+### input.select@2.0.0
 
 ~~~text
 props:
@@ -954,7 +973,7 @@ props:
   options:
     LIST<RECORD{
       label: STRING(120),
-      value: ONE_OF<NUMBER,STRING,BOOLEAN>
+      value: STRING(8192)
     }>(500)
     source_kinds = LITERAL
   required?: BOOLEAN
@@ -966,7 +985,10 @@ bindings:
 
 events:
   change:
-    payload.value = concrete ENUM member type/domain derived by SELECT_ENUM_DOMAIN
+    payload:
+      kind = BOUND_STATE_DESCRIPTOR
+      binding_key = bind
+    resolved shape = RECORD{ value: bound state's concrete STRING-domain ENUM descriptor }
 
 actions: {}
 composition: children=false, repeat=false
@@ -1054,11 +1076,14 @@ events: {}
 actions:
   sample_number:
     args.min = NUMBER
+      source_kinds = LITERAL | STATE | RULE | OP | EVENT | SCOPE
     args.max = NUMBER
+      source_kinds = LITERAL | STATE | RULE | OP | EVENT | SCOPE
     invariant_ids = [RANDOM_MIN_MAX]
 
   choose_item:
     args.items = LIST<STRING(8192)>(500)
+      source_kinds = LITERAL | STATE | RULE | OP | EVENT | SCOPE
 
 composition: children=false, repeat=false
 
@@ -1113,8 +1138,10 @@ bindings: {}
 actions:
   increment:
     args.delta = NUMBER
+      source_kinds = LITERAL | STATE | RULE | OP | EVENT | SCOPE
   set:
     args.value = NUMBER
+      source_kinds = LITERAL | STATE | RULE | OP | EVENT | SCOPE
   reset: {}
 
 events:
@@ -1492,7 +1519,7 @@ Phase 1：
 
 ~~~text
 Static Trusted Registry only
-Current registry_version = 2.0.0
+Current registry_version = 3.0.0
 ~~~
 
 Deployment bind：
@@ -1509,13 +1536,14 @@ Registry update：
 - compatible capability addition → MINOR
 - metadata-only non-contract fix → PATCH
 - breaking contract → MAJOR
-- BF-034 validator-machine remediation = breaking contract；current Registry `1.x → 2.0.0`
+- BF-034 validator-machine remediation = breaking contract；Registry `1.x → 2.0.0`
+- BF-035 event-payload resolver machine shape + `input.select` STRING-only contract = breaking contract；Registry `2.0.0 → 3.0.0`，且 `input.select 1.0.0 → 2.0.0`
 - old validated Blueprint 保留原 capability refs / registry_version
 - compatibility layer 判斷是否仍可執行
 
 # 30. Open Decisions
 
-BF-030 / BF-031 已完成前次 remediation。BF-034 resolution direction 已於 2026-10-03 Human-approved：safe-subset static assignability、numeric refinement 使用 canonical named invariant、EVENT/SCOPE canonical relative path + all-dispatch-site typing、Registry validator contract MAJOR bump to 2.0.0。T002 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
+BF-030 / BF-031 / BF-034 已完成前次 remediation。BF-035 B2–B4 resolution direction 已於 2026-10-03 Human-approved：action args 明示 source_kinds + static/runtime invariant split、`input.select` 收斂為 STRING-valued contract 並 bump 至 2.0.0、event payload 使用 deterministic node-local resolver machine contract、Registry validator contract MAJOR bump to 3.0.0。T002 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
 
 已閉合：
 

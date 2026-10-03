@@ -725,7 +725,7 @@ Reset：
 target node
 → exact CapabilityRef
 → trusted runtime-registry handler
-→ validate action + args
+→ validate action + resolved args + applicable invariant_ids
 → invoke through RuntimeContext
 → CapabilityInvocationResult
 ~~~
@@ -739,6 +739,18 @@ dispose(capability_state, runtime_context)
 ~~~
 
 Blueprint 永遠不能提供 handler。
+
+### 19.1 BF-035 Runtime Revalidation for Action Invariants
+
+F02 admission 的 static proof 不取代 Runtime 對 exact resolved values 的 transaction-time enforcement。
+
+Rules：
+
+1. Runtime invoke 前必須依 F04 generated Validator contract 重驗 action name、arg keys、resolved arg base type與 applicable invariant IDs；不得從 prose Card自行建立第二份規則。
+2. `RANDOM_MIN_MAX`：即使 F02 已證明 descriptor-level relation，Runtime仍以本次 exact `min` / `max` resolved values檢查 `min <= max`；失敗 → invocation FAILURE，current Action rollback。
+3. `SCORE_BOUNDS`：`set` / `reset` / `increment` 的 exact resulting score 必須在 declared bounds；`increment` 一律在 transaction pre-commit 前用 current capability state + resolved delta檢查。超界 → invocation FAILURE，current Action rollback。
+4. Runtime revalidation 不得讓 F02 原本無法 static prove 的 `RANDOM_MIN_MAX` candidate 通過 admission；Runtime check 是 defense-in-depth，不是 admission bypass。
+5. 所有 invariant failure 必須保持 atomicity：不 commit Blueprint mutable state、capability_state patch、staged effect 或 emitted event。
 
 # 20. Capability Invocation Result
 
