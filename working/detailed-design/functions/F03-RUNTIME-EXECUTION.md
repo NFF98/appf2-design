@@ -1328,17 +1328,28 @@ Capability declaration
 
 # 37. Runtime Resource Enforcement
 
-F02 admission 是第一層，F03 再做 defense-in-depth：
+F02 admission 是第一層，F03 再做 defense-in-depth。BF-038 明確分離 static admission proof 與 dynamic runtime guard：F03 不得用 runtime實際值回頭合理化一個本應被 F02 V09拒絕的 Blueprint。
+
+F03 guards：
 
 - event queue max
 - dispatch-cycle max
-- timer max
-- capability instance count
+- timer max（不得超過 admitted F02 timer upper bound / Capability budget）
+- capability instance count（不得超過 admitted static upper bound）
+- capability-local state bytes
 - state patch size
 - repeat max
 - effect rate limit
 - node error boundary
 - action duration instrumentation
+
+`ResourceBudget.maxLocalStateBytes` exact runtime measurement：
+
+1. guard unit = **每個 concrete NodeInstanceKey** 的 capability-local state，不跨 instance合併。
+2. value使用 F04 admitted `capability_state` TypeDescriptor，只能有 declared fields / optional ABSENT semantics。
+3. 每次 initialize後、每次準備 commit capability-local state mutation前，將該 state value依 F02 canonical JSON scalar/object ordering rules序列化，取 exact UTF-8 byte length。
+4. byte length > exact Capability `maxLocalStateBytes` → 本次 transition不得 commit，進 typed Runtime resource failure / Recovery；不得 truncate / drop field / silently reset。
+5. 此 dynamic guard不替代 F02 §19.1/19.2 的 static Blueprint / timer / instance / binding / props checks。
 
 Phase 1 synchronous action CPU：
 
