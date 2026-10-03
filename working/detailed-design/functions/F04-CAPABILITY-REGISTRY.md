@@ -240,7 +240,7 @@ CapabilityDefinition
 
 > **BF-031 remediation：Executable machine shape 不得留給 Cursor / implementation 自行決定。** Working 必須先固定 validator 可消費的 field/type/composition contract；TypeScript/Zod 只做機械翻譯，不得新增 Product semantics。
 
-Registry machine-source rule（v2+，current v5）：
+Registry machine-source rule（v2+，current v6）：
 
 - `CapabilityDefinition.contract.validator` 是 executable Validator machine truth 的 canonical source field。
 - `propsSchema` / `stateSchema` 可保留供 semantic/documentation/runtime schema reference，但 **不得**取代或覆蓋 `contract.validator`。
@@ -536,6 +536,8 @@ Canonical rules：
 5. `maxLocalStateBytes` 是 F03 per-concrete-NodeInstanceKey dynamic guard；F03 exact measurement見 F03 §37。它不能取代 F02可 static proof的 resource checks。
 6. `mediaAutoplayAllowed` / `networkAccessAllowed` 是 permission/security policy，F02 V10 / F03 enforcement共同遵守。
 7. Capability Card 可以更嚴格，不能自行提高 platform global ceiling；source budget若高於 platform ceiling且該維度有 global ceiling → generation hard fail，不 clamp。
+8. BF-039 machine token normalization：Generated Validator 中 canonical field path **唯一**是 `resource_usage.timerSlotsPerInstance`。snake_case `timer_slots_per_instance` 不存在 alias、不得接受雙拼法；F02/F03/F04/Tests 全部引用同一 camelCase token。
+9. Phase 1 production policy：ENABLED Core 的 `mediaAutoplayAllowed` 與 `networkAccessAllowed` 都必須為 `false`；任一為 true → Registry generation hard fail。未來 media/browser permission 必須走 versioned Product contract，不得由 T003 implementation自行放寬。
 
 # 8. Generated Compiler Artifact
 
@@ -581,6 +583,7 @@ GeneratedCapabilityValidator = {
   permission_class: PermissionClass,
   resource_budget: ResourceBudget,
   resource_usage: ResourceUsageProfile,
+  execution_contract_digest: "sha256:<64 lowercase hex>",
   availability: DISABLED | EXPERIMENTAL | ENABLED,
   execution_status: ACTIVE | REVOKED,
   execution_class: LOCAL_REACT | LOCAL_RULE | LOCAL_EFFECT,
@@ -596,6 +599,9 @@ Rules：
 3. 所有 named invariant 必須出現在其 canonical `invariant_ids[]` location；generator 不得把 invariant semantics埋成 hand-written validator branch。
 4. event `payload` 必須使用 §5.1 `EventPayloadDescriptorResolver` exact machine representation。Static event 使用 `{kind:"STATIC", descriptor: ...}`；empty payload = STATIC `RECORD{fields:{}}`，不得用 implementation-defined `{}` special case。
 5. Node-dependent event payload 只允許 `BOUND_STATE_DESCRIPTOR` 或 `BOUND_STRING_NARROWED_BY_PROP`；F02 必須在 node validation 時先 resolve 為 concrete TypeDescriptor，之後才進 EVENT dispatch-site typing。
+6. BF-039 `execution_contract_digest` = 對此 exact CapabilityRef 的 immutable executable contract canonical JSON 做 SHA-256。Digest input **包含** `validator`、`permission_class`、`resource_budget`、`resource_usage`、`execution_class`、`compatibility`、`degradation`；**排除** `availability`、`execution_status`。
+7. 同一 exact CapabilityRef 跨不同 Registry snapshots 若 `execution_contract_digest` 改變，代表 executable semantics drift；必須 bump Capability semantic version。不得只 bump Registry version後沿用同一 CapabilityRef。
+8. `availability` / `execution_status` 是唯一允許在相同 exact CapabilityRef 跨 Registry snapshots 改變而不 bump Capability version的 execution-policy fields；每次改變仍必須發布新的 Registry version + digest，禁止 same-version/digest mutation。
 6. action `args` empty = `{}`。
 7. F02 只讀此 generated `validator` contract 做 capability validation；不得維護第二份 capability schema / invariant table。
 8. Generator 必須 deterministic；相同 canonical definitions輸入生成 byte-equivalent semantic artifact與相同 registry_digest。
@@ -656,7 +662,17 @@ INCOMPATIBLE
 REVOKED
 ~~~
 
-`execution_status` 是 canonical current machine source：`ACTIVE | REVOKED`。REVOKED 可因 security / critical correctness 發生；它與 selection `availability` 分離。舊 Blueprint body 不修改，但 Validator / Resolver / fresh Execution Admission / Runtime 必須拒絕 current REVOKED capability並交 F12 Recovery。
+`execution_status` 在**每一個 immutable Registry snapshot**中記錄該 snapshot發布時的 machine policy：`ACTIVE | REVOKED`。REVOKED 可因 security / critical correctness 發生；它與 selection `availability` 分離。
+
+BF-039 current-authority rule：
+
+- immutable historical snapshot不得被原地改寫；同一 `registry_version` changed digest仍是 generation/deployment hard fail。
+- security revoke / disable 必須發布**新的 Registry version + digest**。
+- fresh Execution Admission同時持有：
+  1. Blueprint自己的 pinned historical Registry snapshot；
+  2. server deployment指定的 **current execution Registry snapshot**。
+- current execution eligibility只從 current execution snapshot讀 `availability` / `execution_status`，不得假裝 pinned old snapshot是「current」。
+- old Blueprint body不修改；current snapshot若無 exact CapabilityRef、policy拒絕、dependency不合格或 contract digest drift，fresh execution fail closed並交 F12 Recovery。
 
 # 12. Phase 1 Concrete Capability Set
 
@@ -1269,9 +1285,10 @@ Production Registry：
 
 - PROPOSED / POC 不得 ENABLED
 - 至少 TESTED 才可 production ENABLED
-- `availability` 回答「此 snapshot是否可被正常選用」；`executionStatus` 回答「current security/correctness是否仍允許執行」。
-- security / critical-correctness incident 可把 executionStatus改為 REVOKED；不得靠 availability=ENABLED 繞過。
-- DISABLED / EXPERIMENTAL production-unavailable；REVOKED 在所有 context都不可執行。
+- `availability` 回答「此 snapshot發布時是否可被正常選用」；`executionStatus` 回答「此 snapshot發布時 security/correctness policy是否允許執行」。
+- security / critical-correctness incident 要把 executionStatus改為 REVOKED時，必須發布新的 Registry version/digest；禁止原地改 historical snapshot。
+- Fresh execution以 deployment指定的 current execution Registry snapshot為 current policy authority；不得靠 pinned old snapshot的 ENABLED/ACTIVE繞過新 revoke。
+- DISABLED / EXPERIMENTAL production-unavailable；current snapshot中 REVOKED 在所有 context都不可執行。
 - maturity 是證據；availability不是 revocation substitute。
 
 # 16. Capability Resolution Contract
@@ -1395,11 +1412,12 @@ User 可以看：
 # 20. Backend / Runtime Behavior
 
 Compiler → 只讀 compiler-catalog。
-Validator → 只讀 validator-registry。
-Runtime → 只讀 runtime-registry trusted handler mapping。
-Resolver → 讀同一 Registry snapshot 做 availability / compatibility / coverage。
+Validator → 只讀本次 validation選定的 validator-registry snapshot。
+Runtime → 只讀與其 Registry snapshot同 version/digest的 runtime-registry trusted handler mapping。
+Resolver → composition/validation讀同一 Registry snapshot做 availability / compatibility / coverage。
+Fresh Execution Admission → 同時讀 Blueprint pinned snapshot + deployment current execution Registry snapshot；current snapshot只用來決定現在能不能執行，不重寫 immutable Blueprint semantics。
 
-四者必須帶同一 registry_version / registry_digest。
+同一 snapshot內 Compiler / Validator / Runtime / Resolver artifacts必須帶同一 registry_version / registry_digest。
 
 Deployment mismatch → fail fast / health check fail，不在 production 默默使用不同 snapshot。
 
@@ -1558,7 +1576,7 @@ Phase 1：
 
 ~~~text
 Static Trusted Registry only
-Current registry_version = 5.0.0
+Current registry_version = 6.0.0
 ~~~
 
 Deployment bind：
@@ -1579,6 +1597,7 @@ Registry update：
 - BF-035 event-payload resolver machine shape + `input.select` STRING-only contract = breaking contract；Registry `2.0.0 → 3.0.0`，且 `input.select 1.0.0 → 2.0.0`
 - BF-036 RECORD `optional_fields` TypeDescriptor machine token + Blueprint/SCOPE schema closure = breaking validator contract；Registry `3.0.0 → 4.0.0`。Core capability semantic versions不因純 Registry machine representation rebaseline自動改號。
 - BF-038 execution eligibility + resource-usage Validator projection = breaking machine contract；Registry `4.0.0 → 5.0.0`。Current Core Capability semantic versions維持不變；`logic.timer@1.0.0` explicit usage=1，其餘 current Core explicit usage=0。
+- BF-039 current-execution authority + `execution_contract_digest` + canonical usage token = breaking machine contract；Registry `5.0.0 → 6.0.0`。Current Core Capability semantic versions維持不變，因 resolved executable semantics未改；只修正 machine authority/identity。
 - old validated Blueprint 保留原 capability refs / registry_version
 - compatibility layer 判斷是否仍可執行
 
@@ -1586,9 +1605,11 @@ Registry update：
 
 BF-030 / BF-031 / BF-034 / BF-035 / BF-036 已完成前次 remediation。
 
-BF-038 已於 2026-10-04 Human blanket-approved through pre-Cursor re-execution：Registry v5 必須 machine-project availability、executionStatus、execution class與ResourceUsageProfile，讓 F02 V04/V09及 fresh Execution Admission不靠 implementation guess。T003 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
+BF-038 已完成前次 Registry v5 machine projection remediation。
 
-目前沒有其他同類 T003 F04/F02 execution-eligibility/resource machine completeness open decision。
+BF-039 已於 2026-10-04 Human blanket-approved through pre-Cursor re-execution：Registry v6 固定唯一 `resource_usage.timerSlotsPerInstance` token、per-Capability `execution_contract_digest`、immutable pinned snapshot vs current execution Registry snapshot雙 authority、recursive dependency compatibility，以及 Phase 1 media/network V10 policy。T003 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
+
+目前沒有其他同類 T003 current-execution Registry authority open decision。
 
 已閉合：
 
