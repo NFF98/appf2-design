@@ -349,6 +349,7 @@ BF-038 resolution：
 - Current Phase 1 Registry snapshot version = `6.0.0`。
 - `1.x` / `2.0.0` / `3.0.0` / `4.0.0` / `5.0.0` 與 `6.0.0` 的 validator / execution-eligibility / resource-usage/current-authority machine contract 不視為同一 executable contract；未知或不相容 snapshot 必須在 V03 reject。
 - Registry `5.0.0` 新增 BF-038 execution eligibility / resource usage；Registry `6.0.0` 再加入 BF-039 `execution_contract_digest` 與 pinned/current dual-snapshot authority。這是 Registry machine contract MAJOR bump，不自動改變 Core Capability semantic versions。
+- Phase 1 current execution-admission implementation沒有 v5→v6 compatibility adapter；因此 pinned Registry `<6.0.0` 的既有 Blueprint body保持 immutable/durable，但 fresh execution fail closed為 `F02-ERR-017`，直到明確 versioned adapter/migration存在。不得用 v6 snapshot重解 v5 body。
 - Capability 自身的 `capability_version` 不因 Registry machine-contract rebaseline 自動改號；只有該 Capability contract 本身 breaking 時才另行 bump。
 
 # 6. Metadata Contract
@@ -1227,7 +1228,7 @@ F04 `ResourceBudget` 每個欄位的 meaning / stage：
 - `maxSerializedPropsBytes`：V09；對使用 exact CapabilityRef 的每個 static `Node.props` object 做 §18 canonical JSON UTF-8 byte length後加總；不乘 repeat runtime instances，因這是 Blueprint serialized props budget。
 - `maxEventBindings`：V09；使用 exact CapabilityRef 的 static `Node.events` entry總數。
 - `maxActionBindings`：V09；所有 static `INVOKE_CAPABILITY` steps中，target node使用 exact CapabilityRef者的數量。
-- `maxConcurrentTimers`：V09；對 exact CapabilityRef 的 `Σ(instance_upper_bound × timer_slots_per_instance)`。
+- `maxConcurrentTimers`：V09；對 exact CapabilityRef 的 `Σ(instance_upper_bound × resource_usage.timerSlotsPerInstance)`。
 - `maxLocalStateBytes`：F03 runtime dynamic defense-in-depth；每個 concrete NodeInstanceKey 的 capability-local state canonical JSON UTF-8 bytes不得超該 Capability budget。F02 不得以假設 runtime值來偽造 static proof。
 - `mediaAutoplayAllowed` / `networkAccessAllowed`：V10 permission/security policy，不是 byte/count metric。
 
