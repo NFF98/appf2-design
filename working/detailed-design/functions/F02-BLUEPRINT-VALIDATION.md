@@ -1589,6 +1589,7 @@ ExecutionRuntimeContext = {
   registry_snapshot: RegistryReleaseBundle,          // Blueprint pinned
   current_registry_snapshot: RegistryReleaseBundle,  // deployment current
   trusted_release_ledger: server/deployment-owned immutable RegistryReleaseLedger,
+  trusted_runtime_handler_catalog: server/deployment-owned actual bundled handler keys,
   now: trusted server time
 }
 ~~~
@@ -1602,7 +1603,7 @@ Rules：
 5. 任一 execution ref若 current與pinned都有同一 exact ref，`execution_contract_digest` **及** `runtime_binding_digest` 都必須一致；任一 drift → E07 / `F02-ERR-017`。
 6. Required dependency從 current snapshot依 V04 deterministic recursive rule resolve。Candidate若同 exact ref也存在pinned snapshot，兩個 identity digest都必須相同；current新 exact version若pinned不存在，可依 versionRange + current eligibility滿足 requirement。
 7. current `availability` / `execution_status` 只讀 current snapshot；過去 validation PASS不凍結 revoke/disable。
-8. executable=true前必須確認 pinned RuntimeRegistry artifact identity成立，且所有 **node direct executable refs** 有 trusted bundled handler mapping；current snapshot不得換掉 pinned handler binding。
+8. executable=true前必須確認 pinned RuntimeRegistry artifact identity成立；對所有 **node direct executable refs**，由 pinned RuntimeRegistry取得 registration_key，且該 key必須存在 server/deployment-owned、由實際 bundle建立的 TrustedRuntimeHandlerCatalog。Current snapshot不得換掉 pinned handler binding。
 9. Content persistence `admitBlueprint` / same-hash REUSED只代表 canonical content與validation lineage成立，**永遠不等於現在可執行**；fresh Runtime仍必須取得 §37 / EXECUTION-ADMISSION 的 executable=true authorization。
 10. Persisted canonical body重新 hash若不等 content_hash，或 persisted schema_version/registry_version與body不一致 → deterministic content integrity denial，`F02-ERR-015`；repository temporary failure則 E08。
 
