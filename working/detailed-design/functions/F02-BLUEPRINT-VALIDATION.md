@@ -107,7 +107,7 @@ Phase 1 logical shape：
 ~~~json
 {
   "schema_version": "1.0.0",
-  "registry_version": "6.0.0",
+  "registry_version": "7.0.0",
   "kind": "APP",
   "meta": {
     "title": "聚餐分帳",
@@ -165,7 +165,7 @@ Unknown top-level executable key → reject。
 
 ## 4.1 BF-036 Canonical Executable Schema Closure
 
-> **BF-036 resolution：V02 的「required keys / allowed keys only」必須能由單一 machine schema直接判斷。以下 shape、requiredness、grammar、bounds 都是 Phase 1 canonical Product truth；範例不再承擔隱含 requiredness。**
+> **BF-036/BF-040 resolution：V02 的「required keys / allowed keys only」必須能由單一 machine schema直接判斷。以下 shape、requiredness、grammar與非-resource bounds是 Phase 1 canonical Product truth；凡 §19/BF-040 ownership matrix 指定由 V05/V09 擁有的 canonical hard maximum，V02不得以同一 max搶先拒絕。範例不承擔隱含 requiredness。**
 
 Canonical identifier token（除已有更嚴格專用 ID grammar外）：
 
@@ -1217,7 +1217,7 @@ Capability Card 可以更低，不可更高。
 12. **event bindings** = 所有 static `Node.events` map entry 的總和；repeat runtime multiplicity不改這個 static metric。
 13. **result outputs / support degradations / capability refs per degradation / children refs per node** = 對應 canonical array length；後兩者逐 container individually 檢查。
 14. **node runtime instance upper bound**：某 static Node 的 `instance_upper_bound` = 該 Node **strict structural ancestors** 中所有帶 `repeat` Node 的 admitted `repeat.max_items` 乘積；沒有 repeat ancestor時=1。Node自己的 repeat不乘自己。
-15. **concurrent timers**：F04 Registry v6 每個 exact CapabilityRef 必須 machine-declare `resource_usage.timerSlotsPerInstance`。Blueprint `timer_count = Σ(node.instance_upper_bound × capability.resource_usage.timerSlotsPerInstance)`。不得從 `TIME_DEPENDENT`、名稱 `logic.timer` 或 handler實作反推。Phase 1 Core truth：`logic.timer@1.0.0 = 1`，其餘 current Core = 0。
+15. **concurrent timers**：F04 Registry v7 每個 exact CapabilityRef 必須 machine-declare `resource_usage.timerSlotsPerInstance`。Blueprint `timer_count = Σ(node.instance_upper_bound × capability.resource_usage.timerSlotsPerInstance)`。不得從 `TIME_DEPENDENT`、名稱 `logic.timer` 或 handler實作反推。Phase 1 Core truth：`logic.timer@1.0.0 = 1`，其餘 current Core = 0。
 16. 所有 integer count 使用 mathematical integer；乘積或總和若超出 safe implementation integer range，直接視為超 ceiling reject，不 wrap / clamp。
 
 ### 19.2 F04 ResourceBudget Enforcement Split
@@ -1299,7 +1299,7 @@ Executable string domain（BF-037）：
 - required keys
 - allowed keys only
 - field type / enum / ID pattern
-- bounds
+- non-resource shape/minimum/value bounds only；§19-owned resource maxima不得在 V02 preempt
 - unique IDs
 - exact schema version syntax
 
@@ -1323,7 +1323,7 @@ INCOMPATIBLE
 
 # 24. V04 — Registry Admission
 
-F02 只讀 **Registry v6 generated Validator machine truth**；不得從 compiler catalog、runtime handler、capability ID命名或 prose 反推。
+F02 只讀 **Registry v7 generated Validator machine truth**；不得從 compiler catalog、runtime handler、capability ID命名或 prose 反推。
 
 對每個 Node exact CapabilityRef deterministic 檢查：
 
