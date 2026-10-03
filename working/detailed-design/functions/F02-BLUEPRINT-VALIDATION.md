@@ -311,6 +311,7 @@ Canonical requiredness / closure rules：
 14. valid but unused state/rule/action declaration Phase 1 不因「dead code」本身 reject；Validator 不得自行加 unused-declaration rejection。Node 例外：所有 nodes 必須屬於 rooted structural tree。
 15. 字串長度以 Unicode code points 計，不以 UTF-16 code units 計；byte ceiling另由 §19 / V01 enforce。
 16. 任何「example 有 key所以視為 required」或「沒寫就當 empty」的 implementation inference 均禁止；只認本節 exact schema。
+17. 所有 executable Blueprint JSON string token（包含 object key 與 value）必須屬於 §21 的 PostgreSQL-jsonb-representable Unicode scalar domain；不得讓「F02 PASSED、DB jsonb cast 才失敗」成為合法路徑。
 
 # 5. Version Contract
 
@@ -984,6 +985,9 @@ args
 when?
 ~~~
 
+- `target_node_id` 必須指向存在的 static Blueprint Node 定義。
+- Phase 1 `INVOKE_CAPABILITY` target 必須是 **singleton runtime target**：該 target Node 在 structural tree 上不得有任何帶 `repeat` 的 ancestor。target Node 自己可宣告 `repeat`，因 repeat multiplicity只套用到其 structural children subtree；只有落在 ancestor repeat subtree 內的 Node 才是 multi-instance target。
+- target 若不是 singleton runtime target → V08 / `F02-ERR-010 ACTION_EVENT_INVALID` reject；Phase 1 不提供「挑哪個 repeated clone」的隱式 selector。
 - `capability_action` 必須存在於 target node exact Capability 的 F04 machine contract。
 - `args` allowed keys / requiredness / TypeDescriptor 全部來自該 action schema；unknown arg reject。
 - `when` static type 必須 BOOLEAN。
@@ -1113,9 +1117,10 @@ Rules：
 7. -0 canonicalize 為 0
 8. JSON number 使用可 round-trip 最短 decimal representation
 9. String 使用標準 JSON escaping；不做 locale-dependent normalization
-10. Optional field 缺失與 explicit null 不視為同值；Phase 1 executable schema 原則上不用 null 表達 optional
-11. Unknown executable keys Admission 前 reject
-12. created_at / ownership / compiler / share metadata 不在 Blueprint body
+10. Canonicalizer input 已先通過 §21 executable string-domain validation；canonical output 不得包含 U+0000 或 lone surrogate code unit，合法 supplementary Unicode scalar value 以標準 JSON escaping 或等價 UTF-8 scalar representation canonicalize。
+11. Optional field 缺失與 explicit null 不視為同值；Phase 1 executable schema 原則上不用 null 表達 optional
+12. Unknown executable keys Admission 前 reject
+13. created_at / ownership / compiler / share metadata 不在 Blueprint body
 
 Canonicalization implementation 必須是一份 shared library，不能各自實作。
 
@@ -1237,6 +1242,16 @@ Reject：
 - payload bytes > **512 KiB (524,288 exact UTF-8 bytes)**
 - non-object root
 - prohibited binary / executable payload
+- 任一 decoded JSON string token 含 U+0000
+- 任一 `\uXXXX` surrogate escape 未形成合法 high-surrogate + low-surrogate pair；lone high surrogate、lone low surrogate、錯序或未配對 surrogate 一律 reject
+
+Executable string domain（BF-037）：
+
+1. V01 UTF-8 decoder維持 fatal；raw invalid UTF-8 直接 `F02-ERR-001`。
+2. JSON escape 解碼後的每個 string token（object key 與 value）必須是 Unicode scalar values sequence；U+D800..U+DFFF 不得作為獨立 decoded value 留存。
+3. supplementary scalar 可由合法 surrogate pair escape表示；Validator 必須合成單一 Unicode scalar value語意後再進後續 validation / canonicalization。
+4. U+0000 即使以 `\u0000` 合法 JSON escape 出現也 reject，因 canonical `blueprint_content.canonical_blueprint` 使用 PostgreSQL `jsonb`，Admission 必須保證所有 PASSED content 可持久化。
+5. 本節 string-domain failure 全部是 V01 / `F02-ERR-001 INVALID_JSON`；不得延後到 repository / database cast 才失敗。
 
 先對 exact `candidate_payload_bytes` 產生 `candidate_digest = sha256:<hex>` + trace id，再 parse。
 
