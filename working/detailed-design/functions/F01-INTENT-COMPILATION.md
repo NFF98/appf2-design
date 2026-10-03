@@ -778,7 +778,7 @@ Success：
     "status": "VALIDATED",
     "content_hash": "sha256:...",
     "schema_version": "1.0.0",
-    "registry_version": "1.0.0",
+    "registry_version": "4.0.0",
     "support": {
       "coverage_status": "FULLY_SUPPORTED",
       "degradations": []

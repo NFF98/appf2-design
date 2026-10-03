@@ -237,7 +237,7 @@ CapabilityDefinition
 
 > **BF-031 remediation：Executable machine shape 不得留給 Cursor / implementation 自行決定。** Working 必須先固定 validator 可消費的 field/type/composition contract；TypeScript/Zod 只做機械翻譯，不得新增 Product semantics。
 
-Registry v2 source rule：
+Registry machine-source rule（v2+，current v4）：
 
 - `CapabilityDefinition.contract.validator` 是 executable Validator machine truth 的 canonical source field。
 - `propsSchema` / `stateSchema` 可保留供 semantic/documentation/runtime schema reference，但 **不得**取代或覆蓋 `contract.validator`。
@@ -320,7 +320,7 @@ Canonical defaults：
 - `source_kinds` is always explicit in generated machine truth。Human-readable §13.1 prop shorthand defaults to `[LITERAL]` only；**action arg shorthand has no implicit source-kind default**，每個 action arg 必須在 §13.1 明示。
 - event `payload` 一律使用 `EventPayloadDescriptorResolver`；`STATIC` 直接攜帶完整 payload-root concrete F02 TypeDescriptor。§13.1 human-readable `payload.value = T` / `payload = {}` 只是不改語意的 shorthand，canonical source 必須 normalize 成 `STATIC(RECORD{...})`；node-dependent payload 只能使用本節列出的 resolver kind，不得由 implementation 自創 resolver token。
 - empty props / bindings / events / actions are `{}`，never omitted。
-- `capability_state` must be explicit resolved TypeDescriptor or `NONE`。
+- `capability_state` must be explicit resolved TypeDescriptor or `NONE`。Human-readable RECORD field suffix `?` is canonical shorthand only for F02 `constraints.optional_fields[]`：generator 必須把所有 `field?` normalize 成 lexicographically sorted unique optional_fields；不得 invent nullable/undefined union 或第二種 state schema。
 - `composition.children` and `composition.repeat` are always explicit booleans；`repeat_required` exists only when repeat=true and is otherwise omitted。
 - field/action/capability `invariant_ids` may all be used；each ID must resolve to §5.2 canonical invariant semantics。
 
@@ -344,7 +344,8 @@ Rules：
 4. Optional field 缺失與 explicit null 不等價；Phase 1 machine contract原則上不用 null。
 5. Unknown prop / binding / action arg / event payload field → F02 reject。
 6. Capability-specific cross-field relation可以用 canonical named invariant，但 invariant ID + semantics 必須在本 Working 固定，implementation 不得自創。
-7. `capability_state` 是 Runtime-local schema，不是 Blueprint app state；其 RECORD field 可明確標 optional，absence 由 F03 internal ABSENT/initialization semantics 處理，不得序列化成 Blueprint null。
+7. `capability_state` 是 Runtime-local schema，不是 Blueprint app state；其 RECORD optional field唯一 machine representation = F02 TypeDescriptor `constraints.optional_fields[]`。absence 由 F03 internal ABSENT/initialization semantics處理，不得序列化成 Blueprint null/undefined。Blueprint app-state RECORD Phase 1不得使用 optional_fields。
+8. action arg `source_kinds` 若包含 SCOPE，其 admission typing context完全由 F02 §9.2 all-dispatch-site lexical scope contract擁有；F04 只宣告 source kind，不得另建 scope semantics。
 
 ### 5.2 BF-034 Canonical Target Matcher / Named Invariant Contract
 
@@ -1519,7 +1520,7 @@ Phase 1：
 
 ~~~text
 Static Trusted Registry only
-Current registry_version = 3.0.0
+Current registry_version = 4.0.0
 ~~~
 
 Deployment bind：
@@ -1538,12 +1539,15 @@ Registry update：
 - breaking contract → MAJOR
 - BF-034 validator-machine remediation = breaking contract；Registry `1.x → 2.0.0`
 - BF-035 event-payload resolver machine shape + `input.select` STRING-only contract = breaking contract；Registry `2.0.0 → 3.0.0`，且 `input.select 1.0.0 → 2.0.0`
+- BF-036 RECORD `optional_fields` TypeDescriptor machine token + Blueprint/SCOPE schema closure = breaking validator contract；Registry `3.0.0 → 4.0.0`。Core capability semantic versions不因純 Registry machine representation rebaseline自動改號。
 - old validated Blueprint 保留原 capability refs / registry_version
 - compatibility layer 判斷是否仍可執行
 
 # 30. Open Decisions
 
-BF-030 / BF-031 / BF-034 已完成前次 remediation。BF-035 B2–B4 resolution direction 已於 2026-10-03 Human-approved：action args 明示 source_kinds + static/runtime invariant split、`input.select` 收斂為 STRING-valued contract 並 bump 至 2.0.0、event payload 使用 deterministic node-local resolver machine contract、Registry validator contract MAJOR bump to 3.0.0。T002 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
+BF-030 / BF-031 / BF-034 / BF-035 已完成前次 remediation。BF-036 Blueprint machine-schema completeness 已於 2026-10-03 Human blanket-approved through re-activation：F02 exact nested schema closure、RECORD optional_fields canonical token、all-dispatch-site SCOPE typing、F03 lexical runtime context、Registry validator contract MAJOR bump to 4.0.0。T002 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
+
+目前沒有其他同類 F04/F02 machine-schema completeness open decision。
 
 已閉合：
 
