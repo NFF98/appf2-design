@@ -1391,7 +1391,7 @@ F02 只讀 **Registry v7 generated Validator machine truth**；不得從 compile
 - INVOKE_CAPABILITY action declared
 - args typed
 - no recursion / loop
-- step count bounded
+- Action.steps 必須 non-empty且每 step schema/type合法；canonical max steps/action = 16 只由 V09 resource owner enforce
 
 # 29. V09 — Resource Validation
 
