@@ -203,7 +203,8 @@ CapabilityDefinition
 │  ├─ actions[]
 │  ├─ events[]
 │  ├─ bindings
-│  └─ operators[]
+│  ├─ operators[]
+│  └─ validator              // exact ValidatorContract source owned by §5.1
 ├─ runtime
 │  ├─ execution
 │  ├─ registrationKey
@@ -236,6 +237,13 @@ CapabilityDefinition
 
 > **BF-031 remediation：Executable machine shape 不得留給 Cursor / implementation 自行決定。** Working 必須先固定 validator 可消費的 field/type/composition contract；TypeScript/Zod 只做機械翻譯，不得新增 Product semantics。
 
+Registry v2 source rule：
+
+- `CapabilityDefinition.contract.validator` 是 executable Validator machine truth 的 canonical source field。
+- `propsSchema` / `stateSchema` 可保留供 semantic/documentation/runtime schema reference，但 **不得**取代或覆蓋 `contract.validator`。
+- ENABLED Phase 1 Core Capability 缺少 `contract.validator` → generation hard fail。
+- generator 對 `contract.validator` 做 deterministic normalization / validation，再投影到 §9 generated `validator-registry.ts`；不得從 prose Card、runtime handler 或 legacy ref反向猜 contract。
+
 ## 5.1 Phase 1 Validator Machine Contract Vocabulary
 
 F04 與 F02 共用同一 typed vocabulary；F04 不建立第二套 state/value type system。
@@ -254,42 +262,61 @@ ONE_OF<T...>
 
 其中 NUMBER / STRING / ENUM / LIST / RECORD 的 exact descriptor semantics 由 F02 §8.1.1 擁有。
 
-每個 Capability 的 executable validator contract 必須顯式提供：
+每個 Capability 的 executable validator contract 必須使用以下 **exact logical machine shape**；欄位名稱與 nesting 是 canonical，TypeScript/Zod 只能等價翻譯，不得改名或拆成第二套語意：
 
 ~~~text
-props:
-  key -> {
-    required,
-    type,
-    source_kinds[]
-  }
+validator = {
+  props: map<key, FieldContract>,
+  bindings: map<key, BindingContract>,
+  events: map<event_name, EventContract>,
+  actions: map<action_name, ActionContract>,
+  composition: {
+    children: boolean,
+    repeat: boolean,
+    repeat_required?: boolean
+  },
+  capability_state: TypeDescriptor | NONE,
+  invariant_ids: InvariantId[]
+}
 
-bindings:
-  key -> {
-    required,
-    type,
-    source_kinds[],
-    mutable_state_required?
-  }
+FieldContract = {
+  required: boolean,
+  matcher: TargetMatcher,
+  source_kinds: SourceKind[],
+  invariant_ids: InvariantId[]
+}
 
-events:
-  event_name -> {
-    payload_fields
-  }
+BindingContract = {
+  required: boolean,
+  matcher: TargetMatcher,
+  source_kinds: SourceKind[],
+  mutable_state_required: boolean,
+  reference: ACTION_ID | NODE_ID | NONE,
+  invariant_ids: InvariantId[]
+}
 
-actions:
-  action_name -> {
-    args
-  }
+EventContract = {
+  payload: TypeDescriptor,
+  invariant_ids: InvariantId[]
+}
 
-composition:
-  children: true | false
-  repeat: true | false
-  repeat_required?: true | false
-
-capability_state:
-  resolved TypeDescriptor | NONE
+ActionContract = {
+  args: map<arg_name, FieldContract>,
+  invariant_ids: InvariantId[]
+}
 ~~~
+
+Canonical defaults：
+
+- omitted optional syntax in human-readable card is normalized into explicit machine fields before generation。
+- `invariant_ids` is always an array；none = `[]`。
+- `mutable_state_required` is always boolean；default `false`。
+- `reference` is always explicit；default `NONE`。
+- `source_kinds` is always explicit in generated machine truth。Human-readable §13.1 prop shorthand defaults to `[LITERAL]` only。
+- empty props / bindings / events / actions are `{}`，never omitted。
+- `capability_state` must be explicit resolved TypeDescriptor or `NONE`。
+- `composition.children` and `composition.repeat` are always explicit booleans；`repeat_required` exists only when repeat=true and is otherwise omitted。
+- field/action/capability `invariant_ids` may all be used；each ID must resolve to §5.2 canonical invariant semantics。
 
 `source_kinds` 只可來自：
 
@@ -312,6 +339,80 @@ Rules：
 5. Unknown prop / binding / action arg / event payload field → F02 reject。
 6. Capability-specific cross-field relation可以用 canonical named invariant，但 invariant ID + semantics 必須在本 Working 固定，implementation 不得自創。
 7. `capability_state` 是 Runtime-local schema，不是 Blueprint app state；其 RECORD field 可明確標 optional，absence 由 F03 internal ABSENT/initialization semantics 處理，不得序列化成 Blueprint null。
+
+### 5.2 BF-034 Canonical Target Matcher / Named Invariant Contract
+
+F04 不擴張 F02 `TypeDescriptor`。Capability machine contract 可以使用 **target matcher** 來描述「可接受哪一類 concrete F02 descriptor」；matcher 本身不是 Runtime value type，Admission 後仍保留 concrete F02 descriptor。
+
+Canonical target matcher：
+
+~~~text
+EXACT(TypeDescriptor)
+ONE_OF<matcher...>
+ANY_ENUM
+ANY_RECORD
+LIST_OF(matcher, max_length?)
+~~~
+
+Exact machine representation：
+
+~~~text
+TargetMatcher
+= { kind: "EXACT", descriptor: TypeDescriptor }
+| { kind: "ONE_OF", options: TargetMatcher[] }
+| { kind: "ANY_ENUM" }
+| { kind: "ANY_RECORD" }
+| { kind: "LIST_OF", item: TargetMatcher, max_length?: integer }
+
+InvariantId = one of the canonical IDs listed below
+SourceKind = LITERAL | STATE | RULE | OP | EVENT | SCOPE
+~~~
+
+Rules：
+
+1. `EXACT(D)` 使用 F02 §8.1.2 `Assignable(source,D)`。
+2. `ONE_OF`：source 至少 assignable / match 一個 branch。
+3. `ANY_ENUM`：只 match concrete F02 ENUM descriptor；domain 不可省略於實際 source descriptor。
+4. `ANY_RECORD`：只 match concrete F02 RECORD descriptor；declared fields 不可省略於實際 source descriptor。
+5. `LIST_OF(P,n)`：source 必須是 concrete LIST descriptor、source.max_length <= n（若 n 存在），且 item descriptor match P。
+6. matcher 不得被寫進 Blueprint state / Rule / Result；它只存在 generated Validator machine contract。
+7. Composite LITERAL 仍受 F02 §9.1 限制：若 matcher 無法在 validation 前提供唯一 concrete expected TypeDescriptor，該位置不得接受 LITERAL。
+
+Canonical named invariant IDs：
+
+~~~text
+NUM_INTEGER
+NUM_GT_ZERO
+NUM_GTE_ZERO
+NUM_INT_RANGE_0_8192
+NUM_INT_RANGE_0_500
+INPUT_NUMBER_BOUNDS
+INPUT_TEXT_BOUND
+SELECT_ENUM_DOMAIN
+STAT_FORMAT
+TABLE_COLUMNS
+TABLE_ROWS_BOUND
+RANDOM_MIN_MAX
+SCORE_BOUNDS
+~~~
+
+Semantics：
+
+- `NUM_INTEGER`：value 必須是 finite integer。
+- `NUM_GT_ZERO`：finite NUMBER 且 > 0。
+- `NUM_GTE_ZERO`：finite NUMBER 且 >= 0。
+- `NUM_INT_RANGE_0_8192`：integer 且 0 <= value <= 8192。
+- `NUM_INT_RANGE_0_500`：integer 且 0 <= value <= 500。
+- `INPUT_NUMBER_BOUNDS`：min/max/step finite；min<=max；step 若存在 >0；bound state NUMBER constraints authoritative，props 只能收窄有效輸入，不可放寬 state contract。
+- `INPUT_TEXT_BOUND`：bound state 必須是 mutable STRING；prop.max_length <= bound state's max_length；event payload effective bound = prop.max_length。
+- `SELECT_ENUM_DOMAIN`：options value unique、同 primitive type；E = exact ordered-insensitive options domain；bound ENUM allowed domain == E。
+- `STAT_FORMAT`：NUMBER/PERCENT/CURRENCY_DISPLAY 只接受 NUMBER；TEXT 接受 NUMBER/STRING/BOOLEAN/concrete ENUM。
+- `TABLE_COLUMNS`：column.key unique 且存在於 concrete row RECORD；numeric display format要求 NUMBER field。
+- `TABLE_ROWS_BOUND`：rows concrete LIST max_length <= prop.max_rows。
+- `RANDOM_MIN_MAX`：sample_number args.min <= args.max。
+- `SCORE_BOUNDS`：initial default 0；min<=max；initial/set/increment result 必須留在 declared bounds。
+
+Generated validator artifact 必須攜帶 invariant ID；不得只攜帶自由文字。
 
 # 6. Enum Contracts
 
@@ -428,24 +529,35 @@ Compiler artifact 禁止包含：
 
 # 9. Generated Validator Artifact
 
-validator-registry.ts 提供：
+`validator-registry.ts` 必須生成同一份 canonical machine truth，top-level exact logical shape：
 
 ~~~text
-capability existence
-exact version existence
-resolved props schema
-resolved capability-local state schema / port types
-resolved binding restrictions + expected Value Type
-resolved action args schema
-resolved event payload schema
-explicit composition.children / composition.repeat
-permission class
-resource budget
-compatibility metadata
-degradation metadata
+ValidatorRegistry = {
+  registry_version: string,
+  registry_digest: "sha256:<64 lowercase hex>",
+  capabilities: map<capability_id, map<capability_version, GeneratedCapabilityValidator>>
+}
+
+GeneratedCapabilityValidator = {
+  id: capability_id,
+  version: capability_version,
+  validator: ValidatorContract,   // exact §5.1 shape
+  permission_class: PermissionClass,
+  resource_budget: ResourceBudget,
+  compatibility: CompatibilityContract,
+  degradation: DegradationContract
+}
 ~~~
 
-F02 必須讀這份 generated artifact，不能維護第二份 schema。
+Rules：
+
+1. `validator` 必須是 §5.1 resolved exact shape；不得只保留名稱 list、schema ref 或自由文字。
+2. TargetMatcher 必須使用 §5.2 exact machine representation。
+3. 所有 named invariant 必須出現在其 canonical `invariant_ids[]` location；generator 不得把 invariant semantics埋成 hand-written validator branch。
+4. event `payload` 必須是 resolved F02 TypeDescriptor；empty payload = `RECORD{fields:{}}`，不得用 implementation-defined `{}` special case。
+5. action `args` empty = `{}`。
+6. F02 只讀此 generated `validator` contract 做 capability validation；不得維護第二份 capability schema / invariant table。
+7. Generator 必須 deterministic；相同 canonical definitions輸入生成 byte-equivalent semantic artifact與相同 registry_digest。
 
 **Ref-only artifact 不合格：**
 
@@ -454,7 +566,7 @@ propsSchema: { ref: "capability://..." }
 stateSchema: { ref: "capability://..." }
 ~~~
 
-若 deployment artifact 只有上述 unresolved ref、沒有同 artifact 可直接解析的 canonical schema graph，對 ENABLED Capability 視為 `F04-ERR-007 REGISTRY_GENERATION_INVALID`。
+若 deployment artifact 只有 unresolved ref、沒有同 artifact 可直接解析的 canonical schema graph，對 ENABLED Capability 視為 `F04-ERR-007 REGISTRY_GENERATION_INVALID`。
 
 Unknown capability ID/version → REJECT。
 
@@ -727,6 +839,8 @@ capability_state = NONE
 ### content.card@1.0.0
 
 ~~~text
+props: {}
+
 bindings:
   title?: STRING(120)
   description?: STRING(500)
@@ -746,10 +860,13 @@ capability_state = NONE
 ~~~text
 props: {}
 bindings: {}
+events: {}
+actions: {}
 composition:
   children = true
   repeat = true
   repeat_required = true
+capability_state = NONE
 ~~~
 
 Canonical list data source **只走 F02 node.repeat.items**；template **只走 structural children**。
@@ -782,7 +899,8 @@ props:
   label: STRING(120)
   min?: NUMBER
   max?: NUMBER
-  step?: NUMBER where step > 0
+  step?: NUMBER
+    invariant_ids = [NUM_GT_ZERO]
   required?: BOOLEAN
 
 bindings:
@@ -794,10 +912,11 @@ events:
   change:
     payload.value = NUMBER
 
-cross-field invariant:
-  min/max/step若存在必須 finite
-  min <= max when both present
-  bound state's NUMBER constraints remain authoritative; Capability props可更嚴格，不可放寬 state constraint
+actions: {}
+composition: children=false, repeat=false
+capability_state = NONE
+
+invariant_ids = [INPUT_NUMBER_BOUNDS]
 ~~~
 
 ### input.text@1.0.0
@@ -805,18 +924,26 @@ cross-field invariant:
 ~~~text
 props:
   label: STRING(120)
-  max_length: NUMBER integer 0..8192
+  max_length: NUMBER
+    invariant_ids = [NUM_INT_RANGE_0_8192]
   placeholder?: STRING(500)
   required?: BOOLEAN
 
 bindings:
-  bind: STRING(max_length <= bound state's max_length)
+  bind: STRING
         source_kinds = STATE
         mutable_state_required = true
 
 events:
   change:
-    payload.value = STRING(max_length <= effective bound)
+    payload.value = STRING
+    effective_descriptor = bound state's STRING descriptor narrowed to prop.max_length
+
+actions: {}
+composition: children=false, repeat=false
+capability_state = NONE
+
+invariant_ids = [INPUT_TEXT_BOUND]
 ~~~
 
 ### input.select@1.0.0
@@ -827,24 +954,25 @@ props:
   options:
     LIST<RECORD{
       label: STRING(120),
-      value: ENUM_LITERAL
+      value: ONE_OF<NUMBER,STRING,BOOLEAN>
     }>(500)
     source_kinds = LITERAL
   required?: BOOLEAN
 
 bindings:
-  bind: ENUM<E>
+  bind: ANY_ENUM
         source_kinds = STATE
         mutable_state_required = true
 
 events:
   change:
-    payload.value = E
+    payload.value = concrete ENUM member type/domain derived by SELECT_ENUM_DOMAIN
 
-cross-field invariant SELECT_ENUM_DOMAIN:
-  options[].value 必須 unique 且全部同一 primitive type
-  E = exact ordered-insensitive domain set(options[].value)
-  bound ENUM state's constraints.allowed 必須與 E exact same domain
+actions: {}
+composition: children=false, repeat=false
+capability_state = NONE
+
+invariant_ids = [SELECT_ENUM_DOMAIN]
 ~~~
 
 ### input.toggle@1.0.0
@@ -862,6 +990,7 @@ events:
 props: {}
 actions: {}
 composition: children=false, repeat=false
+capability_state = NONE
 ~~~
 
 ### data.stat@1.0.0
@@ -872,8 +1001,10 @@ props:
   format?: ENUM[NUMBER,TEXT,PERCENT,CURRENCY_DISPLAY]
 
 bindings:
-  value: ONE_OF<NUMBER,STRING,BOOLEAN,ENUM>
+  value: ONE_OF<EXACT(NUMBER),EXACT(STRING(8192)),EXACT(BOOLEAN),ANY_ENUM>
          source_kinds = LITERAL | STATE | RULE | OP | SCOPE
+
+invariant_ids = [STAT_FORMAT]
 
 cross-field invariant STAT_FORMAT:
   NUMBER | PERCENT | CURRENCY_DISPLAY require value type NUMBER
@@ -882,6 +1013,7 @@ cross-field invariant STAT_FORMAT:
 events: {}
 actions: {}
 composition: children=false, repeat=false
+capability_state = NONE
 ~~~
 
 ### data.table_basic@1.0.0
@@ -895,17 +1027,22 @@ props:
       format: ENUM[TEXT,NUMBER,PERCENT,CURRENCY_DISPLAY]
     }>(500)
     source_kinds = LITERAL
-  max_rows: NUMBER integer 0..500
+  max_rows: NUMBER
+    invariant_ids = [NUM_INT_RANGE_0_500]
 
 bindings:
-  rows: LIST<RECORD<declared row fields>>(max_length <= max_rows)
-        source_kinds = LITERAL | STATE | RULE | OP | SCOPE
+  rows: LIST_OF(ANY_RECORD, 500)
+        source_kinds = STATE | RULE | OP | SCOPE
 
-cross-field invariant TABLE_COLUMNS:
-  column.key unique
-  every declared column.key must exist in row descriptor
-  numeric display formats require NUMBER row field
+events: {}
+actions: {}
+composition: children=false, repeat=false
+capability_state = NONE
+
+invariant_ids = [TABLE_COLUMNS, TABLE_ROWS_BOUND]
 ~~~
+
+Phase 1 `rows` **不接受 LITERAL**。原因：row RECORD 必須有 concrete declared-field TypeDescriptor；F02 禁止 Validator 從 object literal shape 自創 schema。需要 literal table data 時，Compiler 必須先建立 typed state / derived value，再由 rows binding引用。
 
 ### logic.random@1.0.0
 
@@ -918,10 +1055,10 @@ actions:
   sample_number:
     args.min = NUMBER
     args.max = NUMBER
-    invariant min <= max
+    invariant_ids = [RANDOM_MIN_MAX]
 
   choose_item:
-    args.items = LIST<STRING>(500)
+    args.items = LIST<STRING(8192)>(500)
 
 composition: children=false, repeat=false
 
@@ -929,7 +1066,7 @@ capability_state:
   RECORD{
     last_number?: NUMBER,
     last_index?: NUMBER,
-    last_item?: STRING
+    last_item?: STRING(8192)
   }
 ~~~
 
@@ -939,7 +1076,8 @@ Random result is capability-local presentation/state in Phase 1；`sample_number
 
 ~~~text
 props:
-  duration_ms: NUMBER integer >= 0
+  duration_ms: NUMBER
+    invariant_ids = [NUM_INTEGER, NUM_GTE_ZERO]
 
 bindings: {}
 
@@ -969,6 +1107,8 @@ props:
   initial?: NUMBER
   min?: NUMBER
   max?: NUMBER
+
+bindings: {}
 
 actions:
   increment:
@@ -1352,6 +1492,7 @@ Phase 1：
 
 ~~~text
 Static Trusted Registry only
+Current registry_version = 2.0.0
 ~~~
 
 Deployment bind：
@@ -1368,12 +1509,13 @@ Registry update：
 - compatible capability addition → MINOR
 - metadata-only non-contract fix → PATCH
 - breaking contract → MAJOR
+- BF-034 validator-machine remediation = breaking contract；current Registry `1.x → 2.0.0`
 - old validated Blueprint 保留原 capability refs / registry_version
 - compatibility layer 判斷是否仍可執行
 
 # 30. Open Decisions
 
-BF-030 / BF-031 exact machine contract 已於 2026-10-02 取得 Human resolution approval 並合併至 Working；在 replacement Build Freeze、T002 rebind 與 Activation 完成前，T002 必須保持 BLOCKED。
+BF-030 / BF-031 已完成前次 remediation。BF-034 resolution direction 已於 2026-10-03 Human-approved：safe-subset static assignability、numeric refinement 使用 canonical named invariant、EVENT/SCOPE canonical relative path + all-dispatch-site typing、Registry validator contract MAJOR bump to 2.0.0。T002 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
 
 已閉合：
 
