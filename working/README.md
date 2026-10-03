@@ -147,17 +147,17 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 
 ## Current Next Step
 
-依 `PFR-2026 — Product-First Phase Realignment`：
+依 `PFR-2026 — Product-First Phase Realignment` 與 appf2-build canonical control state：
 
-1. `BS-P1-004` 已 LOCKED；Build Freeze merge commit = `3ef227f0a85d687788077648a2df6eb3c3c4a740`。
-2. SP2 Rebind + Activation Review 已 PASS；review merge commit = `bc874a8bb5e400f49f12d844bf756cacc0c0e700`。
-3. Human 已批准 `BS-P1-004 / SP-P1-002 Activation`；Activation merge commit = `24d37a43be8b79bafceaf96c45c60d2599e5bcb8`。
-4. Current active baseline = `BS-P1-004`；`implementation_enabled=true`。
-5. `SP-P1-002 = ACTIVE`；`T001 = IN_PROGRESS`；T002–T009 = PLANNED。
-6. 38 個 unfinished backlog 已 atomic rebind 至 `BS-P1-004`；5 個 DONE 歷史保留原 baseline provenance。
-7. `BL-P1-032 / F07-AC-008` revalidation = IN_PROGRESS under T001。
-8. BF-023 = **OPEN implementation bug**，屬 T001 active scope；BF-024 / BF-025 = RESOLVED。
-9. Cursor Product implementation 現在只授權 **T001 active scope**；不得啟動 T002+ 或任何 SP-P1-003+ work。
-10. Next Step = **T001 Cursor Execution**。
+1. Current locked baseline = `BS-P1-012`。
+2. appf2-build canonical main at this normalization = `780100c7766584abb9adc9f1caf00e886ade3406`。
+3. `implementation_enabled=false`；repository execution state = **HOLD**。
+4. `SP-P1-002` 尚未結束；T001–T003 = CLOSED，T004–T009 = PLANNED。
+5. T004 是下一個 Activation Review 對象；**尚未授權 Cursor implementation**。
+6. POI-005 已記錄 T003 production HTTP / Runtime / Postgres fresh-admission wiring debt；它不阻擋 T004，也不得偷偷塞入 T004 scope。
+7. PFR-03 = F19 Shared App Data Detailed Design；PFR-04 = S03/S04/S05 UI/UX Delta Review；兩者是後續 Product Proof Freeze 的前置。
+8. 未來 Product Proof Build Spec / Sprint **不預留數字 ID**；ID 只在實際 Freeze / Sprint creation 時依 canonical latest sequence 分配。
+9. Historical `BS-P1-005`–`BS-P1-012` 保留原 remediation/rebaseline 意義，不 rename、不 recycle。
+10. Next Step = **SP-P1-002 / T004 Activation Review**。
 
-> Activation 已完成；下一步可以發出第一個 Cursor command，但必須嚴格依 T001 scope、BS-P1-004、BF-023 與 F07-AC-008 revalidation 執行。
+> 本 README 只提供人類導覽；真正 Build execution authority 永遠以 `appf2-build/build-spec/CURRENT.json` 與 `delivery/CURRENT-SPRINT.json` 為準。
