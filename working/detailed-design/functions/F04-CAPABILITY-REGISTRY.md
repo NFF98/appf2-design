@@ -254,42 +254,61 @@ ONE_OF<T...>
 
 其中 NUMBER / STRING / ENUM / LIST / RECORD 的 exact descriptor semantics 由 F02 §8.1.1 擁有。
 
-每個 Capability 的 executable validator contract 必須顯式提供：
+每個 Capability 的 executable validator contract 必須使用以下 **exact logical machine shape**；欄位名稱與 nesting 是 canonical，TypeScript/Zod 只能等價翻譯，不得改名或拆成第二套語意：
 
 ~~~text
-props:
-  key -> {
-    required,
-    type,
-    source_kinds[]
-  }
+validator = {
+  props: map<key, FieldContract>,
+  bindings: map<key, BindingContract>,
+  events: map<event_name, EventContract>,
+  actions: map<action_name, ActionContract>,
+  composition: {
+    children: boolean,
+    repeat: boolean,
+    repeat_required?: boolean
+  },
+  capability_state: TypeDescriptor | NONE,
+  invariant_ids: InvariantId[]
+}
 
-bindings:
-  key -> {
-    required,
-    type,
-    source_kinds[],
-    mutable_state_required?
-  }
+FieldContract = {
+  required: boolean,
+  matcher: TargetMatcher,
+  source_kinds: SourceKind[],
+  invariant_ids: InvariantId[]
+}
 
-events:
-  event_name -> {
-    payload_fields
-  }
+BindingContract = {
+  required: boolean,
+  matcher: TargetMatcher,
+  source_kinds: SourceKind[],
+  mutable_state_required: boolean,
+  reference: ACTION_ID | NODE_ID | NONE,
+  invariant_ids: InvariantId[]
+}
 
-actions:
-  action_name -> {
-    args
-  }
+EventContract = {
+  payload: TypeDescriptor,
+  invariant_ids: InvariantId[]
+}
 
-composition:
-  children: true | false
-  repeat: true | false
-  repeat_required?: true | false
-
-capability_state:
-  resolved TypeDescriptor | NONE
+ActionContract = {
+  args: map<arg_name, FieldContract>,
+  invariant_ids: InvariantId[]
+}
 ~~~
+
+Canonical defaults：
+
+- omitted optional syntax in human-readable card is normalized into explicit machine fields before generation。
+- `invariant_ids` is always an array；none = `[]`。
+- `mutable_state_required` is always boolean；default `false`。
+- `reference` is always explicit；default `NONE`。
+- `source_kinds` is always explicit in generated machine truth。Human-readable §13.1 prop shorthand defaults to `[LITERAL]` only。
+- empty props / bindings / events / actions are `{}`，never omitted。
+- `capability_state` must be explicit resolved TypeDescriptor or `NONE`。
+- `composition.children` and `composition.repeat` are always explicit booleans；`repeat_required` exists only when repeat=true and is otherwise omitted。
+- field/action/capability `invariant_ids` may all be used；each ID must resolve to §5.2 canonical invariant semantics。
 
 `source_kinds` 只可來自：
 
@@ -325,6 +344,20 @@ ONE_OF<matcher...>
 ANY_ENUM
 ANY_RECORD
 LIST_OF(matcher, max_length?)
+~~~
+
+Exact machine representation：
+
+~~~text
+TargetMatcher
+= { kind: "EXACT", descriptor: TypeDescriptor }
+| { kind: "ONE_OF", options: TargetMatcher[] }
+| { kind: "ANY_ENUM" }
+| { kind: "ANY_RECORD" }
+| { kind: "LIST_OF", item: TargetMatcher, max_length?: integer }
+
+InvariantId = one of the canonical IDs listed below
+SourceKind = LITERAL | STATE | RULE | OP | EVENT | SCOPE
 ~~~
 
 Rules：
@@ -488,24 +521,35 @@ Compiler artifact 禁止包含：
 
 # 9. Generated Validator Artifact
 
-validator-registry.ts 提供：
+`validator-registry.ts` 必須生成同一份 canonical machine truth，top-level exact logical shape：
 
 ~~~text
-capability existence
-exact version existence
-resolved props schema
-resolved capability-local state schema / port types
-resolved binding restrictions + expected Value Type
-resolved action args schema
-resolved event payload schema
-explicit composition.children / composition.repeat
-permission class
-resource budget
-compatibility metadata
-degradation metadata
+ValidatorRegistry = {
+  registry_version: string,
+  registry_digest: "sha256:<64 lowercase hex>",
+  capabilities: map<capability_id, map<capability_version, GeneratedCapabilityValidator>>
+}
+
+GeneratedCapabilityValidator = {
+  id: capability_id,
+  version: capability_version,
+  validator: ValidatorContract,   // exact §5.1 shape
+  permission_class: PermissionClass,
+  resource_budget: ResourceBudget,
+  compatibility: CompatibilityContract,
+  degradation: DegradationContract
+}
 ~~~
 
-F02 必須讀這份 generated artifact，不能維護第二份 schema。
+Rules：
+
+1. `validator` 必須是 §5.1 resolved exact shape；不得只保留名稱 list、schema ref 或自由文字。
+2. TargetMatcher 必須使用 §5.2 exact machine representation。
+3. 所有 named invariant 必須出現在其 canonical `invariant_ids[]` location；generator 不得把 invariant semantics埋成 hand-written validator branch。
+4. event `payload` 必須是 resolved F02 TypeDescriptor；empty payload = `RECORD{fields:{}}`，不得用 implementation-defined `{}` special case。
+5. action `args` empty = `{}`。
+6. F02 只讀此 generated `validator` contract 做 capability validation；不得維護第二份 capability schema / invariant table。
+7. Generator 必須 deterministic；相同 canonical definitions輸入生成 byte-equivalent semantic artifact與相同 registry_digest。
 
 **Ref-only artifact 不合格：**
 
@@ -514,7 +558,7 @@ propsSchema: { ref: "capability://..." }
 stateSchema: { ref: "capability://..." }
 ~~~
 
-若 deployment artifact 只有上述 unresolved ref、沒有同 artifact 可直接解析的 canonical schema graph，對 ENABLED Capability 視為 `F04-ERR-007 REGISTRY_GENERATION_INVALID`。
+若 deployment artifact 只有 unresolved ref、沒有同 artifact 可直接解析的 canonical schema graph，對 ENABLED Capability 視為 `F04-ERR-007 REGISTRY_GENERATION_INVALID`。
 
 Unknown capability ID/version → REJECT。
 
