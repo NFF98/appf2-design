@@ -41,7 +41,7 @@
 Program = PFR-2026
 Status = ACTIVE
 Current Step = PFR-02 — Complete SP-P1-002
-Current Build Canonical = appf2-build@780100c7766584abb9adc9f1caf00e886ade3406
+Current Build Control Source = appf2-build/build-spec/CURRENT.json + delivery/CURRENT-SPRINT.json
 Current Locked Baseline = BS-P1-012
 Current Build Execution = HOLD
 SP-P1-002 = OPEN / HOLD BETWEEN TASKS
