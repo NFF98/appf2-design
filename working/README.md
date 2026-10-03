@@ -150,7 +150,7 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 依 `PFR-2026 — Product-First Phase Realignment` 與 appf2-build canonical control state：
 
 1. Current locked baseline = `BS-P1-012`。
-2. appf2-build canonical main at this normalization = `780100c7766584abb9adc9f1caf00e886ade3406`。
+2. Canonical Build control source = `appf2-build/build-spec/CURRENT.json` + `delivery/CURRENT-SPRINT.json`。
 3. `implementation_enabled=false`；repository execution state = **HOLD**。
 4. `SP-P1-002` 尚未結束；T001–T003 = CLOSED，T004–T009 = PLANNED。
 5. T004 是下一個 Activation Review 對象；**尚未授權 Cursor implementation**。
