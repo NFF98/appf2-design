@@ -305,7 +305,7 @@ ABSENT
 
 ABSENT 是 VM internal sentinel：
 
-- 只可來自 F02/F04 machine descriptor 明示 optional 的 declared field，或 scoped path resolving 到該 optional capability-local field；不得由 implementation把普通 missing key自行解讀成 ABSENT
+- 只可來自 F02/F04 machine descriptor 明示 optional 的 declared field；Phase 1 實際 owner 是 F04 capability_state optional field。不得由 implementation把普通 missing key或 Blueprint SCOPE path自行解讀成 ABSENT
 - F02 Blueprint app-state RECORD Phase 1 禁止 optional_fields，因此 app mutable/derived state不會以 ABSENT 表示「缺值」
 - F04 capability_state RECORD 的 optional_fields 可在 initialize 時 absent；present 後必須符合 field descriptor
 - 不可保存成 JSON null/undefined，也不可跨 Blueprint durable state boundary
