@@ -1293,7 +1293,7 @@ CapabilityExecutionPolicySnapshot = {
 
 Canonical rules：
 
-1. `policy_digest` 由 policy body canonical JSON計算；同一 `policy_version` 若 body/digest改變 → deployment/build hard fail。每次 policy變更必須新 policy version + digest。
+1. `policy_digest = sha256(UTF8(canonical_policy_body_without_policy_digest))`；object keys依 Unicode code point升冪、array順序保留、無額外 whitespace，hash boundary輸出 `sha256:<64 lowercase hex>`。同一 `policy_version` 若 body/digest改變 → deployment/build hard fail。每次 policy變更必須新 policy version + digest。
 2. Policy keyed by exact CapabilityRef，可涵蓋多個仍受支援的 historical Registry snapshots；它**不**改變任何 historical `registry_digest`。
 3. Fresh execution effective state = immutable Registry snapshot state AND current policy state。兩邊任一 deny即 deny。
 4. Policy只能收緊：不得把 pinned snapshot `DISABLED/EXPERIMENTAL → ENABLED`，不得把 pinned `REVOKED → ACTIVE`。若 policy entry缺少 referenced exact CapabilityRef，fresh execution fail closed。
