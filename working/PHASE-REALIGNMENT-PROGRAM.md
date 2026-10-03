@@ -180,6 +180,8 @@ A0 由 BF-014 觸發。First-pass 已完成：35/35 SP2 Acceptance/Test mapping 
 
 A0 exit：blocking Findings resolved → cross-contract re-audit PASS → projection scope clean → Human Build Freeze approval。
 
+> Naming note：下方 Update Log 是歷史事件記錄；其中曾出現的 `BS-P1-004` / `BS-P1-005` 等當時預留名稱只代表當時語境，不構成未來 identifier reservation。現行 future-ID 規則以 §4B 為準。
+
 # 8. Update Log
 
 | Date | Step | Update | Result |
@@ -197,3 +199,5 @@ A0 exit：blocking Findings resolved → cross-contract re-audit PASS → projec
 | 2026-10-01 | PFR-02 / A0 | Human 批准 BS-P1-004 Build Freeze；Build PR #113 全 checks PASS 後 merge，BS-P1-004 LOCKED，BF-014～022 RESOLVED，BF-023 保持 OPEN；CURRENT 仍 BS-P1-003/HOLD | CURRENT / SP2 REBIND + ACTIVATION REVIEW |
 | 2026-10-01 | PFR-02 | SP2 Rebind + Activation Review 完成；Build PR #114 全 required checks PASS 後 merge。Review 確認 atomic rebind precedent：Human Activation 時一次切 CURRENT + rebind 38 個 unfinished backlog + SP2 Tasks；BL-P1-032 保留 DONE 歷史並由 T001 revalidate F07-AC-008。BF-024/025 RESOLVED；BF-023 保持 OPEN | HUMAN ACTIVATION GATE |
 | 2026-10-01 | PFR-02 | Human 批准 BS-P1-004 / SP-P1-002 Activation；Build PR #115 全 gates PASS 後 merge。CURRENT=BS-P1-004、implementation_enabled=true、SP2 ACTIVE、T001 IN_PROGRESS、38 unfinished backlog rebind，BL-P1-032/F07-AC-008 revalidation IN_PROGRESS | CURRENT / T001 EXECUTION |
+
+| 2026-10-04 | PFR-02 / Naming | T001–T003 已 CLOSED、SP2 HOLD before T004；全面清理 stale future BS/SP reservations，Product Proof future stages改用 stable stage names，numeric ID改為 Freeze/Sprint creation 時才分配 | NAMING NORMALIZED / NO PRODUCT SEMANTIC CHANGE |
