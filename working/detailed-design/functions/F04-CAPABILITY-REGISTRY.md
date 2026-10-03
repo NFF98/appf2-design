@@ -703,15 +703,26 @@ runtime_binding_digest
   })
 ~~~
 
+Deployment-owned handler catalog exact internal shape：
+
+~~~text
+TrustedRuntimeHandlerCatalog = {
+  registration_keys: sorted unique string[]
+}
+~~~
+
+`TrustedRuntimeHandlerCatalog` 必須從**實際 build-time bundled handler map**建立，不得從 Registry source自己複製一份「預期存在」的 key來假裝 proof。它不是 public artifact，不由 Blueprint/client提供。
+
 安全規則：
 
 1. Blueprint 只攜帶 capability_id + version + declarative config。
 2. Runtime 只依 **pinned Registry release bundle** 的 trusted RuntimeRegistry取得 handler；fresh current Registry只決定 current eligibility，不可替換 old Blueprint的 pinned handler binding。
 3. Blueprint 不得指定 module path、JS source、function body、npm package、dynamic import URL。
-4. Runtime handler 必須 build-time bundled；deployment build必須驗證每個 ENABLED direct executable mapping的 registration_key恰好解析到一個 trusted bundled handler。
-5. Missing runtime handler / handler bundle verification失敗 = build/deployment integrity failure；禁止 dynamic fallback。
-6. 同一 exact CapabilityRef跨歷史 release重用時 `runtime_binding_digest` 必須與 append-only ledger一致；registrationKey改變必須 bump Capability semantic version。
-7. `runtime_registry_digest` 必須覆蓋完整 mapping與 lifecycle-independent runtime binding metadata；release ledger綁定 registry_version + registry_digest + validator_registry_digest + runtime_registry_digest。
+4. Runtime handler 必須 build-time bundled；release/deployment gate必須用實際 `TrustedRuntimeHandlerCatalog` 驗證每個 ENABLED RuntimeRegistry registration_key恰好解析到一個 bundled handler。Registry generator本身若拿不到 handler catalog，不得偽造此 proof；完整 handler completeness gate屬於 build/deployment。
+5. Fresh Execution Admission對 Blueprint pinned direct Node refs再做一次 deployment completeness check：由 pinned RuntimeRegistry取得 registration_key，必須存在於 current app build的 TrustedRuntimeHandlerCatalog。
+6. Missing runtime handler / handler catalog verification失敗 = build/deployment integrity failure；禁止 dynamic fallback。
+7. 同一 exact CapabilityRef跨歷史 release重用時 `runtime_binding_digest` 必須與 append-only ledger一致；registrationKey改變必須 bump Capability semantic version。
+8. `runtime_registry_digest` 必須覆蓋完整 mapping與 lifecycle-independent runtime binding metadata；release ledger綁定 registry_version + registry_digest + validator_registry_digest + runtime_registry_digest。
 
 # 11. Compatibility Artifact
 
