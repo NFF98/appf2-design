@@ -221,6 +221,8 @@ erDiagram
 - `PASSED` 才能形成 / 引用 `blueprint_content`。
 - REJECTED candidate body 不預設 durable 保存；只留必要 digest / error evidence。
 - validation report 的正式 shape 由 F02 定義。
+- **BF-037 terminal-row rule**：Phase 1 `validation_run` 只在 validation outcome 已確定為 PASSED / REJECTED / INCOMPATIBLE 後 INSERT 一次；不存在可原地 finalize 的 provisional row。
+- `validation_run` INSERT 後所有 columns immutable；database boundary 必須拒絕 UPDATE 與 DELETE。需要更正或重跑時建立新的 `validation_run_id`，不得覆寫歷史 trust evidence。
 - **SP2 staged FK rule**：若 `compiler_run` physical table 尚未存在，`validation_run.compiler_run_id` 先建立為 nullable uuid column，值只在有可信 upstream compiler_run identity 時寫入；不得建立假 row / placeholder compiler_run。
 - 當 F01 compiler persistence（BL-P1-010 / BL-P1-011 所屬實作）落地後，必須用後續 migration 對既有非 NULL 值完成 integrity validation，再加 `validation_run.compiler_run_id → compiler_run.compiler_run_id` physical FK。
 - RESTORE / IMPORT 等合法無 compiler run 路徑維持 NULL；staged FK 不改變 logical ownership，只解開 migration ordering。
@@ -607,7 +609,7 @@ base blueprint
 | anonymous_identity lifecycle metadata | YES | continuity |
 | raw / structured / resolved intent lifecycle | LIMITED | clarification progresses |
 | compiler_run | APPEND / finalize only | audit / evidence |
-| validation_run | APPEND / finalize only | trust evidence |
+| validation_run | NO — insert-only terminal row | immutable trust evidence；retry / rerun 另建 validation_run |
 | blueprint_content body | NO | immutable artifact |
 | blueprint trust_status | YES | revoke / compatibility governance |
 | blueprint_lineage | NO | historical relation |
@@ -731,6 +733,9 @@ Relational columns 必須保留：
 -主要查詢 / filter dimensions。
 
 規則：
+
+- `canonical_blueprint jsonb` 只接受已通過 F02 executable string-domain validation 的 canonical Blueprint；F02 必須在 PASSED 前排除 PostgreSQL jsonb 無法表示的 U+0000 / invalid surrogate cases。
+- repository / database `jsonb` cast 若仍因 Blueprint string representability 失敗，視為 implementation/runtime invariant defect，不得把該 failure 當成正常 user candidate rejection path。
 
 > 不能把整個 Database 退化成「一張 table + 任意 JSON」。
 
