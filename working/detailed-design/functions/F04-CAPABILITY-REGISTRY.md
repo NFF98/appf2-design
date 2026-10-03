@@ -599,12 +599,13 @@ Rules：
 3. 所有 named invariant 必須出現在其 canonical `invariant_ids[]` location；generator 不得把 invariant semantics埋成 hand-written validator branch。
 4. event `payload` 必須使用 §5.1 `EventPayloadDescriptorResolver` exact machine representation。Static event 使用 `{kind:"STATIC", descriptor: ...}`；empty payload = STATIC `RECORD{fields:{}}`，不得用 implementation-defined `{}` special case。
 5. Node-dependent event payload 只允許 `BOUND_STATE_DESCRIPTOR` 或 `BOUND_STRING_NARROWED_BY_PROP`；F02 必須在 node validation 時先 resolve 為 concrete TypeDescriptor，之後才進 EVENT dispatch-site typing。
-6. BF-039 `execution_contract_digest` = 對此 exact CapabilityRef 的 immutable executable contract canonical JSON 做 SHA-256。Digest input **包含** `validator`、`permission_class`、`resource_budget`、`resource_usage`、`execution_class`、`compatibility`、`degradation`；**排除** `availability`、`execution_status`。
-7. 同一 exact CapabilityRef 跨不同 Registry snapshots 若 `execution_contract_digest` 改變，代表 executable semantics drift；必須 bump Capability semantic version。不得只 bump Registry version後沿用同一 CapabilityRef。
-8. `availability` / `execution_status` 是唯一允許在相同 exact CapabilityRef 跨 Registry snapshots 改變而不 bump Capability version的 execution-policy fields；每次改變仍必須發布新的 Registry version + digest，禁止 same-version/digest mutation。
-6. action `args` empty = `{}`。
-7. F02 只讀此 generated `validator` contract 做 capability validation；不得維護第二份 capability schema / invariant table。
-8. Generator 必須 deterministic；相同 canonical definitions輸入生成 byte-equivalent semantic artifact與相同 registry_digest。
+6. BF-039 `execution_contract_digest` = 對此 exact CapabilityRef 的 immutable executable contract canonical JSON 做 SHA-256。Exact digest input object keys = `id`、`version`、`validator`、`permission_class`、`resource_budget`、`resource_usage`、`execution_class`、`compatibility`、`degradation`；**排除** `availability`、`execution_status`。
+7. Digest canonicalization：object keys recursively 依 Unicode code point ascending 排序；array order保留；使用 compact JSON（無額外 whitespace）序列化；對 exact UTF-8 bytes做 SHA-256；跨 contract boundary canonical representation = `sha256:<64 lowercase hex>`。任何 schema-invalid non-JSON value在 hash前已 generation fail。
+8. 同一 exact CapabilityRef 跨不同 Registry snapshots 若 `execution_contract_digest` 改變，代表 executable semantics drift；必須 bump Capability semantic version。不得只 bump Registry version後沿用同一 CapabilityRef。
+9. `availability` / `execution_status` 是唯一允許在相同 exact CapabilityRef 跨 Registry snapshots 改變而不 bump Capability version的 execution-policy fields；每次改變仍必須發布新的 Registry version + digest，禁止 same-version/digest mutation。
+10. action `args` empty = `{}`。
+11. F02 只讀此 generated `validator` contract 做 capability validation；不得維護第二份 capability schema / invariant table。
+12. Generator 必須 deterministic；相同 canonical definitions輸入生成 byte-equivalent semantic artifact、相同 execution_contract_digest與相同 registry_digest。
 
 **Ref-only artifact 不合格：**
 
