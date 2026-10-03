@@ -1319,7 +1319,7 @@ Unknown / disabled / revoked → reject or incompatible，不 dynamic fallback�
 - rule graph acyclic
 - expression complexity
 - EVENT only in action context
-- SCOPE only in repeat scope
+- SCOPE only in §9.2 admitted lexical context：Node-local使用 ancestor repeat scope；top-level Action 只可使用 all-dispatch-site SCOPE context；Rule/Derived/Result 無 scope時一律 reject
 
 # 28. V08 — Action / Event Validation
 
