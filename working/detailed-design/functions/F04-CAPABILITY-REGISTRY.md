@@ -318,7 +318,7 @@ Canonical defaults：
 - `mutable_state_required` is always boolean；default `false`。
 - `reference` is always explicit；default `NONE`。
 - `source_kinds` is always explicit in generated machine truth。Human-readable §13.1 prop shorthand defaults to `[LITERAL]` only；**action arg shorthand has no implicit source-kind default**，每個 action arg 必須在 §13.1 明示。
-- event `payload` 一律使用 `EventPayloadDescriptorResolver`；`STATIC` 直接攜帶 concrete F02 TypeDescriptor，node-dependent payload 只能使用本節列出的 resolver kind，不得由 implementation 自創 resolver token。
+- event `payload` 一律使用 `EventPayloadDescriptorResolver`；`STATIC` 直接攜帶完整 payload-root concrete F02 TypeDescriptor。§13.1 human-readable `payload.value = T` / `payload = {}` 只是不改語意的 shorthand，canonical source 必須 normalize 成 `STATIC(RECORD{...})`；node-dependent payload 只能使用本節列出的 resolver kind，不得由 implementation 自創 resolver token。
 - empty props / bindings / events / actions are `{}`，never omitted。
 - `capability_state` must be explicit resolved TypeDescriptor or `NONE`。
 - `composition.children` and `composition.repeat` are always explicit booleans；`repeat_required` exists only when repeat=true and is otherwise omitted。
@@ -377,8 +377,8 @@ SourceKind = LITERAL | STATE | RULE | OP | EVENT | SCOPE
 Event payload resolver rules：
 
 1. `STATIC`：generated artifact 已攜帶完整 concrete F02 TypeDescriptor；F02 直接使用。
-2. `BOUND_STATE_DESCRIPTOR`：`binding_key` 必須指向同一 node 已驗證、`source_kinds=[STATE]` 且可解析為 concrete mutable state descriptor 的 binding；F02 以該 concrete descriptor 作 payload descriptor。
-3. `BOUND_STRING_NARROWED_BY_PROP`：`binding_key` 必須解析為 concrete mutable STRING descriptor；`prop_key` 必須是同 node 已驗證的 LITERAL NUMBER prop，且其 canonical invariant 保證為合法 max_length。F02 產生 `STRING(max_length = prop value)`；若該值大於 bound STRING max_length，node validation reject。
+2. `BOUND_STATE_DESCRIPTOR`：`binding_key` 必須指向同一 node 已驗證、`source_kinds=[STATE]` 且可解析為 concrete mutable state descriptor 的 binding；resolver 的 **payload root** 固定產生 `RECORD{ value: <bound concrete descriptor> }`。
+3. `BOUND_STRING_NARROWED_BY_PROP`：`binding_key` 必須解析為 concrete mutable STRING descriptor；`prop_key` 必須是同 node 已驗證的 LITERAL NUMBER prop，且其 canonical invariant 保證為合法 max_length。resolver 的 **payload root** 固定產生 `RECORD{ value: STRING(max_length = prop value) }`；若該值大於 bound STRING max_length，node validation reject。
 4. resolver 解析發生在 F02 node props/bindings 驗證之後、EVENT dispatch-site typing 之前；任何 unresolved / wrong-kind / non-concrete descriptor → F02 reject。
 5. resolver 只是 generated Validator machine metadata，不可序列化進 Blueprint、state、Rule、Result 或 Runtime value。
 6. 同一 node/event 在相同 Blueprint + Registry snapshot 下必須 deterministic resolve 為同一 concrete TypeDescriptor。
@@ -644,7 +644,7 @@ REVOKED 可因 security / critical correctness 發生。舊 Blueprint body 不�
 | action.button | 1.0.0 | INPUT | INPUT | user gesture 觸發 action | LOCAL_REACT | DETERMINISTIC |
 | input.number | 1.0.0 | INPUT | INPUT | 編輯 typed number state | LOCAL_REACT | DETERMINISTIC |
 | input.text | 1.0.0 | INPUT | INPUT | 編輯 bounded text state | LOCAL_REACT | DETERMINISTIC |
-| input.select | 1.0.0 | INPUT | INPUT | 從 bounded options 選值 | LOCAL_REACT | DETERMINISTIC |
+| input.select | 2.0.0 | INPUT | INPUT | 從 bounded STRING options 選值 | LOCAL_REACT | DETERMINISTIC |
 | input.toggle | 1.0.0 | INPUT | INPUT | 編輯 boolean state | LOCAL_REACT | DETERMINISTIC |
 | data.stat | 1.0.0 | DATA | VIEW | 呈現重要 value / metric | LOCAL_REACT | DETERMINISTIC |
 | data.table_basic | 1.0.0 | DATA | VIEW | 呈現 bounded rows / columns | LOCAL_REACT | DETERMINISTIC |
@@ -747,8 +747,8 @@ bound type: string
 input.select：
 ~~~text
 label
-bind
-options: bounded label/value list
+bind: mutable STRING-domain ENUM
+options: bounded label/STRING-value list
 required?
 event: change
 no remote option loader in Phase 1
@@ -965,7 +965,7 @@ capability_state = NONE
 invariant_ids = [INPUT_TEXT_BOUND]
 ~~~
 
-### input.select@1.0.0
+### input.select@2.0.0
 
 ~~~text
 props:
@@ -1519,7 +1519,7 @@ Phase 1：
 
 ~~~text
 Static Trusted Registry only
-Current registry_version = 2.0.0
+Current registry_version = 3.0.0
 ~~~
 
 Deployment bind：
@@ -1536,13 +1536,14 @@ Registry update：
 - compatible capability addition → MINOR
 - metadata-only non-contract fix → PATCH
 - breaking contract → MAJOR
-- BF-034 validator-machine remediation = breaking contract；current Registry `1.x → 2.0.0`
+- BF-034 validator-machine remediation = breaking contract；Registry `1.x → 2.0.0`
+- BF-035 event-payload resolver machine shape + `input.select` STRING-only contract = breaking contract；Registry `2.0.0 → 3.0.0`，且 `input.select 1.0.0 → 2.0.0`
 - old validated Blueprint 保留原 capability refs / registry_version
 - compatibility layer 判斷是否仍可執行
 
 # 30. Open Decisions
 
-BF-030 / BF-031 已完成前次 remediation。BF-034 resolution direction 已於 2026-10-03 Human-approved：safe-subset static assignability、numeric refinement 使用 canonical named invariant、EVENT/SCOPE canonical relative path + all-dispatch-site typing、Registry validator contract MAJOR bump to 2.0.0。T002 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
+BF-030 / BF-031 / BF-034 已完成前次 remediation。BF-035 B2–B4 resolution direction 已於 2026-10-03 Human-approved：action args 明示 source_kinds + static/runtime invariant split、`input.select` 收斂為 STRING-valued contract 並 bump 至 2.0.0、event payload 使用 deterministic node-local resolver machine contract、Registry validator contract MAJOR bump to 3.0.0。T002 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
 
 已閉合：
 
