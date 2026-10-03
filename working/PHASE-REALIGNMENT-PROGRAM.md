@@ -41,26 +41,20 @@
 Program = PFR-2026
 Status = ACTIVE
 Current Step = PFR-02 — Complete SP-P1-002
-Step Status = BS-P1-004 / SP-P1-002 ACTIVATED
-Current Build Execution = ACTIVE
-SP-P1-002 = ACTIVE
-T001 = IN_PROGRESS
-T002–T009 = PLANNED
-Current Active Baseline = BS-P1-004
-BS-P1-004 Freeze Commit = appf2-build@3ef227f0a85d687788077648a2df6eb3c3c4a740
-Activation Review Commit = appf2-build@bc874a8bb5e400f49f12d844bf756cacc0c0e700
-Activation Commit = appf2-build@24d37a43be8b79bafceaf96c45c60d2599e5bcb8
-Scope-clean Freeze Source = 91894ae8bd6241bb5ee1897180db72e9e578d1bf
-BD-003 = APPROVED
-BD-004 = APPROVED
-BF-014..BF-022 = RESOLVED
-BF-023 = OPEN IMPLEMENTATION BUG / ACTIVE T001 SCOPE
-BF-024 = RESOLVED
-BF-025 = RESOLVED
-BL-P1-032 / F07-AC-008 Revalidation = IN_PROGRESS under T001
-Cursor Product Implementation = AUTHORIZED ONLY FOR ACTIVE T001 SCOPE
-Next Step = T001 Cursor Execution
+Current Build Control Source = appf2-build/build-spec/CURRENT.json + delivery/CURRENT-SPRINT.json
+Current Locked Baseline = BS-P1-012
+Current Build Execution = HOLD
+SP-P1-002 = OPEN / HOLD BETWEEN TASKS
+T001 = CLOSED
+T002 = CLOSED
+T003 = CLOSED
+T004–T009 = PLANNED
+Cursor Product Implementation = NOT AUTHORIZED
+Next Step = T004 Activation Review
+Carry-forward = POI-005 production HTTP / Runtime / Postgres fresh-admission wiring (non-blocking, not T004 scope)
 ~~~
+
+Current status is a tracker convenience only. Canonical Build control state remains `appf2-build/build-spec/CURRENT.json` + `delivery/CURRENT-SPRINT.json`; when this tracker and Build control state differ, Build control state wins.
 
 # 4. Phase 1 Product-First Re-alignment
 
@@ -68,14 +62,14 @@ Next Step = T001 Cursor Execution
 |---|---|---|---|---:|---|
 | PFR-00 | Program Registration | 正式建立本重構與 tracker | No implementation | — | **COMPLETED — 2026-09-30** |
 | PFR-01 | Development Re-alignment Audit | 新 Product Spec 對舊 Build Plan；判斷保留 / 修改 / 延後 | Audit only | 0.5–1 day | **COMPLETED — 2026-10-01** |
-| PFR-02 | Complete `SP-P1-002 — Validation + Intent Foundation + Evidence Reliability` | 完成 Intent / Validation / Evidence 地基 | **Cursor implementation after Human Activation** | 2–4 days | **CURRENT — ACTIVATION REVIEW PASS / HUMAN ACTIVATION PENDING** |
+| PFR-02 | Complete `SP-P1-002 — Validation + Intent Foundation + Evidence Reliability` | 完成 Intent / Validation / Evidence 地基 | **Cursor implementation after Human Activation** | 2–4 days | **CURRENT — T001–T003 CLOSED / HOLD BEFORE T004 ACTIVATION** |
 | PFR-03 | Complete `F19 — Shared App Data / Social Persistence` Detailed Design | 把 Shared Ranking 設計到可施工 | Design only | 1–2 days | PENDING |
 | PFR-04 | UI/UX Delta Review | 重新檢查 S03 / S04 / S05 的 Shared Data / Remix / Lineage 影響 | Design only | ~1 day | PENDING |
-| PFR-05 | Create `BS-P1-005 — Product Proof Baseline` | 最新 Product Truth Freeze 成新的施工圖；`BS-P1-004` 已保留給 BF-014 replacement rebaseline | Build planning / no product code | 0.5–1 day | PENDING |
-| PFR-06 | `SP-P1-003 — Playable App Vertical Slice` | Intent → generated App → render → play | **Cursor implementation** | 3–5 days | PENDING |
-| PFR-07 | `SP-P1-004 — Share + Shared Ranking Product Proof` | Share → recipient use → asynchronous Shared Ranking | **Cursor implementation** | 3–5 days | PENDING |
-| PFR-08 | `SP-P1-005 — Remix + Lineage Product Proof` | Remix → child Version → Parent / Root lineage → fresh Shared Data Scope | **Cursor implementation** | 3–5 days | PENDING |
-| PFR-09 | `SP-P1-006+ — Product Hardening & Phase 1 Close` | Recovery / Correction / Accessibility / performance / evidence 等必要收尾 | **Cursor implementation** | Evidence-driven | PENDING |
+| PFR-05 | Create next Human-approved Product Proof Build Spec | 最新 Product Truth Freeze 成新的施工圖；**不在 roadmap 預留 BS 編號，實際 BS-P1-NNN 只在 Freeze 建立時依 canonical latest ID 分配** | Build planning / no product code | 0.5–1 day | PENDING |
+| PFR-06 | Product Proof Stage A — Playable App Vertical Slice | Intent → generated App → render → play；**Sprint numeric ID at creation time** | **Cursor implementation** | 3–5 days | PENDING |
+| PFR-07 | Product Proof Stage B — Share + Shared Ranking | Share → recipient use → asynchronous Shared Ranking；**Sprint numeric ID at creation time** | **Cursor implementation** | 3–5 days | PENDING |
+| PFR-08 | Product Proof Stage C — Remix + Lineage | Remix → child Version → Parent / Root lineage → fresh Shared Data Scope；**Sprint numeric ID at creation time** | **Cursor implementation** | 3–5 days | PENDING |
+| PFR-09 | Product Hardening + Phase 1 Close | Recovery / Correction / Accessibility / performance / evidence 等必要收尾；**Sprint numeric ID(s) at creation time** | **Cursor implementation** | Evidence-driven | PENDING |
 
 Phase 1 完成的核心產品循環：
 
@@ -100,18 +94,18 @@ Phase 1 不以「所有未來功能都做完」為完成條件；以 Human-appro
 
 - `SP-P1-001` 已完成 implementation 全部保留；Capability Registry / Admission / Coverage、Canonical Blueprint Identity、Anonymous Identity、Evidence ingestion / batching / retry 不因新 Product direction 重做。
 - `SP-P1-002 T001–T009` 保留；其 F01 / F02 / F04 / F07 foundation 未被 F19 / F20 推翻。
-- `BS-P1-003` 仍足夠作為 `SP-P1-002` implementation authority；**PFR-02 前不需要 rebaseline**。
+- **Historical PFR-01 decision:** 當時 `BS-P1-003` 足以開始 `SP-P1-002`。其後 BF remediation 已合法 rebaseline 至 `BS-P1-012`；目前/未來 implementation authority 一律讀 `appf2-build/build-spec/CURRENT.json`，不得把這條歷史敘述當成現行 baseline。
 
 ### CHANGE
 
-- 舊 `SP-P1-003–SP-P1-008` 不再作為 execution sequence；其 backlog 必須依 Product-first roadmap 重新 move / split / re-sequence。
+- **Legacy provisional labels `SP-P1-003–SP-P1-008` 不再作為 execution sequence，也不構成未來 Sprint ID reservation。** 其舊 backlog grouping 必須依 Product-first roadmap重新 move / split / re-sequence；未來正式 Sprint ID只在 Human-approved Sprint creation時分配。
 - Phase 1 execution sequence改為：
   `SP2 foundation → Playable App → Share + Shared Ranking → Remix + Lineage → Hardening`。
-- `BS-P1-004` 已保留給 BF-014 replacement rebaseline；原 Product Proof Baseline 順延為 `BS-P1-005`，仍只在 PFR-05 建立，前置為 F19 Detailed Design closure + S03/S04/S05 UI/UX Delta Review + required Acceptance/Test/Evidence closure。
+- **Historical naming note:** PFR-01 曾暫定 Product Proof Baseline 為 `BS-P1-005`，但後續 BF rebaseline 已實際使用 `BS-P1-005`–`BS-P1-012`。因此該預留名稱正式作廢；PFR-05 不再預約固定 BS ID。Product Proof Build Spec只在 F19 Detailed Design closure + S03/S04/S05 UI/UX Delta Review + required Acceptance/Test/Evidence closure後，由當時 canonical latest baseline往後分配唯一新 ID。
 
 ### DEFER
 
-- Full Result Correction、deeper Recovery、full Accessibility、advanced hardening、final cross-function metrics 延後到 `SP-P1-006+`，但前序 Product Proof 仍需 minimum safe failure / truthful timeout / bounded recovery。
+- Full Result Correction、deeper Recovery、full Accessibility、advanced hardening、final cross-function metrics 延後到 **PFR-09 Product Hardening stage**，但前序 Product Proof仍需 minimum safe failure / truthful timeout / bounded recovery。實際 Sprint ID不在本 roadmap預留。
 - F09 Realtime 保持 evidence-gated。
 - F08 durable account ownership 保持 Phase 2。
 - F13 full entitlement / metering、F20 Creator Commerce、F15 settlement 保持 Phase 3。
@@ -124,6 +118,18 @@ Phase 1 不以「所有未來功能都做完」為完成條件；以 Human-appro
 - F19 Phase 1 resource-limit contract不得依賴完整 Phase 3 F13 billing/entitlement system；完整 Creator Plan / commercial metering仍 deferred。
 
 > 本段是 PFR-01 Human-approved planning truth；不直接授權任何 Cursor implementation。
+
+## 4B. Canonical Naming Rule — Future Build Specs / Sprints
+
+為避免 PFR planning 與 Build remediation 共用同一組流水號造成碰撞，2026-10-04 起採以下規則：
+
+1. **Planning roadmap 不預留未來 `BS-P1-NNN` 或 `SP-P1-NNN` 數字 ID。**
+2. PFR 只使用 stable stage name：`Product Proof Stage A / B / C`、`Product Hardening`。
+3. Build Spec ID 只在 Human-approved Build Freeze candidate真正建立時，依 `appf2-build/build-spec/baselines/` 最新 canonical ID分配。
+4. Sprint ID只在 Sprint詳細 planning / Human activation前建立時，依 `appf2-build/delivery/sprints/` canonical sequence分配。
+5. 已存在的 historical ID（例如 `BS-P1-005`–`BS-P1-012`）永遠保留其原始歷史意義，不 rename、不 recycle、不重新指派。
+6. Legacy provisional `SP-P1-003–SP-P1-008` 只代表舊 roadmap草案，不保留號碼；未來不得因名稱相同就自動沿用其舊 scope。
+7. Product semantics / stage順序不因本命名 normalization改變；本次只移除 identifier collision / stale reservation。
 
 # 5. Phase 2–Phase 4+ Replanning
 
@@ -146,7 +152,7 @@ Phase 2–Phase 4+ 必須重排，但**不在 Phase 1 尚未產生真實 Evidenc
 PFR-01 audit
 → PFR-02 SP2
 → PFR-03 / 04 design delta
-→ PFR-05 BS-P1-005
+→ PFR-05 next Product Proof Build Spec (ID assigned at Freeze)
 → PFR-06 first playable App
    target ≈ 2026-10-07 to 2026-10-10
 
@@ -174,6 +180,8 @@ A0 由 BF-014 觸發。First-pass 已完成：35/35 SP2 Acceptance/Test mapping 
 
 A0 exit：blocking Findings resolved → cross-contract re-audit PASS → projection scope clean → Human Build Freeze approval。
 
+> Naming note：下方 Update Log 是歷史事件記錄；其中曾出現的 `BS-P1-004` / `BS-P1-005` 等當時預留名稱只代表當時語境，不構成未來 identifier reservation。現行 future-ID 規則以 §4B 為準。
+
 # 8. Update Log
 
 | Date | Step | Update | Result |
@@ -191,3 +199,5 @@ A0 exit：blocking Findings resolved → cross-contract re-audit PASS → projec
 | 2026-10-01 | PFR-02 / A0 | Human 批准 BS-P1-004 Build Freeze；Build PR #113 全 checks PASS 後 merge，BS-P1-004 LOCKED，BF-014～022 RESOLVED，BF-023 保持 OPEN；CURRENT 仍 BS-P1-003/HOLD | CURRENT / SP2 REBIND + ACTIVATION REVIEW |
 | 2026-10-01 | PFR-02 | SP2 Rebind + Activation Review 完成；Build PR #114 全 required checks PASS 後 merge。Review 確認 atomic rebind precedent：Human Activation 時一次切 CURRENT + rebind 38 個 unfinished backlog + SP2 Tasks；BL-P1-032 保留 DONE 歷史並由 T001 revalidate F07-AC-008。BF-024/025 RESOLVED；BF-023 保持 OPEN | HUMAN ACTIVATION GATE |
 | 2026-10-01 | PFR-02 | Human 批准 BS-P1-004 / SP-P1-002 Activation；Build PR #115 全 gates PASS 後 merge。CURRENT=BS-P1-004、implementation_enabled=true、SP2 ACTIVE、T001 IN_PROGRESS、38 unfinished backlog rebind，BL-P1-032/F07-AC-008 revalidation IN_PROGRESS | CURRENT / T001 EXECUTION |
+
+| 2026-10-04 | PFR-02 / Naming | T001–T003 已 CLOSED、SP2 HOLD before T004；全面清理 stale future BS/SP reservations，Product Proof future stages改用 stable stage names，numeric ID改為 Freeze/Sprint creation 時才分配 | NAMING NORMALIZED / NO PRODUCT SEMANTIC CHANGE |
