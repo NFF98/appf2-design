@@ -107,7 +107,7 @@ Phase 1 logical shape：
 ~~~json
 {
   "schema_version": "1.0.0",
-  "registry_version": "3.0.0",
+  "registry_version": "4.0.0",
   "kind": "APP",
   "meta": {
     "title": "聚餐分帳",
@@ -120,7 +120,20 @@ Phase 1 logical shape：
   "state": {},
   "rules": [],
   "actions": [],
-  "nodes": [],
+  "nodes": [
+    {
+      "id": "node_root",
+      "capability": {"id":"layout.container","version":"1.0.0"},
+      "props": {
+        "direction":{"kind":"LITERAL","value":"COLUMN"},
+        "gap":{"kind":"LITERAL","value":"NONE"},
+        "align":{"kind":"LITERAL","value":"STRETCH"}
+      },
+      "bindings": {},
+      "events": {},
+      "children": []
+    }
+  ],
   "root_node_id": "node_root",
   "result": {
     "outputs": []
@@ -149,6 +162,155 @@ Unknown top-level executable key → reject。
 理由：
 
 > 避免 LLM 用多塞欄位偷偷創造 Runtime semantics。
+
+## 4.1 BF-036 Canonical Executable Schema Closure
+
+> **BF-036 resolution：V02 的「required keys / allowed keys only」必須能由單一 machine schema直接判斷。以下 shape、requiredness、grammar、bounds 都是 Phase 1 canonical Product truth；範例不再承擔隱含 requiredness。**
+
+Canonical identifier token（除已有更嚴格專用 ID grammar外）：
+
+~~~text
+CanonicalIdentifier = ^[a-z][a-z0-9_]{0,63}$
+~~~
+
+`nff_`、`sys_`、`__` 開頭 token 保留給平台，不得由 Blueprint 使用。
+
+Top-level exact shape（**11 keys 全部 required**，不得省略 empty object / array）：
+
+~~~text
+Blueprint = {
+  schema_version: "1.0.0",
+  registry_version: "4.0.0",
+  kind: "APP",
+  meta: Meta,
+  support: Support,
+  state: map<StateKey, StateEntry>,
+  rules: Rule[],
+  actions: Action[],
+  nodes: Node[],
+  root_node_id: NodeId,
+  result: ResultContract
+}
+~~~
+
+`kind` Phase 1 唯一 allowed value = `APP`。
+
+Nested exact shapes：
+
+~~~text
+Meta = {
+  title: string(1..120 chars),
+  description?: string(0..500 chars)
+}
+
+Support = {
+  coverage_status: FULLY_SUPPORTED | PARTIALLY_SUPPORTED,
+  degradations: Degradation[]
+}
+
+Degradation = {
+  requirement_id: CanonicalIdentifier,
+  description: string(1..500 chars),
+  capability_refs: CapabilityRef[],
+  preserves_semantic_core: true
+}
+
+CapabilityRef = {
+  id: F04 capability_id,
+  version: exact F04 capability SemVer
+}
+
+MutableStateEntry = {
+  mode: "MUTABLE",
+  type: NUMBER | STRING | BOOLEAN | ENUM | LIST | RECORD,
+  initial: value,
+  constraints?: type-specific constraints
+}
+
+DerivedStateEntry = {
+  mode: "DERIVED",
+  type: NUMBER | STRING | BOOLEAN | ENUM | LIST | RECORD,
+  expr: ValueSource
+}
+
+Rule = {
+  id: RuleId,
+  result_type: NUMBER | STRING | BOOLEAN | ENUM | LIST | RECORD,
+  expr: ValueSource
+}
+
+Node = {
+  id: NodeId,
+  capability: CapabilityRef,
+  props: map<declared_prop_key, ValueSource>,
+  bindings: map<declared_binding_key, ValueSource>,
+  events: map<declared_event_name, ActionId>,
+  children: NodeId[],
+  repeat?: Repeat
+}
+
+Repeat = {
+  items: ValueSource,
+  item_alias: CanonicalIdentifier,
+  index_alias?: CanonicalIdentifier,
+  max_items: integer 0..500
+}
+
+Action = {
+  id: ActionId,
+  steps: ActionStep[]
+}
+
+SET_STATE step = {
+  type: "SET_STATE",
+  target: StateKey,
+  value: ValueSource,
+  when?: ValueSource
+}
+
+INVOKE_CAPABILITY step = {
+  type: "INVOKE_CAPABILITY",
+  target_node_id: NodeId,
+  capability_action: declared action name,
+  args: map<declared_arg_key, ValueSource>,
+  when?: ValueSource
+}
+
+RESET_STATE step = {
+  type: "RESET_STATE",
+  target: StateKey | "ALL_MUTABLE"
+}
+
+ResultContract = {
+  outputs: ResultOutput[]
+}
+
+ResultOutput = {
+  id: CanonicalIdentifier,
+  label: string(1..120 chars),
+  value: ValueSource,
+  sensitivity: NORMAL | SENSITIVE | DO_NOT_PERSIST
+}
+~~~
+
+Canonical requiredness / closure rules：
+
+1. 每個上述 object 只允許列出的 exact keys；unknown key → V02 reject。
+2. `Meta.description`、`Node.repeat`、`Repeat.index_alias`、SET_STATE / INVOKE_CAPABILITY 的 `when` 是本節唯一 optional executable keys；另有 TypeDescriptor 自身已明示的 optional constraint keys。
+3. `props` / `bindings` / `events` / `children` / `args` / `outputs` / `degradations` 即使為空也必須 explicit 寫成 `{}` / `[]`；不得靠 omission 表示 empty。
+4. `Node.repeat`：F04 `composition.repeat=false` 時 forbidden；`repeat=true && repeat_required=true` 時 required；`repeat=true && repeat_required!=true` 時 optional。
+5. `children` 永遠 required；F04 `composition.children=false` 時必須 `[]`。
+6. `Support.coverage_status=FULLY_SUPPORTED` → `degradations=[]`；`PARTIALLY_SUPPORTED` → degradations 必須 non-empty，且每項 `preserves_semantic_core=true`。
+7. `Degradation.capability_refs` length = 1..20；每個元素都是 exact `CapabilityRef` object、同一 degradation內不得 duplicate；不得使用 bare capability ID 字串。每個 ref 必須存在於該 Blueprint `registry_version` snapshot。
+8. `Degradation.requirement_id` 在 degradations 內 unique；`ResultOutput.id` 在 outputs 內 unique；`Node.children` 不得 duplicate；Action / Rule / Node identity沿用各自專用 grammar與 unique rule。
+9. Mutable State 的 type-specific `constraints` requiredness仍由 §8.1.1 擁有；DERIVED 永遠禁止 `initial` / `constraints`。
+10. `when` 若存在，static descriptor 必須 assignable 到 BOOLEAN；RESET_STATE Phase 1 不接受 `when`，需要 conditional reset 時由 IF/Action composition明確建模。
+11. `Action.steps` length = 1..16；empty Action 沒有 executable meaning，V02 reject。
+12. `nodes` length = 1..100；`root_node_id` 必須指向存在 Node。structural children graph 必須是 rooted tree：root 不得作為任何 node child；每個 non-root Node 必須恰有一個 structural parent；DAG multi-parent與 orphan都 reject。rules/actions 可為 empty。
+13. `support.degradations` max 50；每個 `capability_refs` length 1..20；`Result.outputs` max 50。
+14. valid but unused state/rule/action declaration Phase 1 不因「dead code」本身 reject；Validator 不得自行加 unused-declaration rejection。Node 例外：所有 nodes 必須屬於 rooted structural tree。
+15. 字串長度以 Unicode code points 計，不以 UTF-16 code units 計；byte ceiling另由 §19 / V01 enforce。
+16. 任何「example 有 key所以視為 required」或「沒寫就當 empty」的 implementation inference 均禁止；只認本節 exact schema。
 
 # 5. Version Contract
 
@@ -181,10 +343,10 @@ capability_version
 
 Registry version 不取代 capability version。
 
-BF-034 resolution：
+BF-036 resolution：
 
-- Current Phase 1 Registry snapshot version = `3.0.0`。
-- `1.x` / `2.0.0` 與 `3.0.0` 的 validator machine contract 不視為同一 executable contract；未知或不相容 snapshot 必須在 V03 reject。
+- Current Phase 1 Registry snapshot version = `4.0.0`。
+- `1.x` / `2.0.0` / `3.0.0` 與 `4.0.0` 的 validator / TypeDescriptor machine contract 不視為同一 executable contract；未知或不相容 snapshot 必須在 V03 reject。
 - Capability 自身的 `capability_version` 不因 Registry machine-contract rebaseline 自動改號；只有該 Capability contract 本身 breaking 時才另行 bump。
 
 # 6. Metadata Contract
@@ -407,9 +569,11 @@ Type-specific canonical shape：
 ~~~
 
 - `constraints` required。
-- 唯一 allowed key：`fields`。
+- allowed keys：`fields`，以及 machine vocabulary 的 `optional_fields?`。
 - `fields` 是 declared field map；field key grammar = `^[a-z][a-z0-9_]{0,63}$`。
-- initial object keys 必須與 declared fields **exactly equal**；missing / extra field 都 reject。
+- `optional_fields` 若存在：array values unique、lexicographically canonical、每個 value 必須存在於 `fields`；它表示該 field 的 runtime value 可以是 ABSENT，而 **不是** null/undefined。
+- Phase 1 Blueprint MUTABLE / DERIVED app state **禁止** `optional_fields`；因此 app-state RECORD initial object keys仍必須與 declared fields exactly equal。Phase 1 `optional_fields` 只供 F04 generated `capability_state` machine descriptor 使用。
+- capability_state runtime value：所有 non-optional fields 必須存在；optional field 可缺失，存在時必須符合其 field descriptor；extra field 永遠 reject。
 - arbitrary undeclared object key 永遠 reject。
 
 Canonical reusable `TypeDescriptor`：
@@ -421,10 +585,10 @@ TypeDescriptor
 | { type: BOOLEAN }
 | { type: ENUM,    constraints:  { allowed[] } }
 | { type: LIST,    constraints:  { item: TypeDescriptor, max_length } }
-| { type: RECORD,  constraints:  { fields: map<field, TypeDescriptor> } }
+| { type: RECORD,  constraints:  { fields: map<field, TypeDescriptor>, optional_fields?: field[] } }
 ~~~
 
-TypeDescriptor 遞迴 shape 受 canonical Blueprint bytes / total initial state bytes ceiling 限制，不建立第二套 hidden type system。
+TypeDescriptor 遞迴 shape 受 §19 `TypeDescriptor / composite literal nesting depth = 12`、canonical Blueprint bytes / total initial state bytes ceiling共同限制，不建立第二套 hidden type system；composite LITERAL nesting 必須跟 receiving expected descriptor同步計 depth。
 
 ### 8.1.2 Canonical Static Assignability / Descriptor Join
 
@@ -444,7 +608,7 @@ Rules：
 4. `STRING`：`source.max_length <= target.max_length`。
 5. `ENUM`：source / target item primitive type 必須一致，且 source `allowed` 必須是 target `allowed` 的 exact-value subset。Capability-specific invariant 可要求 exact same domain。
 6. `LIST`：`source.max_length <= target.max_length`，且 source item descriptor 必須 assignable 到 target item descriptor。
-7. `RECORD`：declared field key set 必須 exactly equal；每個 source field descriptor 必須 assignable 到同名 target field descriptor。Phase 1 不做 width subtyping。
+7. `RECORD`：declared field key set 必須 exactly equal；每個 source field descriptor 必須 assignable 到同名 target field descriptor。若 descriptor 含 `optional_fields`，還必須滿足 `source.optional_fields ⊆ target.optional_fields`，避免 source 可能缺少 target-required field。Phase 1 不做 width subtyping；Blueprint app-state RECORD 本身禁止 optional_fields。
 8. Constraint-free / wider source 不得 assign 到較窄 target。例：unbounded NUMBER 不可 static assign 到 NUMBER{min:0}；STRING(500) 不可 assign 到 STRING(120)。
 9. `LITERAL` 可在 receiving context 直接以 target descriptor 驗證 exact value；這不建立新的 inferred composite schema。
 10. Runtime 仍對 mutation / capability output做 constraint-check；runtime check 不取代 admission-time static assignability。
@@ -456,7 +620,7 @@ Descriptor join `Join(A,B,...)` 用於 IF / COALESCE 等多分支結果，產生
 - STRING → max_length = maximum branch max_length。
 - ENUM → same primitive type 的 ordered-insensitive exact union；超過 500 items → reject。
 - LIST → max_length = maximum branch max_length；item = recursive Join(item...)。
-- RECORD → field key set 必須 exactly equal；每個 field recursive Join。
+- RECORD → field key set 必須 exactly equal；每個 field recursive Join；`optional_fields` = all branches optional_fields 的 ordered-insensitive union。Phase 1 app-state Join 若產生 non-empty optional_fields → reject，因 app state不允許 optional RECORD。
 - base type 不同、無合法 canonical Join、或 Join 超出 Phase 1 ceiling → reject。
 
 Derived state / Rule / OP 必須攜帶 inference 後的完整 descriptor；不得只保留 top-level type。
@@ -579,6 +743,28 @@ segment = ^[a-z][a-z0-9_]{0,63}$
 - traversal 只可穿過 RECORD declared fields；Phase 1 不支援 numeric LIST index、bracket syntax、escaping alias 或 dynamic segment。
 - scalar root 只允許 empty path；unknown / missing field → reject。
 - path resolve 後得到的 concrete descriptor 才參與 Assignable(source,target)。
+
+### 9.2 Canonical Lexical SCOPE Context
+
+BF-036 固定 SCOPE typing，不允許 top-level Action 自行猜「目前是哪個 repeat」。
+
+Node-local lexical environment：
+
+1. 一個 repeat node 的 `item_alias` / `index_alias` 只對其 **structural children subtree** 可見；不對 repeat node 自己的 props/bindings/events/repeat.items 可見。
+2. nested repeat 可繼承 ancestor aliases，但 child repeat 的 alias 不得 shadow任何 ancestor alias；`item_alias != index_alias`。
+3. `item_alias` root descriptor = `repeat.items` 的 LIST item descriptor。
+4. `index_alias` 若存在，root descriptor = `NUMBER{min:0}`；runtime value必須是 finite integer且等於本次 repeated item zero-based index。
+5. Node props/bindings 中的 SCOPE 只能從該 Node lexical environment resolve；Rule、Derived State、top-level Result output 不存在 lexical repeat environment，因此直接使用 SCOPE → reject。
+
+Action dispatch-site SCOPE context：
+
+1. Action 中任一 Value Source tree（SET_STATE value/when、INVOKE_CAPABILITY args/when 以及 nested OP）含 SCOPE → 該 Action 至少必須有一個 `Node.events.* -> action_id` dispatch site。
+2. 每個 dispatch site 的 lexical environment = dispatching Node 的 ancestor repeat environments，依本節 node-local規則建立。
+3. 對 Action 內每個 `SCOPE{name,path}`，**每個** dispatch site都必須存在同名 alias，且 path resolve後 descriptor必須對該 receiving target通過 Assignable；任一 site missing/incompatible → entire Blueprint reject。
+4. Validator 不得挑第一個 site、最寬 descriptor或把多 site union成 hidden type。
+5. Action 同時含 EVENT + SCOPE 時，兩者各自對所有 dispatch sites驗證；同一 site必須同時滿足 EVENT payload與 lexical SCOPE。
+6. F04 `action_refs` 不建立 EVENT 或 SCOPE dispatch context。
+7. Runtime event envelope必須攜帶該 admitted dispatch site的 immutable lexical scope bindings供本次 Action evaluate；不得從 DOM/render tree反推。
 
 禁止：
 
@@ -713,7 +899,7 @@ Rules：
 8. `children` / `repeat` 是 **F02 structural composition fields，不是 binding names**
 9. children / repeat 只有 F04 `composition` 明確允許的 Capability 可用；不得用 magic binding name（例如 `children` / `items`）推導
 10. root_node_id 可達所有 executable node
-11. orphan executable node → reject
+11. structural graph必須是 rooted tree：root parent count=0；每個 non-root parent count=1；orphan或multi-parent node → reject
 12. child graph 不可 cycle
 
 F04 generated Validator artifact 是 prop/binding/event/action/composition 的唯一 Capability machine truth；F02 不維護第二份 Capability allowlist/schema。
@@ -733,13 +919,16 @@ Phase 1 bounded repeat：
 }
 ~~~
 
+Exact machine shape / requiredness 由 §4.1 `Repeat` 擁有。
+
 Rules：
 
 - `node.repeat` 是 Phase 1 **唯一 structural repeat syntax**。
 - 只有 F04 machine contract `composition.repeat = true` 的 Capability 可用。
 - `repeat.items` 必須 static type = LIST<T>；T 成為 item_alias 的 SCOPE TypeDescriptor。
-- `max_items` 不超過 F02 global ceiling、state/list descriptor max_length 與 Capability ceiling 的最小值。
-- aliases lexical scoped。
+- `item_alias` required；`index_alias` optional；兩者都使用 §4.1 CanonicalIdentifier、不得使用平台 reserved prefix、不得相同或 shadow ancestor alias。
+- `max_items` required integer 0..500，且不超過 source LIST descriptor max_length、F02 global ceiling與 Capability ceiling的最小值。
+- aliases lexical scoped，exact visibility / Action dispatch semantics由 §9.2 擁有。
 - scope path 必須存在於 T；若 T 是 scalar，非空 path 一律 reject。
 - repeated template 由該 node 的 structural `children` 描述；不得再以 `bindings.item_template` 建立第二種 executable template syntax。
 - no arbitrary template code。
@@ -761,6 +950,8 @@ Action = bounded declarative mutation / invocation sequence。
   ]
 }
 ~~~
+
+Action exact object / ActionStep variant shape與 requiredness由 §4.1 擁有。
 
 Action ID：
 
@@ -897,9 +1088,12 @@ SENSITIVE
 DO_NOT_PERSIST
 ~~~
 
+ResultContract / ResultOutput exact object shape與 requiredness由 §4.1 擁有。
+
 Rules：
 
-- output Value Source typed / valid
+- output IDs unique，且使用 §4.1 CanonicalIdentifier；label required 1..120 Unicode code points；sensitivity required。
+- output Value Source typed / valid；SCOPE forbidden because Result has no lexical repeat dispatch context。
 - F16 durable Result Snapshot 遵守 sensitivity
 - DO_NOT_PERSIST 可顯示但不可進 durable snapshot
 - Result declaration 不代表 semantic correctness，只提供 canonical result surface
@@ -983,6 +1177,7 @@ Rules：
 | action steps / action | 16 |
 | expression AST nodes / expression | 64 |
 | expression nesting depth | 12 |
+| TypeDescriptor / composite literal nesting depth | 12 |
 | UI child nesting depth | 12 |
 | repeat nesting depth | 2 |
 | initial LIST items | 500 |
@@ -991,6 +1186,9 @@ Rules：
 | event bindings | 200 |
 | concurrent timers | 10 |
 | result outputs | 50 |
+| support degradations | 50 |
+| capability refs / degradation | 20 |
+| children refs / node | 100 |
 
 Capability Card 可以更低，不可更高。
 
@@ -1036,7 +1234,7 @@ Reject：
 
 - invalid JSON
 - duplicate keys
-- payload bytes > intake ceiling
+- payload bytes > **512 KiB (524,288 exact UTF-8 bytes)**
 - non-object root
 - prohibited binary / executable payload
 
@@ -1123,7 +1321,7 @@ Unknown / disabled / revoked → reject or incompatible，不 dynamic fallback�
 - rule graph acyclic
 - expression complexity
 - EVENT only in action context
-- SCOPE only in repeat scope
+- SCOPE only in §9.2 admitted lexical context：Node-local使用 ancestor repeat scope；top-level Action 只可使用 all-dispatch-site SCOPE context；Rule/Derived/Result 無 scope時一律 reject
 
 # 28. V08 — Action / Event Validation
 
@@ -1515,7 +1713,9 @@ Compatibility：
 
 # 46. Open Decisions
 
-目前沒有阻擋 Phase 1 Build Freeze Gate 的 open decision。
+BF-036 Blueprint machine-schema completeness remediation 已於 2026-10-03 取得 Human blanket approval through re-activation：exact nested schema closure、RECORD optional_fields machine token、lexical/action-dispatch SCOPE typing、repeat/result/support/kind/intake bounds、Registry 4.0.0。T002 在 replacement Build Freeze / Activation 前保持 BLOCKED。
+
+目前沒有其他同類 Blueprint schema completeness open decision。
 
 已閉合：
 
