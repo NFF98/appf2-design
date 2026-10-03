@@ -203,7 +203,8 @@ CapabilityDefinition
 │  ├─ actions[]
 │  ├─ events[]
 │  ├─ bindings
-│  └─ operators[]
+│  ├─ operators[]
+│  └─ validator              // exact ValidatorContract source owned by §5.1
 ├─ runtime
 │  ├─ execution
 │  ├─ registrationKey
@@ -235,6 +236,13 @@ CapabilityDefinition
 ~~~
 
 > **BF-031 remediation：Executable machine shape 不得留給 Cursor / implementation 自行決定。** Working 必須先固定 validator 可消費的 field/type/composition contract；TypeScript/Zod 只做機械翻譯，不得新增 Product semantics。
+
+Registry v2 source rule：
+
+- `CapabilityDefinition.contract.validator` 是 executable Validator machine truth 的 canonical source field。
+- `propsSchema` / `stateSchema` 可保留供 semantic/documentation/runtime schema reference，但 **不得**取代或覆蓋 `contract.validator`。
+- ENABLED Phase 1 Core Capability 缺少 `contract.validator` → generation hard fail。
+- generator 對 `contract.validator` 做 deterministic normalization / validation，再投影到 §9 generated `validator-registry.ts`；不得從 prose Card、runtime handler 或 legacy ref反向猜 contract。
 
 ## 5.1 Phase 1 Validator Machine Contract Vocabulary
 
