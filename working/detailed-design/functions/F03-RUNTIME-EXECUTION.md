@@ -305,8 +305,10 @@ ABSENT
 
 ABSENT 是 VM internal sentinel：
 
-- 只可來自 optional declared field / scoped path
-- 不可保存進 state
+- 只可來自 F02/F04 machine descriptor 明示 optional 的 declared field，或 scoped path resolving 到該 optional capability-local field；不得由 implementation把普通 missing key自行解讀成 ABSENT
+- F02 Blueprint app-state RECORD Phase 1 禁止 optional_fields，因此 app mutable/derived state不會以 ABSENT 表示「缺值」
+- F04 capability_state RECORD 的 optional_fields 可在 initialize 時 absent；present 後必須符合 field descriptor
+- 不可保存成 JSON null/undefined，也不可跨 Blueprint durable state boundary
 - 不可作 Result output
 - 可被 COALESCE 消解
 - 未消解就進 typed target → RuntimeError
@@ -508,6 +510,7 @@ sequence
 source_node_id
 event_name
 payload
+lexical_scope_bindings
 occurred_monotonic_ms
 origin:
   USER
@@ -516,7 +519,15 @@ origin:
   SYSTEM
 ~~~
 
-payload 必須符合 F04 capability event schema。
+`payload` 必須符合 F04 capability event schema。
+
+BF-036 lexical scope runtime rule：
+
+- `lexical_scope_bindings` 只由 F02-admitted structural repeat ancestry建立，key = admitted alias，value = current item/index runtime value + admitted root TypeDescriptor。
+- renderer / DOM / arbitrary callback payload不得新增或覆蓋 scope alias。
+- repeat node自己的 alias只進入 repeated structural children的 event envelope，不回灌 repeat node自己的事件。
+- dispatcher綁定 Action 時，EVENT與SCOPE都從同一 admitted dispatch-site envelope resolve；Action shared across sites仍使用該次實際 site的 immutable envelope。
+- Admission 已保證 Action 內每個 SCOPE 對所有可能 dispatch sites成立；Runtime missing alias / descriptor mismatch視為 F03-ERR-018 invariant broken，不做 fallback。
 
 # 15. Re-entrancy / Loop Guard
 
@@ -812,6 +823,14 @@ Phase 1 local effect 不得 arbitrary network request。
 ~~~text
 capability_state_by_node[node_id]
 ~~~
+
+BF-036 optional-field initialization：
+
+1. F04 generated `capability_state` RECORD 可含 F02 `constraints.optional_fields[]`；只有該 list中的 fields允許初始 ABSENT。
+2. initialize 建立 capability state 時，所有 non-optional fields必須由 canonical capability initializer產生合法 value；optional fields可 omitted。
+3. optional field omitted ≠ null；patch 可首次建立該 field，但 value必須通過 descriptor。
+4. handler patch含 undeclared key、刪除 required field、或以 null/undefined模擬 absence → invocation failure + current Action rollback。
+5. optional capability state不得序列化進 Blueprint body，也不影響 Blueprint content_hash。
 
 用途：
 
@@ -1308,7 +1327,7 @@ createRuntimeInstance(admittedBlueprint, runtimeContext)
 hydrateInstance(instance)
 dispatchRuntimeEvent(instanceId, event) → RuntimeOperationHandle
 subscribeRuntimeOperation(operationToken, listener)
-evaluateValue(instanceId, valueSource, scope?)
+evaluateValue(instanceId, valueSource, admittedDispatchContext?)
 evaluateResult(instanceId)
 captureRuntimeSnapshot(instanceId)
 createCorrectionReplayInstance(request)
