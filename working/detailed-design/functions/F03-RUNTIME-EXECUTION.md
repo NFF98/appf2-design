@@ -429,6 +429,25 @@ LIST_MAX(LIST<NUMBER>) → NUMBER
 - AVG empty = error
 - LIST_MIN/MAX empty = error
 
+### 12.1 Static Descriptor Propagation
+
+> **BF-034 resolution：F03 operator signature 不只回傳 base type；F02 admission 必須能 deterministic 推導 concrete descriptor。Assignability / Join 定義由 F02 §8.1.2 canonical 擁有。**
+
+Rules：
+
+- Arithmetic `ADD/SUB/MUL/DIV/MOD/ABS/ROUND/FLOOR/CEIL/MIN/MAX` → `NUMBER` with no inferred min/max unless operator semantics below explicitly prove bounds；因此不得 static assign 到 bounded NUMBER target，除非 receiving rule另有 canonical invariant。
+- `EQ/NEQ` → `BOOLEAN`。Operands 必須是同一 primitive/base family；ENUM operands 必須具有相同 primitive member type，domain 可不同；LIST/RECORD equality Phase 1 仍禁止。
+- `GT/GTE/LT/LTE` → `BOOLEAN`；operands 必須為相同 base type的 NUMBER 或 STRING。
+- `AND/OR/NOT` → `BOOLEAN`。
+- `IF(condition,A,B)` → `Join(descriptor(A), descriptor(B))`。
+- `COALESCE(A,B,...)` → 對所有非-ABSENT branch descriptor 做 `Join`；沒有可形成 canonical Join 的 branches → reject。
+- `LENGTH/COUNT` → unbounded `NUMBER` descriptor；Runtime result仍 finite/non-negative，但 Phase 1 不把 integer/non-negative refinement塞進 F02 TypeDescriptor。
+- `SUM/AVG/LIST_MIN/LIST_MAX` → unbounded `NUMBER` descriptor。
+- `LOWER/UPPER/TRIM(STRING(n))` → `STRING(n)`。
+- `CONCAT(STRING(n1),...,STRING(nk))` → `STRING(sum(n1..nk))`；sum > 8192 → admission reject，而不是 clamp descriptor。
+- RULE result descriptor = expression inferred descriptor；`result_type` 只驗證 top-level base type，不得丟失完整 descriptor。
+- DERIVED state同理：完整 inferred descriptor 必須傳遞至 downstream binding / result / action validation。
+
 ## String
 
 ~~~text
