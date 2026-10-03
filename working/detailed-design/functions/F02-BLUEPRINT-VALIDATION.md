@@ -1328,7 +1328,7 @@ F02 只讀 **Registry v5 generated Validator machine truth**；不得從 compile
 
 1. ID/version 不存在 → `F02-ERR-005 / V04`，REJECTED。
 2. `availability != ENABLED`（DISABLED / EXPERIMENTAL in production validation）→ `F02-ERR-005 / V04`，REJECTED。
-3. `execution_status = REVOKED` → `F02-ERR-005 / V04`，REJECTED。這是 **Capability current execution state**；不得誤用 Blueprint-level `F02-ERR-016`。
+3. `execution_status = REVOKED` → `F02-ERR-005 / V04`，REJECTED。這是 **該 immutable Registry snapshot 的 Capability lifecycle state**；fresh current override 另由 F04 §15.1 execution policy 擁有，不得誤用 Blueprint-level `F02-ERR-016`。
 4. required dependency resolution 必須在**同一 immutable Validator Registry snapshot**內遞迴完成。對每個 required dependency，先依 `versionRange` 取符合的 exact versions，SemVer由高到低；候選必須通過 snapshot-time availability=ENABLED、execution_status=ACTIVE、trusted execution_class、Blueprint schema/runtime compatibility與其 transitive required dependencies。第一個完整 eligible candidate 才可滿足 dependency；沒有任何 candidate可滿足 → `F02-ERR-005 / V04`，REJECTED，internal reason = `CAPABILITY_DEPENDENCY_UNAVAILABLE`。Dependency 自身 schema/runtime incompatible 不升格成 parent 的 `F02-ERR-004`；對 parent 而言它是 required dependency unavailable。
 5. `execution_class` 不在 Phase 1 trusted local allowlist `LOCAL_REACT | LOCAL_RULE | LOCAL_EFFECT` → `F02-ERR-005 / V04`，REJECTED。
 6. Blueprint schema不在 Capability `blueprintSchemaRange`，或 validation context的 trusted `runtime_version` 不在 Capability min/max runtime range → `F02-ERR-004 / V04`，INCOMPATIBLE。
