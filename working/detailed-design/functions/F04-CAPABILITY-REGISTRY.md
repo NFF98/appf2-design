@@ -1399,7 +1399,8 @@ Build hard fail：
 - ENABLED capability missing validator schema
 - same registry_version with changed digest
 - same execution policy_version with changed policy_digest
-- execution policy state token非法 / referenced current exact ref缺失時不得 fail-open
+- execution policy snapshot出現 malformed / duplicate CapabilityRef、非法 state token或 digest不匹配
+- policy snapshot可以不列某 historical exact ref，但 fresh execution若需要該 ref，E07 必須 fail closed；不得以 pinned snapshot的 ENABLED/ACTIVE補成 current allow
 
 # 19. Frontend Behavior
 
