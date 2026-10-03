@@ -301,15 +301,16 @@ Canonical requiredness / closure rules：
 4. `Node.repeat`：F04 `composition.repeat=false` 時 forbidden；`repeat=true && repeat_required=true` 時 required；`repeat=true && repeat_required!=true` 時 optional。
 5. `children` 永遠 required；F04 `composition.children=false` 時必須 `[]`。
 6. `Support.coverage_status=FULLY_SUPPORTED` → `degradations=[]`；`PARTIALLY_SUPPORTED` → degradations 必須 non-empty，且每項 `preserves_semantic_core=true`。
-7. `Degradation.capability_refs` 每個元素都是 exact `CapabilityRef` object；不得使用 bare capability ID 字串。每個 ref 必須存在於該 Blueprint `registry_version` snapshot。
-8. `ResultOutput.id` 在 outputs 內 unique；`Node.children` 不得 duplicate；Action / Rule / Node identity沿用各自專用 grammar與 unique rule。
+7. `Degradation.capability_refs` length = 1..20；每個元素都是 exact `CapabilityRef` object、同一 degradation內不得 duplicate；不得使用 bare capability ID 字串。每個 ref 必須存在於該 Blueprint `registry_version` snapshot。
+8. `Degradation.requirement_id` 在 degradations 內 unique；`ResultOutput.id` 在 outputs 內 unique；`Node.children` 不得 duplicate；Action / Rule / Node identity沿用各自專用 grammar與 unique rule。
 9. Mutable State 的 type-specific `constraints` requiredness仍由 §8.1.1 擁有；DERIVED 永遠禁止 `initial` / `constraints`。
 10. `when` 若存在，static descriptor 必須 assignable 到 BOOLEAN；RESET_STATE Phase 1 不接受 `when`，需要 conditional reset 時由 IF/Action composition明確建模。
 11. `Action.steps` length = 1..16；empty Action 沒有 executable meaning，V02 reject。
-12. `nodes` length = 1..100；`root_node_id` 必須指向存在 Node。rules/actions 可為 empty。
-13. `support.degradations` max 50；每個 `capability_refs` max 20；`Result.outputs` max 50。
-14. 字串長度以 Unicode code points 計，不以 UTF-16 code units 計；byte ceiling另由 §19 / V01 enforce。
-15. 任何「example 有 key所以視為 required」或「沒寫就當 empty」的 implementation inference 均禁止；只認本節 exact schema。
+12. `nodes` length = 1..100；`root_node_id` 必須指向存在 Node。structural children graph 必須是 rooted tree：root 不得作為任何 node child；每個 non-root Node 必須恰有一個 structural parent；DAG multi-parent與 orphan都 reject。rules/actions 可為 empty。
+13. `support.degradations` max 50；每個 `capability_refs` length 1..20；`Result.outputs` max 50。
+14. valid but unused state/rule/action declaration Phase 1 不因「dead code」本身 reject；Validator 不得自行加 unused-declaration rejection。Node 例外：所有 nodes 必須屬於 rooted structural tree。
+15. 字串長度以 Unicode code points 計，不以 UTF-16 code units 計；byte ceiling另由 §19 / V01 enforce。
+16. 任何「example 有 key所以視為 required」或「沒寫就當 empty」的 implementation inference 均禁止；只認本節 exact schema。
 
 # 5. Version Contract
 
@@ -898,7 +899,7 @@ Rules：
 8. `children` / `repeat` 是 **F02 structural composition fields，不是 binding names**
 9. children / repeat 只有 F04 `composition` 明確允許的 Capability 可用；不得用 magic binding name（例如 `children` / `items`）推導
 10. root_node_id 可達所有 executable node
-11. orphan executable node → reject
+11. structural graph必須是 rooted tree：root parent count=0；每個 non-root parent count=1；orphan或multi-parent node → reject
 12. child graph 不可 cycle
 
 F04 generated Validator artifact 是 prop/binding/event/action/composition 的唯一 Capability machine truth；F02 不維護第二份 Capability allowlist/schema。
