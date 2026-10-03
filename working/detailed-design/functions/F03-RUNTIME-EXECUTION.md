@@ -149,7 +149,7 @@ RuntimeInstance
 ├─ mutable_state
 ├─ derived_state
 ├─ rule_cache
-├─ capability_state_by_node
+├─ capability_state_by_instance
 ├─ rng
 │  ├─ algorithm
 │  ├─ seed
@@ -174,6 +174,29 @@ instance_epoch：
 - local monotonic generation，用於拒絕舊 operation對已 reset / reinitialized / disposed execution context commit。
 - reset、reinitialize或其他會 invalidate in-flight operation的 lifecycle transition先 increment epoch並關閉舊 token。
 - 不等於 durable revision或 Blueprint version。
+
+### 5.1 Canonical NodeInstanceKey（BF-037）
+
+F02 `Node.id` 是 immutable Blueprint **definition identity**；只要某 Node 位於 ancestor repeat subtree，Runtime 就可能同時存在多個該 definition 的 concrete node instance。Phase 1 不得再用 bare `node_id` 當 concrete instance key。
+
+~~~text
+NodeInstanceKey = {
+  node_id: NodeId,
+  repeat_coordinates: [
+    { repeat_node_id: NodeId, item_index: integer }
+  ]
+}
+~~~
+
+Canonical rules：
+
+1. `repeat_coordinates` 依 structural ancestry由 outermost repeat → innermost repeat 排序；只包含實際使 target multiplicative 的 ancestor repeat nodes。
+2. `item_index` 是該 repeat 的 zero-based runtime index，必須 `0 <= item_index < admitted repeat.max_items` 且小於本次實際 item count。
+3. 不在任何 repeat subtree 的 singleton Node 使用 `repeat_coordinates=[]`。
+4. equality / map key identity = exact `node_id` + ordered coordinates；不得只用 `node_id`、DOM position、React key或 renderer object identity替代。
+5. NodeInstanceKey 是 Browser Runtime identity，不進 Blueprint body、不參與 content_hash、不等於 Runtime `instance_id`。
+6. capability-local state、timer ownership、node-local error isolation、event source concrete identity及其他會指向「某一個 rendered/runtime node clone」的內部 reference 必須使用 NodeInstanceKey；bare `node_id`只能表示 static Blueprint definition。
+7. Runtime evidence producer在事件源自 concrete node clone時必須先保留 NodeInstanceKey作 internal correlation context；durable F07 payload仍只能輸出 Evidence Registry 已註冊欄位，未註冊前不得自行新增 property。
 
 同一 Instance因 FIFO single-writer同時最多一個 `active_operation`。
 
@@ -508,6 +531,7 @@ Event envelope：
 event_id_local
 sequence
 source_node_id
+source_node_instance_key
 event_name
 payload
 lexical_scope_bindings
@@ -520,6 +544,8 @@ origin:
 ~~~
 
 `payload` 必須符合 F04 capability event schema。
+
+`source_node_id` 永遠是 static Blueprint Node definition ID；`source_node_instance_key` 永遠是 §5.1 concrete NodeInstanceKey。singleton node也必須帶 `repeat_coordinates=[]`，不得用缺省表示「大概是 singleton」。
 
 BF-036 lexical scope runtime rule：
 
@@ -733,7 +759,9 @@ Reset：
 ## F03-RQ-008 — Trusted Handler Only
 
 ~~~text
-target node
+target static node_id
+→ assert F02-admitted singleton target
+→ resolve NodeInstanceKey{node_id, repeat_coordinates=[]}
 → exact CapabilityRef
 → trusted runtime-registry handler
 → validate action + resolved args + applicable invariant_ids
@@ -744,12 +772,14 @@ target node
 Conceptual trusted handler：
 
 ~~~text
-initialize(node, runtime_context)
-invoke(action_name, args, capability_state, runtime_context)
-dispose(capability_state, runtime_context)
+initialize(node_instance_key, node_definition, runtime_context)
+invoke(node_instance_key, action_name, args, capability_state, runtime_context)
+dispose(node_instance_key, capability_state, runtime_context)
 ~~~
 
 Blueprint 永遠不能提供 handler。
+
+BF-037 singleton invoke invariant：Phase 1 Blueprint `INVOKE_CAPABILITY.target_node_id` 已由 F02 保證沒有 repeat ancestor，因此 Runtime invocation 只能解析成 `repeat_coordinates=[]` 的單一 NodeInstanceKey。若 admitted content 出現 multi-instance target，視為 `F03-ERR-018 RUNTIME_INVARIANT_BROKEN`，不得自行選 first/current/nearest clone。
 
 ### 19.1 BF-035 Runtime Revalidation for Action Invariants
 
@@ -821,7 +851,7 @@ Phase 1 local effect 不得 arbitrary network request。
 # 22. Capability-local State
 
 ~~~text
-capability_state_by_node[node_id]
+capability_state_by_instance[NodeInstanceKey]
 ~~~
 
 BF-036 optional-field initialization：
@@ -928,13 +958,15 @@ CapabilityRef
 
 Render：
 
-1. resolve current committed props/bindings
-2. evaluate relevant rules
-3. provide immutable render props
-4. renderer 產生 React UI
-5. renderer 只能透過 Runtime dispatch API 發 declared event
+1. 從 static `root_node_id` definition 建立 singleton root NodeInstanceKey。
+2. 遇到 `repeat` 時，依 admitted item order為 structural children建立/傳遞新的 ancestor repeat coordinate；每個 repeated descendant因此得到唯一 NodeInstanceKey。
+3. resolve current committed props/bindings。
+4. evaluate relevant rules。
+5. provide immutable render props + concrete NodeInstanceKey。
+6. renderer 產生 React UI；React/DOM key 可由 NodeInstanceKey 派生，但不得反向成為 Runtime identity truth。
+7. renderer 只能透過 Runtime dispatch API 發 declared event，並由 Runtime附上 canonical `source_node_instance_key`。
 
-Renderer 不直接 mutate Instance Store。
+Renderer 不直接 mutate Instance Store；同一 static `node_id` 的不同 repeated clones不得共用 capability-local state、timer slot或 node-local error slot。
 
 # 26. Node-level Error Isolation
 
@@ -1338,9 +1370,9 @@ disposeRuntimeInstance(instanceId)
 Capability side：
 
 ~~~text
-initializeCapability(nodeContext)
-invokeCapabilityAction(nodeId, actionName, args)
-disposeCapability(nodeId)
+initializeCapability(nodeInstanceKey, nodeContext)
+invokeCapabilityAction(nodeInstanceKey, actionName, args)
+disposeCapability(nodeInstanceKey)
 ~~~
 
 appf2-owned interfaces，不把 React / vendor API 當核心 protocol。
