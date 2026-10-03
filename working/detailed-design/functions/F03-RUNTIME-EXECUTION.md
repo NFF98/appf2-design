@@ -759,7 +759,9 @@ Reset：
 ## F03-RQ-008 — Trusted Handler Only
 
 ~~~text
-target node
+target static node_id
+→ assert F02-admitted singleton target
+→ resolve NodeInstanceKey{node_id, repeat_coordinates=[]}
 → exact CapabilityRef
 → trusted runtime-registry handler
 → validate action + resolved args + applicable invariant_ids
@@ -770,12 +772,14 @@ target node
 Conceptual trusted handler：
 
 ~~~text
-initialize(node, runtime_context)
-invoke(action_name, args, capability_state, runtime_context)
-dispose(capability_state, runtime_context)
+initialize(node_instance_key, node_definition, runtime_context)
+invoke(node_instance_key, action_name, args, capability_state, runtime_context)
+dispose(node_instance_key, capability_state, runtime_context)
 ~~~
 
 Blueprint 永遠不能提供 handler。
+
+BF-037 singleton invoke invariant：Phase 1 Blueprint `INVOKE_CAPABILITY.target_node_id` 已由 F02 保證沒有 repeat ancestor，因此 Runtime invocation 只能解析成 `repeat_coordinates=[]` 的單一 NodeInstanceKey。若 admitted content 出現 multi-instance target，視為 `F03-ERR-018 RUNTIME_INVARIANT_BROKEN`，不得自行選 first/current/nearest clone。
 
 ### 19.1 BF-035 Runtime Revalidation for Action Invariants
 
@@ -1366,9 +1370,9 @@ disposeRuntimeInstance(instanceId)
 Capability side：
 
 ~~~text
-initializeCapability(nodeContext)
-invokeCapabilityAction(nodeId, actionName, args)
-disposeCapability(nodeId)
+initializeCapability(nodeInstanceKey, nodeContext)
+invokeCapabilityAction(nodeInstanceKey, actionName, args)
+disposeCapability(nodeInstanceKey)
 ~~~
 
 appf2-owned interfaces，不把 React / vendor API 當核心 protocol。
