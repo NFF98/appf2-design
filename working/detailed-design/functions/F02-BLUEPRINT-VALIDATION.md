@@ -107,7 +107,7 @@ Phase 1 logical shape：
 ~~~json
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.0.0",
+  "registry_version": "2.0.0",
   "kind": "APP",
   "meta": {
     "title": "聚餐分帳",
@@ -180,6 +180,12 @@ capability_version
 ~~~
 
 Registry version 不取代 capability version。
+
+BF-034 resolution：
+
+- Current Phase 1 Registry snapshot version = `2.0.0`。
+- `1.x` 與 `2.0.0` 的 validator machine contract 不視為同一 executable contract；未知或不相容 snapshot 必須在 V03 reject。
+- Capability 自身的 `capability_version` 不因 Registry machine-contract rebaseline 自動改號；只有該 Capability contract 本身 breaking 時才另行 bump。
 
 # 6. Metadata Contract
 
@@ -402,276 +408,7 @@ Type-specific canonical shape：
 
 - `constraints` required。
 - 唯一 allowed key：`fields`。
-- `fields` 是 declared field map；field key grammar = `^[a-z][a-z0-9_]{0,63}# F02 — Blueprint Validation / Trust Admission
-
-> **PHASE 1 FREEZE AUDIT：PASS — Phase 1 applicable truth passed Final Audit and is eligible for Human-approved Build Freeze; Phase 2/3+ and deferred content are excluded.**
-
-> 狀態：BUILD_FREEZE_READY / STEP2_REVIEWED
-> Governance：Current Truth = this Working file；Build Freeze / implementation boundary 以 `working/common-core/DESIGN-TO-DELIVERY.md` 為準。
->
-> Canonical Role：Phase 1 Executable Blueprint + L3 Validation 的 Working Current Truth。
->
-> 上游：APP-ARCHITECTURE、APP-DETAILED-DESIGN-OVERVIEW、DATA-MODEL、F04-CAPABILITY-REGISTRY、DESIGN-TO-DELIVERY。
->
-> 下游：F03 Runtime、F01 Blueprint Composer、F05 Restore、F06 Remix、F16 Correction。
->
-> 本文件回答兩件事：
-> 1. Blueprint Candidate 必須長什麼樣，才能成為 appf2 可執行 App definition。
-> 2. Candidate 必須通過哪些 deterministic validation / trust gates，才准進 Runtime。
-
-# 1. Purpose / User Outcome
-
-User Outcome：
-
-> appf2 產生的 App 不只是 JSON 能 parse，而是所有 state、binding、rule、action、Capability、resource、permission、compatibility 都能被平台安全理解與執行。
-
-Canonical flow：
-
-~~~text
-Resolved Intent
-→ F04 Capability Coverage
-→ F01 Blueprint Candidate
-→ F02 Parse / Validate / Admit
-   ├─ REJECTED
-   ├─ INCOMPATIBLE
-   └─ VALIDATED
-→ immutable canonical Blueprint
-→ content_hash
-→ durable blueprint_content
-→ F03 Runtime
-~~~
-
-核心原則：
-
-> Schema Valid ≠ Semantic Correct，但 Schema / Trust Invalid 一定不能進 Runtime。
-
-# 2. Scope / Non-Scope
-
-Phase 1 定義：
-
-- Blueprint top-level contract
-- stable schema version
-- exact capability reference
-- state model
-- node composition
-- typed Value Source / Binding
-- pure Expression AST
-- Rule contract
-- Action contract
-- Event binding
-- result/output declarations
-- support / degradation metadata
-- canonical JSON serialization
-- content hash
-- deterministic validation pipeline
-- trust admission
-- compatibility
-- resource ceilings
-- security rejection
-- validation report
-- errors / evidence / acceptance
-
-F02 不負責：
-
-- 理解 raw Intent
-- 決定 clarification
-- 發明 Capability
-- React rendering
-- Runtime scheduling
-- User-facing recovery copy
-- semantic correctness 100% 判斷
-- external provider execution
-- arbitrary generated code
-
-# 3. Blueprint Lifecycle
-
-## F02-RQ-001 — Candidate vs Admitted Blueprint
-
-~~~text
-Blueprint Candidate
-= F01 / import / restore 提供、尚未被信任的 JSON
-
-Admitted Blueprint
-= Candidate 通過完整 F02 validation 後的 canonical immutable JSON
-~~~
-
-只有 Admitted Blueprint 才能：
-
-- 產生 canonical content_hash
-- 寫入 blueprint_content
-- 被 F03 正常 Runtime 執行
-- 成為 durable Share / Remix / Correct base
-
-Rejected Candidate body Phase 1 不預設 durable 保存。
-
-# 4. Top-level Executable Blueprint Contract
-
-Phase 1 logical shape：
-
-~~~json
-{
-  "schema_version": "1.0.0",
-  "registry_version": "1.0.0",
-  "kind": "APP",
-  "meta": {
-    "title": "聚餐分帳",
-    "description": "依角色權重計算每人金額"
-  },
-  "support": {
-    "coverage_status": "FULLY_SUPPORTED",
-    "degradations": []
-  },
-  "state": {},
-  "rules": [],
-  "actions": [],
-  "nodes": [],
-  "root_node_id": "node_root",
-  "result": {
-    "outputs": []
-  }
-}
-~~~
-
-Top-level allowed keys：
-
-~~~text
-schema_version
-registry_version
-kind
-meta
-support
-state
-rules
-actions
-nodes
-root_node_id
-result
-~~~
-
-Unknown top-level executable key → reject。
-
-理由：
-
-> 避免 LLM 用多塞欄位偷偷創造 Runtime semantics。
-
-# 5. Version Contract
-
-## F02-RQ-002 — schema_version
-
-Phase 1：
-
-~~~text
-schema_version = 1.0.0
-~~~
-
-規則：
-
-- PATCH：不改 executable meaning
-- MINOR：backward-compatible extension
-- MAJOR：breaking syntax / semantics
-- Runtime / Validator 必須明確聲明支援 range
-- 不允許未知新 version 自動通過
-
-## F02-RQ-003 — registry_version
-
-Blueprint 必須帶產生時使用的 F04 Registry snapshot version。
-
-每個 Node 另外引用 exact：
-
-~~~text
-capability_id
-capability_version
-~~~
-
-Registry version 不取代 capability version。
-
-# 6. Metadata Contract
-
-~~~text
-meta.title
-meta.description?
-~~~
-
-Rules：
-
-- title：1–120 Unicode chars
-- description：0–500 chars
-- metadata 屬於 canonical Blueprint 並參與 hash
-- creator、anonymous_id、created_at、ownership、share_id、prompt/model metadata 不得放進 Blueprint body
-
-# 7. Support / Degradation Contract
-
-~~~text
-support.coverage_status:
-  FULLY_SUPPORTED
-  PARTIALLY_SUPPORTED
-
-support.degradations[]:
-  requirement_id
-  description
-  capability_refs[]
-  preserves_semantic_core = true
-~~~
-
-Phase 1 Admitted Blueprint 不允許 EXTERNAL_OR_HEAVY_REQUIRED / UNSUPPORTED 冒充 local executable Blueprint。
-
-PARTIALLY_SUPPORTED 必須：
-
-1. 每個 material degradation user-visible
-2. preserves_semantic_core = true
-3. 引用合法 Registry Capability
-4. 不可藉 degradation 改掉核心業務結果
-
-F02 驗證結構與引用；是否真的符合原 Intent，仍由 F01 semantic process + F16 evidence 持續驗證。
-
-# 8. State Contract
-
-## F02-RQ-004 — State Key
-
-State key：
-
-~~~text
-^[a-z][a-z0-9_]{0,63}$
-~~~
-
-Reserved prefixes：
-
-~~~text
-nff_
-sys_
-__*
-~~~
-
-User Blueprint 不得使用。
-
-## 8.1 Mutable State
-
-~~~json
-{
-  "budget": {
-    "mode": "MUTABLE",
-    "type": "NUMBER",
-    "initial": 400,
-    "constraints": {
-      "min": 0,
-      "max": 1000000
-    }
-  }
-}
-~~~
-
-Allowed Phase 1 types：
-
-~~~text
-NUMBER
-STRING
-BOOLEAN
-ENUM
-LIST
-RECORD
-~~~
-
-。
+- `fields` 是 declared field map；field key grammar = `^[a-z][a-z0-9_]{0,63}$`。
 - initial object keys 必須與 declared fields **exactly equal**；missing / extra field 都 reject。
 - arbitrary undeclared object key 永遠 reject。
 
@@ -688,6 +425,41 @@ TypeDescriptor
 ~~~
 
 TypeDescriptor 遞迴 shape 受 canonical Blueprint bytes / total initial state bytes ceiling 限制，不建立第二套 hidden type system。
+
+### 8.1.2 Canonical Static Assignability / Descriptor Join
+
+> **BF-034 resolution：static source descriptor 只有在其可能值集合是 target descriptor 可能值集合的安全子集合時，才可 assign。Validator 不得以 runtime coercion、sample value 或「通常不會超界」放寬。**
+
+定義：
+
+~~~text
+Assignable(source, target) = every value admitted by source is also admitted by target
+~~~
+
+Rules：
+
+1. Base type 必須相同；唯一例外是 F04 的 `ONE_OF` target matcher，source 只需 assignable 至其中一個 branch。
+2. `BOOLEAN → BOOLEAN` always assignable。
+3. `NUMBER`：missing bound = unbounded。若 target 有 `min`，source 必須也有 `min >= target.min`；若 target 有 `max`，source 必須也有 `max <= target.max`。
+4. `STRING`：`source.max_length <= target.max_length`。
+5. `ENUM`：source / target item primitive type 必須一致，且 source `allowed` 必須是 target `allowed` 的 exact-value subset。Capability-specific invariant 可要求 exact same domain。
+6. `LIST`：`source.max_length <= target.max_length`，且 source item descriptor 必須 assignable 到 target item descriptor。
+7. `RECORD`：declared field key set 必須 exactly equal；每個 source field descriptor 必須 assignable 到同名 target field descriptor。Phase 1 不做 width subtyping。
+8. Constraint-free / wider source 不得 assign 到較窄 target。例：unbounded NUMBER 不可 static assign 到 NUMBER{min:0}；STRING(500) 不可 assign 到 STRING(120)。
+9. `LITERAL` 可在 receiving context 直接以 target descriptor 驗證 exact value；這不建立新的 inferred composite schema。
+10. Runtime 仍對 mutation / capability output做 constraint-check；runtime check 不取代 admission-time static assignability。
+
+Descriptor join `Join(A,B,...)` 用於 IF / COALESCE 等多分支結果，產生可安全涵蓋所有 branch 的最小 canonical descriptor：
+
+- BOOLEAN → BOOLEAN。
+- NUMBER → `min = minimum known lower bound`；任一 branch 無 min 則 result 無 min；max 同理取 maximum，任一 branch 無 max 則 result 無 max。
+- STRING → max_length = maximum branch max_length。
+- ENUM → same primitive type 的 ordered-insensitive exact union；超過 500 items → reject。
+- LIST → max_length = maximum branch max_length；item = recursive Join(item...)。
+- RECORD → field key set 必須 exactly equal；每個 field recursive Join。
+- base type 不同、無合法 canonical Join、或 Join 超出 Phase 1 ceiling → reject。
+
+Derived state / Rule / OP 必須攜帶 inference 後的完整 descriptor；不得只保留 top-level type。
 
 Derived state 不攜帶 `constraints`。Validator 必須從 `expr` 做 static type inference；declared `type` 必須與 inferred top-level type 一致。若 inferred value 是 ENUM/LIST/RECORD，完整 descriptor 跟著 inference 傳遞，供後續 binding / result / action type-check 使用。
 
@@ -792,6 +564,21 @@ Static type inference owner：
 - EVENT：F04 event payload schema。
 - SCOPE：F02 repeat item descriptor。
 - Capability prop/binding/action target：F04 generated Validator contract。
+
+Canonical `EVENT.path` / `SCOPE.path`：
+
+~~~text
+path = "" | segment ("." segment)*
+segment = ^[a-z][a-z0-9_]{0,63}$
+~~~
+
+- path 永遠是 **相對於 root descriptor** 的 field path。
+- EVENT root = F04 event `payload`；因此 canonical example 是 `"value"`，`"payload.value"` 禁止。
+- SCOPE root = current repeat item descriptor。
+- empty path `""` 表示 root value 本身。
+- traversal 只可穿過 RECORD declared fields；Phase 1 不支援 numeric LIST index、bracket syntax、escaping alias 或 dynamic segment。
+- scalar root 只允許 empty path；unknown / missing field → reject。
+- path resolve 後得到的 concrete descriptor 才參與 Assignable(source,target)。
 
 禁止：
 
@@ -1040,6 +827,17 @@ Phase 1 禁止：
 Event payload schema 由 F04 generated Validator machine contract 提供，F02 type-check EVENT Value Source。
 
 `Node.events` 是 Phase 1 唯一 event → Blueprint Action reference mechanism。Capability props/bindings 不得另外定義可執行 `action_ref` 捷徑，避免第二條 dispatch semantics。
+
+### 15.1 Canonical EVENT Typing Context
+
+Blueprint Action 的 EVENT Value Source 以所有實際 `Node.events.<event> -> action_id` dispatch site 建立 static context：
+
+1. Action 不含 EVENT Value Source → 不需要 event payload context。
+2. Action 含 EVENT Value Source → 至少必須有一個 `Node.events` dispatch site；沒有 dispatch site → reject。
+3. 同一 Action 被多個 event dispatch site 共用時，每一個 EVENT path 都必須在 **每個** dispatch payload descriptor 中存在，且 resolve 後 descriptor 對該 receiving target 都必須通過 canonical Assignable；任一 site 不成立 → 整個 Blueprint reject。
+4. Validator 不得挑「最寬 payload」、第一個 event、或 union payload 來掩蓋不相容 site。
+5. F04 `action_refs` 是 ACTION_ID data reference，不建立 event payload typing context；它不會使含 EVENT 的 Action 合法。
+6. EVENT path 使用 §9.1 canonical relative path grammar；不得帶 `payload.` prefix。
 
 # 16. Result Contract
 
