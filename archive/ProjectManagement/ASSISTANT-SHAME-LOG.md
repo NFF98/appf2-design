@@ -71,6 +71,14 @@ TOTAL    >1095 min
 
 ---
 
+## Merit Log — Corrective Wins
+
+| ID | Date | Merit | What Went Right | Reusable Lesson | Status |
+|---|---|---|---|---|---|
+| MERIT-001 | 2026-10-03 | Cursor automation watcher 故障排除並恢復自動執行 | 面對「GitHub comment 已存在但 Cursor 無反應」，先把問題拆成 GitHub、watcher、Cursor 三層驗證；確認 GitHub API 可見最新 comment、state 卡在舊 comment ID，再定位到 watcher 只讀 per_page=100 第一頁，以及 Windows PowerShell 對 Invoke-RestMethod 回傳集合造成 System.Object[] → Int64 轉型問題。過程中保留 state、避免重複 execution，最後以 FOUND COMMAND 5968769391 / STARTING CURSOR 實證恢復自動化。 | 故障排除固定採「逐層驗證、最小變更、保留 idempotency state、最後以實際 trigger 證明」；自動化 watcher 不應依賴單頁 API，且 PowerShell collection shape 必須顯式處理。 | RECORDED |
+
+---
+
 ## Preventive Rules — From These Failures
 
 1. **GitHub Current Truth first**
