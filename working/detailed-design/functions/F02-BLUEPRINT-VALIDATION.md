@@ -107,7 +107,7 @@ Phase 1 logical shape：
 ~~~json
 {
   "schema_version": "1.0.0",
-  "registry_version": "2.0.0",
+  "registry_version": "3.0.0",
   "kind": "APP",
   "meta": {
     "title": "聚餐分帳",
@@ -183,8 +183,8 @@ Registry version 不取代 capability version。
 
 BF-034 resolution：
 
-- Current Phase 1 Registry snapshot version = `2.0.0`。
-- `1.x` 與 `2.0.0` 的 validator machine contract 不視為同一 executable contract；未知或不相容 snapshot 必須在 V03 reject。
+- Current Phase 1 Registry snapshot version = `3.0.0`。
+- `1.x` / `2.0.0` 與 `3.0.0` 的 validator machine contract 不視為同一 executable contract；未知或不相容 snapshot 必須在 V03 reject。
 - Capability 自身的 `capability_version` 不因 Registry machine-contract rebaseline 自動改號；只有該 Capability contract 本身 breaking 時才另行 bump。
 
 # 6. Metadata Contract
@@ -707,13 +707,14 @@ Rules：
 2. exact capability ID/version 存在 F04 Registry
 3. props/bindings 只能使用 Capability Card 宣告 keys
 4. prop / binding Value Source 的 static type 必須符合 F04 machine contract；binding source-kind restriction 也必須符合
-5. event 必須由 Capability 宣告，EVENT payload type 由 F04 event schema 提供
-6. action ref 必須存在
-7. `children` / `repeat` 是 **F02 structural composition fields，不是 binding names**
-8. children / repeat 只有 F04 `composition` 明確允許的 Capability 可用；不得用 magic binding name（例如 `children` / `items`）推導
-9. root_node_id 可達所有 executable node
-10. orphan executable node → reject
-11. child graph 不可 cycle
+5. event 必須由 Capability 宣告；F04 generated event contract 提供 `EventPayloadDescriptorResolver`。F02 必須先以同 node 已驗證的 props/bindings deterministic resolve 成 concrete F02 TypeDescriptor，之後該 descriptor 才是 EVENT root type。
+6. event payload resolver 若引用不存在/錯誤 kind 的 binding/prop、無法得到 concrete descriptor、或違反其 canonical invariant → node validation reject；不得 fallback 成 ANY / inferred object shape。
+7. action ref 必須存在
+8. `children` / `repeat` 是 **F02 structural composition fields，不是 binding names**
+9. children / repeat 只有 F04 `composition` 明確允許的 Capability 可用；不得用 magic binding name（例如 `children` / `items`）推導
+10. root_node_id 可達所有 executable node
+11. orphan executable node → reject
+12. child graph 不可 cycle
 
 F04 generated Validator artifact 是 prop/binding/event/action/composition 的唯一 Capability machine truth；F02 不維護第二份 Capability allowlist/schema。
 
@@ -824,11 +825,40 @@ Phase 1 禁止：
 - event → URL callback
 - dynamic action name
 
-Event payload schema 由 F04 generated Validator machine contract 提供，F02 type-check EVENT Value Source。
+Event payload machine metadata 由 F04 generated Validator machine contract 提供；F02 必須先完成 node-local resolver，再以 resolved concrete TypeDescriptor type-check EVENT Value Source。
 
 `Node.events` 是 Phase 1 唯一 event → Blueprint Action reference mechanism。Capability props/bindings 不得另外定義可執行 `action_ref` 捷徑，避免第二條 dispatch semantics。
 
-### 15.1 Canonical EVENT Typing Context
+### 15.1 Canonical Node Event Payload Resolution
+
+F04 generated event payload 不允許 implementation-defined dynamic typing。每個 node/event 在進 dispatch-site typing 前，F02 依 generated `EventPayloadDescriptorResolver` 執行以下 deterministic resolution：
+
+~~~text
+STATIC(descriptor)
+→ descriptor
+
+BOUND_STATE_DESCRIPTOR(binding_key)
+→ resolve node.bindings[binding_key]
+→ required source kind = STATE
+→ payload root = RECORD{ value: concrete bound mutable state TypeDescriptor }
+
+BOUND_STRING_NARROWED_BY_PROP(binding_key, prop_key)
+→ resolve node.bindings[binding_key] as concrete mutable STRING descriptor
+→ resolve node.props[prop_key] as validated LITERAL NUMBER
+→ payload root = RECORD{ value: STRING(max_length = literal prop value) }
+~~~
+
+Rules：
+
+1. Resolver 只能引用同一 node 的已宣告 machine binding/prop key。
+2. props/bindings 的 requiredness、source kind、TargetMatcher、named invariant 必須先 PASS。
+3. `BOUND_STATE_DESCRIPTOR` 不允許 RULE/OP/EVENT/SCOPE/LITERAL 代替 STATE，也不允許 abstract matcher（例如 ANY_ENUM）直接充當 payload descriptor；必須取得 Blueprint 中實際 concrete state descriptor，並包成 canonical payload-root `RECORD{value: ...}`。
+4. `BOUND_STRING_NARROWED_BY_PROP` 的 prop value 必須是已通過 invariant 的 literal integer；若大於 bound STRING 的 max_length → reject；resolved payload-root 固定為 `RECORD{value: STRING(max_length=n)}`。
+5. resolver 完成後 event payload root 必須是完整 concrete F02 RECORD TypeDescriptor；任何 unresolved state / missing key / non-concrete descriptor → V06/V08 reject。
+6. resolver metadata 不寫入 Blueprint body，也不成為 Runtime type system；它只決定 Admission 時的 event concrete descriptor。
+7. 相同 Blueprint + Registry snapshot 必須 resolve 成相同 descriptor。
+
+### 15.2 Canonical EVENT Typing Context
 
 Blueprint Action 的 EVENT Value Source 以所有實際 `Node.events.<event> -> action_id` dispatch site 建立 static context：
 
@@ -838,6 +868,7 @@ Blueprint Action 的 EVENT Value Source 以所有實際 `Node.events.<event> -> 
 4. Validator 不得挑「最寬 payload」、第一個 event、或 union payload 來掩蓋不相容 site。
 5. F04 `action_refs` 是 ACTION_ID data reference，不建立 event payload typing context；它不會使含 EVENT 的 Action 合法。
 6. EVENT path 使用 §9.1 canonical relative path grammar；不得帶 `payload.` prefix。
+7. 每個 dispatch site 使用 §15.1 已 resolve 的 concrete payload descriptor；Validator 不得回頭讀 prose Card、runtime handler 或自行推導另一份 event schema。
 
 # 16. Result Contract
 
