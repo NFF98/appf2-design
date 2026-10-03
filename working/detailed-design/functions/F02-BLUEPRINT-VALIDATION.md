@@ -1216,7 +1216,7 @@ Capability Card 可以更低，不可更高。
 12. **event bindings** = 所有 static `Node.events` map entry 的總和；repeat runtime multiplicity不改這個 static metric。
 13. **result outputs / support degradations / capability refs per degradation / children refs per node** = 對應 canonical array length；後兩者逐 container individually 檢查。
 14. **node runtime instance upper bound**：某 static Node 的 `instance_upper_bound` = 該 Node **strict structural ancestors** 中所有帶 `repeat` Node 的 admitted `repeat.max_items` 乘積；沒有 repeat ancestor時=1。Node自己的 repeat不乘自己。
-15. **concurrent timers**：F04 Registry v5 每個 exact CapabilityRef 必須 machine-declare `resource_usage.timer_slots_per_instance`。Blueprint `timer_count = Σ(node.instance_upper_bound × capability.timer_slots_per_instance)`。不得從 `TIME_DEPENDENT`、名稱 `logic.timer` 或 handler實作反推。Phase 1 Core truth：`logic.timer@1.0.0 = 1`，其餘 current Core = 0。
+15. **concurrent timers**：F04 Registry v5 每個 exact CapabilityRef 必須 machine-declare `resource_usage.timerSlotsPerInstance`。Blueprint `timer_count = Σ(node.instance_upper_bound × capability.resource_usage.timerSlotsPerInstance)`。`timerSlotsPerInstance` 是 F04 ResourceUsageProfile 的唯一 canonical machine token；snake_case alias 禁止。不得從 `TIME_DEPENDENT`、名稱 `logic.timer` 或 handler實作反推。Phase 1 Core truth：`logic.timer@1.0.0 = 1`，其餘 current Core = 0。
 16. 所有 integer count 使用 mathematical integer；乘積或總和若超出 safe implementation integer range，直接視為超 ceiling reject，不 wrap / clamp。
 
 ### 19.2 F04 ResourceBudget Enforcement Split
@@ -1227,7 +1227,7 @@ F04 `ResourceBudget` 每個欄位的 meaning / stage：
 - `maxSerializedPropsBytes`：V09；對使用 exact CapabilityRef 的每個 static `Node.props` object 做 §18 canonical JSON UTF-8 byte length後加總；不乘 repeat runtime instances，因這是 Blueprint serialized props budget。
 - `maxEventBindings`：V09；使用 exact CapabilityRef 的 static `Node.events` entry總數。
 - `maxActionBindings`：V09；所有 static `INVOKE_CAPABILITY` steps中，target node使用 exact CapabilityRef者的數量。
-- `maxConcurrentTimers`：V09；對 exact CapabilityRef 的 `Σ(instance_upper_bound × timer_slots_per_instance)`。
+- `maxConcurrentTimers`：V09；對 exact CapabilityRef 的 `Σ(instance_upper_bound × resource_usage.timerSlotsPerInstance)`。
 - `maxLocalStateBytes`：F03 runtime dynamic defense-in-depth；每個 concrete NodeInstanceKey 的 capability-local state canonical JSON UTF-8 bytes不得超該 Capability budget。F02 不得以假設 runtime值來偽造 static proof。
 - `mediaAutoplayAllowed` / `networkAccessAllowed`：V10 permission/security policy，不是 byte/count metric。
 
@@ -1329,7 +1329,7 @@ F02 只讀 **Registry v5 generated Validator machine truth**；不得從 compile
 1. ID/version 不存在 → `F02-ERR-005 / V04`，REJECTED。
 2. `availability != ENABLED`（DISABLED / EXPERIMENTAL in production validation）→ `F02-ERR-005 / V04`，REJECTED。
 3. `execution_status = REVOKED` → `F02-ERR-005 / V04`，REJECTED。這是 **Capability current execution state**；不得誤用 Blueprint-level `F02-ERR-016`。
-4. required dependency不存在、disabled、revoked或版本不滿足 → `F02-ERR-005 / V04`，REJECTED。
+4. required dependency resolution 必須在**同一 immutable Validator Registry snapshot**內遞迴完成。對每個 required dependency，先依 `versionRange` 取符合的 exact versions，SemVer由高到低；候選必須通過 snapshot-time availability=ENABLED、execution_status=ACTIVE、trusted execution_class、Blueprint schema/runtime compatibility與其 transitive required dependencies。第一個完整 eligible candidate 才可滿足 dependency；沒有任何 candidate可滿足 → `F02-ERR-005 / V04`，REJECTED，internal reason = `CAPABILITY_DEPENDENCY_UNAVAILABLE`。Dependency 自身 schema/runtime incompatible 不升格成 parent 的 `F02-ERR-004`；對 parent 而言它是 required dependency unavailable。
 5. `execution_class` 不在 Phase 1 trusted local allowlist `LOCAL_REACT | LOCAL_RULE | LOCAL_EFFECT` → `F02-ERR-005 / V04`，REJECTED。
 6. Blueprint schema不在 Capability `blueprintSchemaRange`，或 validation context的 trusted `runtime_version` 不在 Capability min/max runtime range → `F02-ERR-004 / V04`，INCOMPATIBLE。
 7. props / bindings / events / actions / composition 仍只由 generated `validator` exact machine contract判斷。
@@ -1408,7 +1408,9 @@ Rules：
 Phase 1：
 
 - Core capability permission = NONE / USER_GESTURE
-- Core networkAccessAllowed = false
+- Core `networkAccessAllowed = false`
+- Core `mediaAutoplayAllowed = false`
+- 任一 Capability 若 `networkAccessAllowed=true` 或 `mediaAutoplayAllowed=true`，V10 必須以 `F02-ERR-012` reject；USER_GESTURE 不得把這兩個 flag 變成隱含 allow
 - no script / code / module / import / handler path
 - strings never executed as code
 - no provider secrets
@@ -1568,7 +1570,15 @@ ExecutionRuntimeContext = {
   registry_snapshot: {
     registry_version: SemVer,
     registry_digest: sha256,
-    validator_registry: trusted generated Registry v5 snapshot
+    validator_registry: trusted immutable generated Registry v5 snapshot
+  },
+  execution_policy_snapshot: {
+    policy_version: SemVer,
+    policy_digest: sha256,
+    capabilities: map<capability_id, map<capability_version, {
+      availability: DISABLED | EXPERIMENTAL | ENABLED,
+      execution_status: ACTIVE | REVOKED
+    }>>
   },
   now: trusted server time
 }
@@ -1577,9 +1587,11 @@ ExecutionRuntimeContext = {
 Rules：
 
 1. `ExecutionRuntimeContext` 只能由 appf2 server/deployment truth建立；public client不得提供、覆寫或選擇其中欄位。
-2. `registry_snapshot` 必須是 server為該 Blueprint `registry_version` 選到的 exact trusted snapshot；snapshot unavailable / digest mismatch → execution incompatible，禁止用「最新 Registry 大概相容」替代。
-3. Fresh execution admission必須重做 current capability execution-eligibility檢查；過去 validation PASS 不凍結 Capability availability/revocation。
-4. Content persistence `admitBlueprint` / same-hash REUSED只代表 canonical content與validation lineage成立，**永遠不等於現在可執行**；fresh Runtime仍必須取得 §37 / EXECUTION-ADMISSION 的 executable=true authorization。
+2. `registry_snapshot` 必須是 server為該 Blueprint `registry_version` 選到的 exact trusted **immutable historical snapshot**；snapshot unavailable / registry_version or registry_digest mismatch → execution incompatible，禁止用「最新 Registry 大概相容」替代，也禁止在同一 version/digest 下 mutation availability / execution_status 來模擬 current truth。
+3. `execution_policy_snapshot` 是 F04 §15.1 定義的獨立 current execution authority；它有自己的 `policy_version + policy_digest`，不屬於 `registry_digest`。snapshot unavailable / digest integrity failure → fail closed。Public client不得選 policy version/digest。
+4. Fresh effective eligibility = pinned Registry snapshot semantics **AND** current execution-policy allow。Current policy只能收緊：不得把 pinned DISABLED / EXPERIMENTAL 變 ENABLED，也不得把 pinned REVOKED 變 ACTIVE。Policy缺少 referenced exact CapabilityRef亦視為 deny。
+5. Required dependency fresh check 使用 pinned Registry 的 dependency/version/class/compatibility machine truth，並對每個候選遞迴套用 current execution policy；dependency schema/runtime incompatible、current disabled/revoked、或 transitive dependency失敗都使該 candidate unavailable。沒有 fully eligible candidate → E07 deny。
+6. 過去 validation PASS 不凍結 current capability availability/revocation；content persistence `admitBlueprint` / same-hash REUSED只代表 canonical content與validation lineage成立，**永遠不等於現在可執行**；fresh Runtime仍必須取得 §37 / EXECUTION-ADMISSION 的 executable=true authorization。
 
 F02 不呼叫 LLM。
 
@@ -1819,7 +1831,9 @@ Compatibility：
 
 BF-036 Blueprint machine-schema completeness remediation 已完成：exact nested schema closure、RECORD optional_fields machine token、lexical/action-dispatch SCOPE typing、repeat/result/support/kind/intake bounds、Registry 4.0.0。
 
-BF-038 T003 machine-contract completeness remediation 已於 2026-10-04 取得 Human blanket approval through pre-Cursor re-execution：§19/V09 deterministic resource measurement、Registry v5 execution eligibility/resource usage projection、trusted fresh Execution Admission context/precedence、V10 structural no-code與trust-spoof boundary。Replacement Build Freeze / T003 Activation 前 implementation保持 BLOCKED。
+BF-038 T003 machine-contract completeness remediation 已於 2026-10-04 完成前次 rebaseline。BF-039 於 T003 candidate independent review 發現 immutable Registry snapshot 與 current revocation authority混用、required dependency compatibility漏檢、V10 media policy未閉合與 timer usage token命名不一致；Human 已批准 same-class remediation through pre-Cursor re-execution。
+
+BF-039 resolution 固定：F04 camelCase `resource_usage.timerSlotsPerInstance` 為唯一 machine token；fresh execution 使用 immutable Registry snapshot + 獨立 current CapabilityExecutionPolicySnapshot；required dependency compatibility/current policy遞迴 fail-closed；Phase 1 `mediaAutoplayAllowed=false` 與 `networkAccessAllowed=false` 均由 V10 enforce。Replacement Build Freeze / T003 Activation 前 implementation保持 BLOCKED。
 
 目前沒有其他同類 T003 validation/admission machine-contract completeness open decision。
 
