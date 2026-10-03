@@ -237,7 +237,7 @@ CapabilityDefinition
 
 > **BF-031 remediation：Executable machine shape 不得留給 Cursor / implementation 自行決定。** Working 必須先固定 validator 可消費的 field/type/composition contract；TypeScript/Zod 只做機械翻譯，不得新增 Product semantics。
 
-Registry v2 source rule：
+Registry machine-source rule（v2+，current v4）：
 
 - `CapabilityDefinition.contract.validator` 是 executable Validator machine truth 的 canonical source field。
 - `propsSchema` / `stateSchema` 可保留供 semantic/documentation/runtime schema reference，但 **不得**取代或覆蓋 `contract.validator`。
