@@ -245,7 +245,26 @@ CapabilityDefinition
 
 > **BF-031 remediation：Executable machine shape 不得留給 Cursor / implementation 自行決定。** Working 必須先固定 validator 可消費的 field/type/composition contract；TypeScript/Zod 只做機械翻譯，不得新增 Product semantics。
 
-Registry machine-source rule（v2+，current v6）：
+Registry machine-source rule（v2+，current v7）：
+
+BF-040 CompatibilityContract runtime-bound grammar：
+
+~~~text
+minRuntimeVersion = SemVer                 // inclusive
+maxRuntimeVersion = "<" SemVer            // exclusive; '<' required
+blueprintSchemaRange =
+    SemVer
+  | "^" SemVer
+  | ">=" SemVer " <" SemVer
+~~~
+
+Rules：
+
+- `minRuntimeVersion` 必須是 bare SemVer，inclusive。
+- `maxRuntimeVersion` 必須是 **exact token `<SemVer`**，exclusive；bare max version禁止，implementation不得自行發明 inclusive max。
+- `min < max` 必須成立；invalid/empty range = Registry generation hard fail。
+- `blueprintSchemaRange` 只接受上列三種 canonical grammar；不得接受 implementation-specific npm-semver自由語法。
+
 
 - `CapabilityDefinition.contract.validator` 是 executable Validator machine truth 的 canonical source field。
 - `propsSchema` / `stateSchema` 可保留供 semantic/documentation/runtime schema reference，但 **不得**取代或覆蓋 `contract.validator`。
