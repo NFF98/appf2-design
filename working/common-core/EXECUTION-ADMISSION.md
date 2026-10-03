@@ -46,11 +46,12 @@ Server flow：
 ~~~text
 content_hash
 → load immutable Blueprint + current blueprint trust_status
-→ server selects exact trusted Registry snapshot for Blueprint.registry_version
+→ server selects exact trusted immutable Registry snapshot for Blueprint.registry_version
+→ server selects latest trusted CapabilityExecutionPolicySnapshot
 → construct trusted ExecutionRuntimeContext
 → F02 assertExecutable(contentHash, runtimeContext)
-→ schema / exact registry snapshot / runtime compatibility
-→ re-check every CapabilityRef current execution eligibility
+→ schema / exact registry snapshot / current policy / runtime compatibility
+→ re-check every CapabilityRef + required dependency current execution eligibility
 → admission response
 ~~~
 
@@ -63,13 +64,21 @@ ExecutionRuntimeContext = {
   registry_snapshot: {
     registry_version: SemVer,
     registry_digest: sha256,
-    validator_registry: trusted generated Registry v5 snapshot
+    validator_registry: trusted immutable generated Registry v5 snapshot
+  },
+  execution_policy_snapshot: {
+    policy_version: SemVer,
+    policy_digest: sha256,
+    capabilities: map<capability_id, map<capability_version, {
+      availability: DISABLED | EXPERIMENTAL | ENABLED,
+      execution_status: ACTIVE | REVOKED
+    }>>
   },
   now: trusted server time
 }
 ~~~
 
-`ExecutionRuntimeContext` 只能由 appf2 server/deployment truth建立；public caller沒有 authority選 snapshot或版本。
+`ExecutionRuntimeContext` 只能由 appf2 server/deployment truth建立；public caller沒有 authority選 Registry snapshot、execution policy snapshot、version或digest。Historical Registry snapshot永遠 immutable；current availability/revocation只從 F04 `CapabilityExecutionPolicySnapshot` 取得，且 policy只能收緊 pinned snapshot。
 
 # 4. ExecutionAdmission Shape
 
@@ -173,17 +182,26 @@ E04 trust_status != VALIDATED
 E05 Blueprint schema outside server supported range
     → F02-ERR-017
 
-E06 exact trusted Registry snapshot unavailable
+E06 exact trusted immutable Registry snapshot unavailable
     OR registry_version/digest integrity mismatch
+    OR current CapabilityExecutionPolicySnapshot unavailable
+    OR policy_version/digest integrity mismatch
     → F02-ERR-017
 
-E07 any referenced Capability current eligibility fails:
-    missing exact ref
-    availability != ENABLED
-    execution_status = REVOKED
-    required dependency unavailable/revoked/incompatible
-    execution_class unsupported
-    Blueprint schema or runtime outside capability compatibility range
+E07 any referenced Capability effective current eligibility fails:
+    exact ref missing from pinned Registry snapshot
+    pinned availability != ENABLED
+    pinned execution_status = REVOKED
+    current policy exact ref missing
+    current policy availability != ENABLED
+    current policy execution_status = REVOKED
+    execution_class unsupported by current Runtime
+    Blueprint schema or runtime outside pinned capability compatibility range
+    required dependency has no fully eligible candidate:
+      candidate exact version must satisfy pinned versionRange
+      candidate pinned class/schema/runtime compatibility must pass
+      candidate pinned lifecycle + current policy must allow
+      transitive required dependencies recurse under the same rules
     → F02-ERR-017
       (internal diagnostics may retain F04 reason; public execution authority remains denied)
 
@@ -194,7 +212,7 @@ otherwise
     → executable=true admission, expires_at <= issued_at + 30 seconds
 ~~~
 
-Capability REVOKED 在 fresh execution check造成 Blueprint **currently incompatible to execute**，使用 F02-ERR-017；F02-ERR-016只保留給 blueprint_content 自身 durable trust_status=REVOKED，避免兩種 revocation identity混淆。
+Capability 在 pinned snapshot或 current execution policy被 REVOKED / unavailable，或 required dependency current-incompatible 時，fresh execution check造成 Blueprint **currently incompatible to execute**，使用 F02-ERR-017；F02-ERR-016只保留給 blueprint_content 自身 durable trust_status=REVOKED，避免兩種 revocation identity混淆。Current policy不得 mutation historical registry_version/digest。
 
 Temporary admission failure不得 fallback成 allow。Content body cache hit、Share ACTIVE、validation曾經PASSED、same-hash content REUSED都不是 allow substitute。
 
@@ -217,7 +235,7 @@ F02-EVT-013 execution_admission_failed
 - Expired admission不能hydrate。
 - Admission hash mismatch不能hydrate。
 - Share ACTIVE但Blueprint INCOMPATIBLE時不能hydrate。
-- Current Registry中任一 referenced Capability變成 DISABLED / REVOKED / dependency unavailable / runtime incompatible時，即使 immutable body過去已VALIDATED，fresh Runtime仍不能hydrate。
+- Current execution policy中任一 referenced Capability變成 DISABLED / REVOKED，或 pinned dependency graph在 current policy + current runtime下沒有 fully eligible required dependency candidate時，即使 immutable body過去已VALIDATED，fresh Runtime仍不能hydrate。
 - Client提供假的 `trust_status=VALIDATED` / `executable=true` / version / digest不能改變 server decision。
 - Same-hash content reuse不重設 durable REVOKED/INCOMPATIBLE trust，也不自動產生 execution authority。
 - admission temporary failure不fail-open。
