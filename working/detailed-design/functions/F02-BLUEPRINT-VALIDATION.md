@@ -1150,7 +1150,7 @@ Rules：
 4. `STRING`：`source.max_length <= target.max_length`。
 5. `ENUM`：source / target item primitive type 必須一致，且 source `allowed` 必須是 target `allowed` 的 exact-value subset。Capability-specific invariant 可要求 exact same domain。
 6. `LIST`：`source.max_length <= target.max_length`，且 source item descriptor 必須 assignable 到 target item descriptor。
-7. `RECORD`：declared field key set 必須 exactly equal；每個 source field descriptor 必須 assignable 到同名 target field descriptor。Phase 1 不做 width subtyping。
+7. `RECORD`：declared field key set 必須 exactly equal；每個 source field descriptor 必須 assignable 到同名 target field descriptor。若 descriptor 含 `optional_fields`，還必須滿足 `source.optional_fields ⊆ target.optional_fields`，避免 source 可能缺少 target-required field。Phase 1 不做 width subtyping；Blueprint app-state RECORD 本身禁止 optional_fields。
 8. Constraint-free / wider source 不得 assign 到較窄 target。例：unbounded NUMBER 不可 static assign 到 NUMBER{min:0}；STRING(500) 不可 assign 到 STRING(120)。
 9. `LITERAL` 可在 receiving context 直接以 target descriptor 驗證 exact value；這不建立新的 inferred composite schema。
 10. Runtime 仍對 mutation / capability output做 constraint-check；runtime check 不取代 admission-time static assignability。
@@ -1162,7 +1162,7 @@ Descriptor join `Join(A,B,...)` 用於 IF / COALESCE 等多分支結果，產生
 - STRING → max_length = maximum branch max_length。
 - ENUM → same primitive type 的 ordered-insensitive exact union；超過 500 items → reject。
 - LIST → max_length = maximum branch max_length；item = recursive Join(item...)。
-- RECORD → field key set 必須 exactly equal；每個 field recursive Join。
+- RECORD → field key set 必須 exactly equal；每個 field recursive Join；`optional_fields` = all branches optional_fields 的 ordered-insensitive union。Phase 1 app-state Join 若產生 non-empty optional_fields → reject，因 app state不允許 optional RECORD。
 - base type 不同、無合法 canonical Join、或 Join 超出 Phase 1 ceiling → reject。
 
 Derived state / Rule / OP 必須攜帶 inference 後的完整 descriptor；不得只保留 top-level type。
@@ -1285,6 +1285,28 @@ segment = ^[a-z][a-z0-9_]{0,63}$
 - traversal 只可穿過 RECORD declared fields；Phase 1 不支援 numeric LIST index、bracket syntax、escaping alias 或 dynamic segment。
 - scalar root 只允許 empty path；unknown / missing field → reject。
 - path resolve 後得到的 concrete descriptor 才參與 Assignable(source,target)。
+
+### 9.2 Canonical Lexical SCOPE Context
+
+BF-036 固定 SCOPE typing，不允許 top-level Action 自行猜「目前是哪個 repeat」。
+
+Node-local lexical environment：
+
+1. 一個 repeat node 的 `item_alias` / `index_alias` 只對其 **structural children subtree** 可見；不對 repeat node 自己的 props/bindings/events/repeat.items 可見。
+2. nested repeat 可繼承 ancestor aliases，但 child repeat 的 alias 不得 shadow任何 ancestor alias；`item_alias != index_alias`。
+3. `item_alias` root descriptor = `repeat.items` 的 LIST item descriptor。
+4. `index_alias` 若存在，root descriptor = `NUMBER{min:0}`；runtime value必須是 finite integer且等於本次 repeated item zero-based index。
+5. Node props/bindings 中的 SCOPE 只能從該 Node lexical environment resolve；Rule、Derived State、top-level Result output 不存在 lexical repeat environment，因此直接使用 SCOPE → reject。
+
+Action dispatch-site SCOPE context：
+
+1. Action 中任一 Value Source tree（SET_STATE value/when、INVOKE_CAPABILITY args/when 以及 nested OP）含 SCOPE → 該 Action 至少必須有一個 `Node.events.* -> action_id` dispatch site。
+2. 每個 dispatch site 的 lexical environment = dispatching Node 的 ancestor repeat environments，依本節 node-local規則建立。
+3. 對 Action 內每個 `SCOPE{name,path}`，**每個** dispatch site都必須存在同名 alias，且 path resolve後 descriptor必須對該 receiving target通過 Assignable；任一 site missing/incompatible → entire Blueprint reject。
+4. Validator 不得挑第一個 site、最寬 descriptor或把多 site union成 hidden type。
+5. Action 同時含 EVENT + SCOPE 時，兩者各自對所有 dispatch sites驗證；同一 site必須同時滿足 EVENT payload與 lexical SCOPE。
+6. F04 `action_refs` 不建立 EVENT 或 SCOPE dispatch context。
+7. Runtime event envelope必須攜帶該 admitted dispatch site的 immutable lexical scope bindings供本次 Action evaluate；不得從 DOM/render tree反推。
 
 禁止：
 
@@ -1439,13 +1461,16 @@ Phase 1 bounded repeat：
 }
 ~~~
 
+Exact machine shape / requiredness 由 §4.1 `Repeat` 擁有。
+
 Rules：
 
 - `node.repeat` 是 Phase 1 **唯一 structural repeat syntax**。
 - 只有 F04 machine contract `composition.repeat = true` 的 Capability 可用。
 - `repeat.items` 必須 static type = LIST<T>；T 成為 item_alias 的 SCOPE TypeDescriptor。
-- `max_items` 不超過 F02 global ceiling、state/list descriptor max_length 與 Capability ceiling 的最小值。
-- aliases lexical scoped。
+- `item_alias` required；`index_alias` optional；兩者都使用 §4.1 CanonicalIdentifier、不得使用平台 reserved prefix、不得相同或 shadow ancestor alias。
+- `max_items` required integer 0..500，且不超過 source LIST descriptor max_length、F02 global ceiling與 Capability ceiling的最小值。
+- aliases lexical scoped，exact visibility / Action dispatch semantics由 §9.2 擁有。
 - scope path 必須存在於 T；若 T 是 scalar，非空 path 一律 reject。
 - repeated template 由該 node 的 structural `children` 描述；不得再以 `bindings.item_template` 建立第二種 executable template syntax。
 - no arbitrary template code。
@@ -1467,6 +1492,8 @@ Action = bounded declarative mutation / invocation sequence。
   ]
 }
 ~~~
+
+Action exact object / ActionStep variant shape與 requiredness由 §4.1 擁有。
 
 Action ID：
 
@@ -1603,9 +1630,12 @@ SENSITIVE
 DO_NOT_PERSIST
 ~~~
 
+ResultContract / ResultOutput exact object shape與 requiredness由 §4.1 擁有。
+
 Rules：
 
-- output Value Source typed / valid
+- output IDs unique，且使用 §4.1 CanonicalIdentifier；label required 1..120 Unicode code points；sensitivity required。
+- output Value Source typed / valid；SCOPE forbidden because Result has no lexical repeat dispatch context。
 - F16 durable Result Snapshot 遵守 sensitivity
 - DO_NOT_PERSIST 可顯示但不可進 durable snapshot
 - Result declaration 不代表 semantic correctness，只提供 canonical result surface
@@ -1697,6 +1727,9 @@ Rules：
 | event bindings | 200 |
 | concurrent timers | 10 |
 | result outputs | 50 |
+| support degradations | 50 |
+| capability refs / degradation | 20 |
+| children refs / node | 100 |
 
 Capability Card 可以更低，不可更高。
 
@@ -1742,7 +1775,7 @@ Reject：
 
 - invalid JSON
 - duplicate keys
-- payload bytes > intake ceiling
+- payload bytes > **512 KiB (524,288 exact UTF-8 bytes)**
 - non-object root
 - prohibited binary / executable payload
 
@@ -2221,7 +2254,9 @@ Compatibility：
 
 # 46. Open Decisions
 
-目前沒有阻擋 Phase 1 Build Freeze Gate 的 open decision。
+BF-036 Blueprint machine-schema completeness remediation 已於 2026-10-03 取得 Human blanket approval through re-activation：exact nested schema closure、RECORD optional_fields machine token、lexical/action-dispatch SCOPE typing、repeat/result/support/kind/intake bounds、Registry 4.0.0。T002 在 replacement Build Freeze / Activation 前保持 BLOCKED。
+
+目前沒有其他同類 Blueprint schema completeness open decision。
 
 已閉合：
 
