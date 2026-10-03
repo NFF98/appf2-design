@@ -102,6 +102,7 @@ Generated outputs：
 ~~~text
 generated/capabilities/
 ├─ registry-manifest.json
+├─ registry-release-ledger.json
 ├─ compiler-catalog.json
 ├─ validator-registry.ts
 ├─ runtime-registry.ts
@@ -163,21 +164,26 @@ Blueprint 必須引用 capability_id + capability_version，不能引用模糊 l
 
 ## F04-RQ-004 — Registry Version
 
-Registry snapshot 同時具有：
+Registry release identity 同時具有：
 
 ~~~text
 registry_version
 registry_digest
+validator_registry_digest
+runtime_registry_digest
 ~~~
 
 規則：
 
-1. registry_version 是人類可理解 release version。
-2. registry_digest 是 canonical source / manifest deterministic digest。
-3. Registry digest 在 Evidence / wire / persisted reference 中的 canonical string representation = `sha256:<64 lowercase hex>`；內部 hash helper 可持有 bare 64-hex，但跨 contract boundary 前必須正規化為帶 `sha256:` prefix 的 canonical representation。
-4. 相同 registry_version 不得對應兩個不同 digest；CI 必須拒絕。
-5. Blueprint durable record 保存 registry_version；validation/debug 可同時保存 digest。
-6. Registry source material change 必須 version bump；純 serialization defect correction 使用 PATCH bump。
+1. `registry_version` 是人類可理解 release version。
+2. `registry_digest` 是 canonical Registry source deterministic digest；它辨識 source release truth。
+3. `validator_registry_digest` = 對 §9 `ValidatorRegistry` 的 canonical artifact body（排除 `validator_registry_digest` 自身）做 SHA-256；**必須包含** `registry_version`、`registry_digest`、`runtime_version`、完整 capabilities map，因此 lifecycle `availability/execution_status` 的任何改動都會改 digest。
+4. `runtime_registry_digest` = 對 §10 `RuntimeRegistry` canonical artifact body（排除 `runtime_registry_digest` 自身）做 SHA-256；包含 exact CapabilityRef → registrationKey / execution_class / runtime_binding_digest mapping。
+5. 所有 digest跨 contract boundary canonical representation = `sha256:<64 lowercase hex>`；object keys recursively依 Unicode code point ascending排序、array order保留、compact JSON UTF-8。
+6. 相同 `registry_version` 不得對應不同的 registry / validator / runtime digest tuple；CI/deployment必須拒絕。
+7. Blueprint durable record保存 `registry_version`；validation_run至少保存 `registry_digest`。Fresh execution由 trusted release ledger以 version+registry_digest取得完整 release identity，不允許 client提供 artifact digest。
+8. Registry source material change必須 version bump；純 serialization defect correction使用 PATCH bump。
+9. BF-040 current Phase 1 machine release = Registry v7；v6 release identity沒有 validator/runtime artifact digest，不得被 v7 fresh execution當作同一 machine contract。
 
 # 5. Canonical Capability Definition
 
@@ -240,7 +246,26 @@ CapabilityDefinition
 
 > **BF-031 remediation：Executable machine shape 不得留給 Cursor / implementation 自行決定。** Working 必須先固定 validator 可消費的 field/type/composition contract；TypeScript/Zod 只做機械翻譯，不得新增 Product semantics。
 
-Registry machine-source rule（v2+，current v6）：
+Registry machine-source rule（v2+，current v7）：
+
+BF-040 CompatibilityContract runtime-bound grammar：
+
+~~~text
+minRuntimeVersion = SemVer                 // inclusive
+maxRuntimeVersion = "<" SemVer            // exclusive; '<' required
+blueprintSchemaRange =
+    SemVer
+  | "^" SemVer
+  | ">=" SemVer " <" SemVer
+~~~
+
+Rules：
+
+- `minRuntimeVersion` 必須是 bare SemVer，inclusive。
+- `maxRuntimeVersion` 必須是 **exact token `<SemVer`**，exclusive；bare max version禁止，implementation不得自行發明 inclusive max。
+- `min < max` 必須成立；invalid/empty range = Registry generation hard fail。
+- `blueprintSchemaRange` 只接受上列三種 canonical grammar；不得接受 implementation-specific npm-semver自由語法。
+
 
 - `CapabilityDefinition.contract.validator` 是 executable Validator machine truth 的 canonical source field。
 - `propsSchema` / `stateSchema` 可保留供 semantic/documentation/runtime schema reference，但 **不得**取代或覆蓋 `contract.validator`。
@@ -572,6 +597,7 @@ Compiler artifact 禁止包含：
 ValidatorRegistry = {
   registry_version: string,
   registry_digest: "sha256:<64 lowercase hex>",
+  validator_registry_digest: "sha256:<64 lowercase hex>",
   runtime_version: string,
   capabilities: map<capability_id, map<capability_version, GeneratedCapabilityValidator>>
 }
@@ -602,10 +628,45 @@ Rules：
 6. BF-039 `execution_contract_digest` = 對此 exact CapabilityRef 的 immutable executable contract canonical JSON 做 SHA-256。Exact digest input object keys = `id`、`version`、`validator`、`permission_class`、`resource_budget`、`resource_usage`、`execution_class`、`compatibility`、`degradation`；**排除** `availability`、`execution_status`。
 7. Digest canonicalization：object keys recursively 依 Unicode code point ascending 排序；array order保留；使用 compact JSON（無額外 whitespace）序列化；對 exact UTF-8 bytes做 SHA-256；跨 contract boundary canonical representation = `sha256:<64 lowercase hex>`。任何 schema-invalid non-JSON value在 hash前已 generation fail。
 8. 同一 exact CapabilityRef 跨不同 Registry snapshots 若 `execution_contract_digest` 改變，代表 executable semantics drift；必須 bump Capability semantic version。不得只 bump Registry version後沿用同一 CapabilityRef。
-9. `availability` / `execution_status` 是唯一允許在相同 exact CapabilityRef 跨 Registry snapshots 改變而不 bump Capability version的 execution-policy fields；每次改變仍必須發布新的 Registry version + digest，禁止 same-version/digest mutation。
-10. action `args` empty = `{}`。
-11. F02 只讀此 generated `validator` contract 做 capability validation；不得維護第二份 capability schema / invariant table。
-12. Generator 必須 deterministic；相同 canonical definitions輸入生成 byte-equivalent semantic artifact、相同 execution_contract_digest與相同 registry_digest。
+9. `availability` / `execution_status` 是唯一允許在相同 exact CapabilityRef 跨 Registry snapshots 改變而不 bump Capability version的 execution-policy fields；每次改變仍必須發布新的 Registry version + registry/validator/runtime digest tuple，禁止 same-version mutation。
+10. BF-040 historical identity：release pipeline維護 append-only `RegistryReleaseLedger`。對每個歷史出現過的 exact `id@version` 保存 `execution_contract_digest` 與 §10 `runtime_binding_digest`。Current source若重用既有 exact ref，兩個 digest都必須與 ledger完全相同；任一不同 → generation hard fail `CAPABILITY_VERSION_REUSE`，即使該 ref曾在中間 release被移除也一樣。真正 executable semantics或 Runtime binding改變必須 bump Capability version。
+11. action `args` empty = `{}`。
+12. F02 只讀此 generated `validator` contract 做 capability validation；不得維護第二份 capability schema / invariant table。
+13. `validator_registry_digest` canonical input包含 lifecycle fields，因此 same-version原地 ACTIVE↔REVOKED / ENABLED↔DISABLED 一定使 artifact digest改變並被 release identity gate拒絕。
+14. Generator 必須 deterministic；相同 canonical definitions + historical ledger輸入生成 byte-equivalent artifacts、相同 execution/runtime binding/artifact/source digests。
+
+### 9.1 BF-040 RegistryReleaseLedger
+
+`registry-release-ledger.json` 是 release pipeline 的 append-only machine truth，exact logical shape：
+
+~~~text
+RegistryReleaseLedger = {
+  schema_version: "1.0.0",
+  releases: [
+    {
+      registry_version: SemVer,
+      registry_digest: sha256,
+      validator_registry_digest: sha256,
+      runtime_registry_digest: sha256
+    }
+  ],
+  capability_identities: map<capability_id, map<capability_version, {
+    execution_contract_digest: sha256,
+    runtime_binding_digest: sha256
+  }>>
+}
+~~~
+
+Canonical rules：
+
+1. `releases[]` 依 SemVer strictly ascending；同一 `registry_version` 只能出現一次。
+2. 已存在 release entry不得 rewrite/delete；新 release只可 append。
+3. `capability_identities` 是歷史 union，不因 capability暫時從 current Registry移除而刪除。
+4. Current exact `id@version` 若 ledger已有 identity，execution/runtime兩個 digest必須 exact equal；不同即 `CAPABILITY_VERSION_REUSE` hard fail。
+5. 新 exact Capability version可新增 identity；一旦寫入不可改。
+6. Ledger serialization使用與 §4 digest相同 canonical JSON；build/deployment把 ledger當 trusted immutable release artifact，不從 public client載入。
+7. Release bundle verification順序：先重算 Validator/Runtime artifact digest，再要求完整 four-field release tuple存在於 ledger；任一 mismatch fail closed。
+
 
 **Ref-only artifact 不合格：**
 
@@ -620,22 +681,48 @@ Unknown capability ID/version → REJECT。
 
 # 10. Generated Runtime Artifact
 
-runtime-registry.ts 是 trusted mapping：
+runtime-registry.ts 是 trusted mapping，Registry v7 exact logical shape：
 
 ~~~text
-CapabilityRef
-→ registrationKey
-→ execution class
-→ trusted bundled Runtime handler
+RuntimeRegistry = {
+  registry_version,
+  registry_digest,
+  runtime_registry_digest,
+  capabilities: map<capability_id, map<capability_version, {
+    registration_key,
+    execution_class,
+    runtime_binding_digest
+  }>>
+}
+
+runtime_binding_digest
+= sha256(canonical JSON {
+    id,
+    version,
+    registration_key
+  })
 ~~~
+
+Deployment-owned handler catalog exact internal shape：
+
+~~~text
+TrustedRuntimeHandlerCatalog = {
+  registration_keys: sorted unique string[]
+}
+~~~
+
+`TrustedRuntimeHandlerCatalog` 必須從**實際 build-time bundled handler map**建立，不得從 Registry source自己複製一份「預期存在」的 key來假裝 proof。它不是 public artifact，不由 Blueprint/client提供。
 
 安全規則：
 
 1. Blueprint 只攜帶 capability_id + version + declarative config。
-2. Runtime 依 trusted Registry mapping 取得 handler。
+2. Runtime 只依 **pinned Registry release bundle** 的 trusted RuntimeRegistry取得 handler；fresh current Registry只決定 current eligibility，不可替換 old Blueprint的 pinned handler binding。
 3. Blueprint 不得指定 module path、JS source、function body、npm package、dynamic import URL。
-4. Runtime handler 必須 build-time bundled。
-5. Missing runtime handler = build / deployment failure；禁止 dynamic fallback。
+4. Runtime handler 必須 build-time bundled；release/deployment gate必須用實際 `TrustedRuntimeHandlerCatalog` 驗證每個 ENABLED RuntimeRegistry registration_key恰好解析到一個 bundled handler。Registry generator本身若拿不到 handler catalog，不得偽造此 proof；完整 handler completeness gate屬於 build/deployment。
+5. Fresh Execution Admission對 Blueprint pinned direct Node refs再做一次 deployment completeness check：由 pinned RuntimeRegistry取得 registration_key，必須存在於 current app build的 TrustedRuntimeHandlerCatalog。
+6. Missing runtime handler / handler catalog verification失敗 = build/deployment integrity failure；禁止 dynamic fallback。
+7. 同一 exact CapabilityRef跨歷史 release重用時 `runtime_binding_digest` 必須與 append-only ledger一致；registrationKey改變必須 bump Capability semantic version。
+8. `runtime_registry_digest` 必須覆蓋完整 mapping與 lifecycle-independent runtime binding metadata；release ledger綁定 registry_version + registry_digest + validator_registry_digest + runtime_registry_digest。
 
 # 11. Compatibility Artifact
 
@@ -1249,10 +1336,12 @@ required
 Rules：
 
 1. Dependency graph Phase 1 必須 acyclic。
-2. Required dependency unavailable → dependent capability unavailable。
-3. Optional degradation 必須 Card 明確宣告。
-4. Blueprint 不自行描述 npm / package implementation dependencies。
-5. Transitive dependency 由 Registry / Validator resolution。
+2. Required dependency是 **admission / eligibility prerequisite**，不是 Blueprint可選的 dynamic Runtime module binding；Runtime不得因 dependency resolution去 dynamic import另一份 code。
+3. Validation-time與fresh-time都依各自 Registry snapshot收集 `versionRange` matching exact versions、SemVer descending，第一個 fully eligible candidate滿足 requirement；沒有 candidate → dependent capability unavailable。
+4. Fresh dual-snapshot defense：若 current選到的 dependency exact ref也存在 pinned snapshot，current `execution_contract_digest` 與 `runtime_binding_digest` 都必須等於 pinned same exact ref；任一 drift使該 candidate ineligible。若 current candidate是 pinned snapshot不存在的**新 exact version**，可依 versionRange + current eligibility滿足 requirement。
+5. Optional degradation 必須 Card 明確宣告。
+6. Blueprint 不自行描述 npm / package implementation dependencies。
+7. Transitive dependency由 Registry / Validator deterministic resolution；不得隱式改 direct Blueprint ref版本。
 
 # 15. Maturity vs Availability
 
@@ -1367,9 +1456,13 @@ Capability Definitions
 → detect dependency cycles
 → validate registrationKey uniqueness
 → validate compatibility ranges
-→ generate artifacts
-→ compute registry_digest
-→ verify registry_version ↔ digest
+→ load append-only RegistryReleaseLedger
+→ generate validator/runtime artifacts
+→ compute execution_contract_digest / runtime_binding_digest
+→ enforce historical exact-ref identity ledger
+→ compute registry_digest / validator_registry_digest / runtime_registry_digest
+→ append new immutable release identity
+→ verify registry_version ↔ full digest tuple
 → run registry contract tests
 ~~~
 
@@ -1387,7 +1480,11 @@ Build hard fail：
 - dependency cycle
 - ENABLED capability missing runtime handler
 - ENABLED capability missing validator schema
-- same registry_version with changed digest
+- same registry_version with changed registry / validator / runtime digest tuple
+- same exact historical CapabilityRef with changed execution_contract_digest
+- same exact historical CapabilityRef with changed runtime_binding_digest
+- release ledger rewrite / deletion / duplicate version
+- ValidatorRegistry or RuntimeRegistry artifact digest mismatch
 
 # 19. Frontend Behavior
 
@@ -1416,11 +1513,13 @@ Compiler → 只讀 compiler-catalog。
 Validator → 只讀本次 validation選定的 validator-registry snapshot。
 Runtime → 只讀與其 Registry snapshot同 version/digest的 runtime-registry trusted handler mapping。
 Resolver → composition/validation讀同一 Registry snapshot做 availability / compatibility / coverage。
-Fresh Execution Admission → 同時讀 Blueprint pinned snapshot + deployment current execution Registry snapshot；current snapshot只用來決定現在能不能執行，不重寫 immutable Blueprint semantics。
+Fresh Execution Admission → 同時讀 Blueprint pinned release bundle + deployment current execution release bundle；current bundle只用來決定現在能不能執行，不重寫 immutable Blueprint semantics。
 
-同一 snapshot內 Compiler / Validator / Runtime / Resolver artifacts必須帶同一 registry_version / registry_digest。
+同一 release內 Compiler / Validator / Runtime / Resolver artifacts必須帶同一 registry_version / registry_digest，且 Validator/Runtime artifact digest必須匹配 trusted `RegistryReleaseLedger`。
 
-Deployment mismatch → fail fast / health check fail，不在 production 默默使用不同 snapshot。
+Pinned Runtime實際執行永遠使用 pinned release的 runtime-registry；current release不得換掉 old Blueprint handler binding。Fresh admission在發出 executable=true前必須確認 pinned RuntimeRegistry artifact integrity成立，且所有 direct executable Node refs存在 trusted bundled handler mapping。
+
+Deployment / release-ledger / artifact mismatch → fail fast / health check fail；fresh admission遇 temporary lookup/load failure → E08，絕不默默 fallback。
 
 # 21. API / Contract
 
@@ -1577,7 +1676,7 @@ Phase 1：
 
 ~~~text
 Static Trusted Registry only
-Current registry_version = 6.0.0
+Current registry_version = 7.0.0
 ~~~
 
 Deployment bind：
@@ -1587,6 +1686,9 @@ app build
 + runtime version
 + registry_version
 + registry_digest
++ validator_registry_digest
++ runtime_registry_digest
++ trusted RegistryReleaseLedger
 ~~~
 
 Registry update：
@@ -1599,8 +1701,9 @@ Registry update：
 - BF-036 RECORD `optional_fields` TypeDescriptor machine token + Blueprint/SCOPE schema closure = breaking validator contract；Registry `3.0.0 → 4.0.0`。Core capability semantic versions不因純 Registry machine representation rebaseline自動改號。
 - BF-038 execution eligibility + resource-usage Validator projection = breaking machine contract；Registry `4.0.0 → 5.0.0`。Current Core Capability semantic versions維持不變；`logic.timer@1.0.0` explicit usage=1，其餘 current Core explicit usage=0。
 - BF-039 current-execution authority + `execution_contract_digest` + canonical usage token = breaking machine contract；Registry `5.0.0 → 6.0.0`。Current Core Capability semantic versions維持不變，因 resolved executable semantics未改；只修正 machine authority/identity。
-- Registry policy-only update（同 exact CapabilityRef只改 `availability` / `execution_status`，execution_contract_digest不變）使用 PATCH bump，例如 `6.0.0 → 6.0.1`；digest 必須同步改變。不得 same-version policy mutation。
-- Phase 1目前沒有 v5→v6 execution compatibility adapter；old v5 Blueprint body保留，但 current v6 admission可判定 incompatible並交 Recovery。
+- Registry policy-only update（同 exact CapabilityRef只改 `availability` / `execution_status`，execution_contract_digest / runtime_binding_digest不變）使用 PATCH bump，例如 `7.0.0 → 7.0.1`；registry + validator + runtime release tuple必須同步形成新 immutable release。不得 same-version policy mutation。
+- BF-040 release-integrity remediation = breaking Registry machine contract；Registry `6.0.0 → 7.0.0`。新增 validator/runtime artifact digest、append-only release ledger、runtime_binding_digest與 historical exact-ref continuity。Core Capability semantic versions維持不變，因 resolved user-facing capability contract / registrationKey本身沒有改變。
+- Phase 1目前沒有 v6→v7 execution compatibility adapter；old v6 Blueprint body保留，但 fresh v7 execution fail closed，直到明確 versioned adapter/migration存在。
 - old validated Blueprint 保留原 capability refs / registry_version
 - compatibility layer 判斷是否仍可執行
 
@@ -1610,9 +1713,13 @@ BF-030 / BF-031 / BF-034 / BF-035 / BF-036 已完成前次 remediation。
 
 BF-038 已完成前次 Registry v5 machine projection remediation。
 
-BF-039 已於 2026-10-04 Human blanket-approved through pre-Cursor re-execution：Registry v6 固定唯一 `resource_usage.timerSlotsPerInstance` token、per-Capability `execution_contract_digest`、immutable pinned snapshot vs current execution Registry snapshot雙 authority、recursive dependency compatibility，以及 Phase 1 media/network V10 policy。T003 在 replacement Build Freeze、rebind 與 Activation 前保持 BLOCKED。
+BF-039 已完成 Registry v6 dual-snapshot remediation。
 
-目前沒有其他同類 T003 current-execution Registry authority open decision。
+BF-040 於 T003 candidate independent review發現 release artifact integrity、historical exact-ref identity、runtime binding、V02/V09 owner、compatibility grammar與 fresh admission precedence仍有同族缺口；Human已批准 exhaustive same-class remediation through pre-Cursor re-execution。
+
+BF-040 resolution：Registry v7 release identity = registry_digest + validator_registry_digest + runtime_registry_digest；append-only RegistryReleaseLedger同時鎖定每個歷史 exact CapabilityRef的 execution_contract_digest + runtime_binding_digest；pinned/current都使用 trusted release bundle；pinned Runtime handler mapping在 executable=true前必須被驗證可用。T003在 replacement Build Freeze / Activation前保持 BLOCKED。
+
+目前沒有其他同類 T003 release-identity / current-execution authority open decision。
 
 已閉合：
 
