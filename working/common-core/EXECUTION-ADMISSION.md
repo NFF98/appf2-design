@@ -39,17 +39,37 @@ GET /api/v1/blueprints/{content_hash}/execution-admission
 
 Public read；不要求 account。
 
+Public request只攜帶 path `content_hash`。Client不得在 body/query/header提供 `trust_status`、`executable`、`runtime_version`、`registry_version`、`registry_digest` 或 Registry object來覆寫 trusted decision。
+
 Server flow：
 
 ~~~text
 content_hash
+→ load immutable Blueprint + current blueprint trust_status
+→ server selects exact trusted Registry snapshot for Blueprint.registry_version
+→ construct trusted ExecutionRuntimeContext
 → F02 assertExecutable(contentHash, runtimeContext)
-→ current blueprint trust_status
-→ schema compatibility
-→ registry compatibility
-→ runtime compatibility
+→ schema / exact registry snapshot / runtime compatibility
+→ re-check every CapabilityRef current execution eligibility
 → admission response
 ~~~
+
+Trusted internal context：
+
+~~~text
+ExecutionRuntimeContext = {
+  runtime_version: SemVer,
+  supported_blueprint_schema_range: SemVerRange,
+  registry_snapshot: {
+    registry_version: SemVer,
+    registry_digest: sha256,
+    validator_registry: trusted generated Registry v5 snapshot
+  },
+  now: trusted server time
+}
+~~~
+
+`ExecutionRuntimeContext` 只能由 appf2 server/deployment truth建立；public caller沒有 authority選 snapshot或版本。
 
 # 4. ExecutionAdmission Shape
 
@@ -63,7 +83,7 @@ content_hash
     "executable": true,
     "trust_status": "VALIDATED",
     "schema_version": "1.0.0",
-    "registry_version": "1.0.0",
+    "registry_version": "5.0.0",
     "registry_digest": "...",
     "runtime_version": "...",
     "issued_at": "...",
@@ -133,17 +153,50 @@ GET /b/{content_hash}
 
 因此 CDN可長快取 body，而 admission保持fresh。
 
-# 9. Failure
+# 9. Failure / Denial Precedence
+
+Fresh admission使用以下 deterministic precedence；第一個成立的 denial結束本次 request，不繼續找「比較好看的」allow path：
 
 ~~~text
-unknown hash → 404
-REVOKED → F02-ERR-016 / F12 terminal-safe recovery
-INCOMPATIBLE → F02-ERR-017 / F12 compatibility recovery
-registry/runtime mismatch → typed F02/F03/F04 error
-admission service temporary failure → 503 / retry
+E01 content_hash unknown
+    → HTTP 404
+
+E02 blueprint_content.trust_status = REVOKED
+    → F02-ERR-016 / F12 terminal-safe recovery
+
+E03 blueprint_content.trust_status = INCOMPATIBLE
+    → F02-ERR-017 / F12 compatibility recovery
+
+E04 trust_status != VALIDATED
+    → deny fail-closed
+
+E05 Blueprint schema outside server supported range
+    → F02-ERR-017
+
+E06 exact trusted Registry snapshot unavailable
+    OR registry_version/digest integrity mismatch
+    → F02-ERR-017
+
+E07 any referenced Capability current eligibility fails:
+    missing exact ref
+    availability != ENABLED
+    execution_status = REVOKED
+    required dependency unavailable/revoked/incompatible
+    execution_class unsupported
+    Blueprint schema or runtime outside capability compatibility range
+    → F02-ERR-017
+      (internal diagnostics may retain F04 reason; public execution authority remains denied)
+
+E08 admission infrastructure temporary failure
+    → HTTP 503 / retry, never executable=true
+
+otherwise
+    → executable=true admission, expires_at <= issued_at + 30 seconds
 ~~~
 
-Temporary admission failure不得 fallback成 allow。
+Capability REVOKED 在 fresh execution check造成 Blueprint **currently incompatible to execute**，使用 F02-ERR-017；F02-ERR-016只保留給 blueprint_content 自身 durable trust_status=REVOKED，避免兩種 revocation identity混淆。
+
+Temporary admission failure不得 fallback成 allow。Content body cache hit、Share ACTIVE、validation曾經PASSED、same-hash content REUSED都不是 allow substitute。
 
 # 10. Evidence
 
@@ -164,6 +217,9 @@ F02-EVT-013 execution_admission_failed
 - Expired admission不能hydrate。
 - Admission hash mismatch不能hydrate。
 - Share ACTIVE但Blueprint INCOMPATIBLE時不能hydrate。
+- Current Registry中任一 referenced Capability變成 DISABLED / REVOKED / dependency unavailable / runtime incompatible時，即使 immutable body過去已VALIDATED，fresh Runtime仍不能hydrate。
+- Client提供假的 `trust_status=VALIDATED` / `executable=true` / version / digest不能改變 server decision。
+- Same-hash content reuse不重設 durable REVOKED/INCOMPATIBLE trust，也不自動產生 execution authority。
 - admission temporary failure不fail-open。
 - normal Runtime interaction READY後不需要每次event重查admission。
 
