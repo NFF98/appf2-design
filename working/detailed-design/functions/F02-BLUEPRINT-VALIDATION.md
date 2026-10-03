@@ -120,7 +120,20 @@ Phase 1 logical shape：
   "state": {},
   "rules": [],
   "actions": [],
-  "nodes": [],
+  "nodes": [
+    {
+      "id": "node_root",
+      "capability": {"id":"layout.container","version":"1.0.0"},
+      "props": {
+        "direction":{"kind":"LITERAL","value":"COLUMN"},
+        "gap":{"kind":"LITERAL","value":"NONE"},
+        "align":{"kind":"LITERAL","value":"STRETCH"}
+      },
+      "bindings": {},
+      "events": {},
+      "children": []
+    }
+  ],
   "root_node_id": "node_root",
   "result": {
     "outputs": []
