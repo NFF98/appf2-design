@@ -1599,6 +1599,8 @@ Registry update：
 - BF-036 RECORD `optional_fields` TypeDescriptor machine token + Blueprint/SCOPE schema closure = breaking validator contract；Registry `3.0.0 → 4.0.0`。Core capability semantic versions不因純 Registry machine representation rebaseline自動改號。
 - BF-038 execution eligibility + resource-usage Validator projection = breaking machine contract；Registry `4.0.0 → 5.0.0`。Current Core Capability semantic versions維持不變；`logic.timer@1.0.0` explicit usage=1，其餘 current Core explicit usage=0。
 - BF-039 current-execution authority + `execution_contract_digest` + canonical usage token = breaking machine contract；Registry `5.0.0 → 6.0.0`。Current Core Capability semantic versions維持不變，因 resolved executable semantics未改；只修正 machine authority/identity。
+- Registry policy-only update（同 exact CapabilityRef只改 `availability` / `execution_status`，execution_contract_digest不變）使用 PATCH bump，例如 `6.0.0 → 6.0.1`；digest 必須同步改變。不得 same-version policy mutation。
+- Phase 1目前沒有 v5→v6 execution compatibility adapter；old v5 Blueprint body保留，但 current v6 admission可判定 incompatible並交 Recovery。
 - old validated Blueprint 保留原 capability refs / registry_version
 - compatibility layer 判斷是否仍可執行
 
