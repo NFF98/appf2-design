@@ -212,7 +212,7 @@ Rules：
 - `materiality` 與 `impact_level` 是不同軸；**不得**用 LOW/MEDIUM/HIGH/CRITICAL 自行推導 MATERIAL/COSMETIC。
 - `COSMETIC` 只表示 presentation/cosmetic preference；必須 `required_for_execution=false` 且 `policy_risk_flags=[]`。
 - 任一 `policy_risk_flags` 命中都代表該 item 是 MATERIAL；不得標成 COSMETIC。
-- `depends_on_ids[]` 只可引用同一 Envelope 內穩定 semantic item ID；不得 self-reference。它表示「此 item 的 semantic/policy truth 依賴哪些 upstream item」，只供 deterministic policy/re-evaluation 使用。
+- `depends_on_ids[]` 只可引用同一 Envelope 內 policy-visible item `id` 或 `KnownInput.id`；不得 self-reference。它表示「此 item 的 semantic/policy truth 依賴哪些 upstream fact/item」，只供 deterministic policy/re-evaluation 使用。
 - Prompt A 可輸出上述 semantic classification；輸出仍是不可信 semantic analysis，必須先過 F01 shape/invariant validation。ClarificationPolicyEngine 只依通過驗證的 Envelope + trusted policy state 決定 outcome，LLM 不可直接指定 final clarification status。
 
 # 5. Known Input
@@ -221,6 +221,7 @@ Rules：
 
 ~~~text
 KnownInput
+├─ id
 ├─ key
 ├─ value
 ├─ value_type
@@ -251,10 +252,12 @@ DO_NOT_PERSIST
 
 Rules：
 
+- `id` 是同一 logical Intent 內的 stable semantic fact ID；同一 fact 在 re-analysis / answer merge 前後保持 identity，不得因 wording normalization 任意換 ID。
 - User explicit value 不被 LLM 任意改 business meaning。
 - formatting normalization 可以；semantic conversion 要明確。
 - DO_NOT_PERSIST 只存在 request-scoped context。
 - sensitive values 不進 telemetry。
+- 需要作為 no-reask upstream dependency 的 User/domain fact 必須有 stable `KnownInput.id`；沒有 stable ID 的欄位不得單獨作為「upstream changed」理由來重問。
 
 # 6. Clarification Policy
 
@@ -366,6 +369,14 @@ UI 由 F00 決定。
 
 這是 appf2-owned policy engine state，不是 Prompt A / Client 可寫欄位。
 
+Canonical location：
+
+~~~text
+StructuredIntentEnvelope.analysis_metadata.clarification_policy_state
+~~~
+
+因此 F01-AC-006 的「same Envelope + policy version」包含同一份 server-owned clarification state；不同 answered/change state 本身就是不同 Envelope truth，不構成 determinism 例外。
+
 ~~~text
 ClarificationPolicyState
 ├─ policy_version
@@ -377,7 +388,7 @@ Rules：
 
 1. `answered_question_ids[]` 只在 server 接受合法 F01-API-002 answer 後加入 stable question_id。
 2. `changed_semantic_item_ids[]` 由 trusted answer merge / re-evaluation 產生，只代表**本次 evaluation 前實際改變**的 semantic items；Client / LLM 不得直接提供。
-3. item 的 value / source / source_ref / materiality / policy_risk_flags / depends_on_ids 任一 semantic-policy truth 改變，都必須把該 item ID 記入 changed set。
+3. policy-visible item 的 description/proposed_default/alternatives/source/source_ref/materiality/policy_risk_flags/depends_on_ids 等 semantic-policy truth，或 KnownInput 的 value/source/source_ref 發生實質改變，都必須把該 stable ID 記入 changed set；純 formatting normalization 不算 semantic change。
 4. 每個 question 的 re-ask basis = `semantic_item_ids[]` 加上這些 target items 的遞迴 `depends_on_ids[]` closure。
 5. 若 question_id 已在 answered set，且本次 `changed_semantic_item_ids[]` 與 re-ask basis **無交集** → 必須 suppress，不得重問。
 6. 只有交集非空時，該已回答 question 才重新變成 eligible；policy 仍須重新跑 CP-003 > CP-001 > CP-002 > CP-004 > CP-005 > CP-006，不能因 upstream change 自動決定一定要問。
