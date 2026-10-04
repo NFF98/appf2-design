@@ -1515,6 +1515,8 @@ resource_usage:
 trace_id
 ~~~
 
+`trace_id` 是 trusted server/deployment tracing context。F02 boundary 只接受符合 F07 canonical trace grammar（32 lowercase hex、不可全 0）的 upstream trace；缺失或不合法時必須由 F02 產生新的 canonical trace_id。不得把不合法 trace 寫入 `validation_run` 後再讓 Evidence intake 靜默拒絕，因為這會破壞 F02-AC-019 的 validation↔evidence traceability。
+
 Consumer UX 不直接顯示 internal issue detail；F12 負責 human message / next action。
 
 # 34. Trust Status
@@ -1532,6 +1534,15 @@ REVOKED = security / critical correctness governance。
 INCOMPATIBLE = current Runtime / Registry 無法安全執行。
 
 Status 可更新，canonical body 不修改。
+
+Trust transition authority（Phase 1）：
+
+- `VALIDATED → REVOKED`：只可由 server/governance-owned F02 trust transition service 執行；public/client input 無 authority。
+- `VALIDATED → INCOMPATIBLE`：只可由 server/deployment-owned compatibility decision 執行；public/client input 無 authority。
+- Phase 1 不允許 `REVOKED / INCOMPATIBLE → VALIDATED` 原地恢復；重新取得 VALIDATED truth 必須走新的 validation/admission truth，不得改寫舊 Blueprint body。
+- transition 必須以 `content_hash + previous_status + new_status + canonical trace_id` 為受控輸入；repository 只允許 compare-and-set `VALIDATED → terminal status`，避免 stale/重複 transition 覆蓋。
+- 成功 transition 不得 mutation canonical Blueprint body、content_hash、schema/registry version、created_at 或 admitting validation lineage。
+- 成功 `REVOKED` transition 發 `F02-EVT-008 trust_revoked`；成功 `INCOMPATIBLE` transition 發 `F02-EVT-014 trust_incompatible`。Evidence delivery 依 F07 為 non-blocking，因此 durable `trust_status` 是執行 gate truth，event 是可觀測 evidence；transition service 必須嘗試 emission 並把 intake failure 交 F07 diagnostics，不得 rollback 已成立的安全 terminal status。
 
 # 35. Frontend Behavior
 
@@ -1633,7 +1644,7 @@ candidate_source:
 schema_policy_version
 registry_version / digest   // trusted server/deployment selected
 runtime_version             // trusted server/deployment selected
-trace_id
+trace_id  // trusted canonical trace；invalid/missing upstream value由 F02 server產生
 ~~~
 
 External Candidate payload只能是 §4 exact Blueprint body。Client不得用 sibling body/query/header欄位提供 `trust_status`、`executable`、`registry_digest`、`runtime_version`、Validator Registry object或 ExecutionRuntimeContext來改變 validation/admission truth。
@@ -1729,6 +1740,7 @@ F02-EVT-010 execution_admission_requested
 F02-EVT-011 execution_admission_allowed
 F02-EVT-012 execution_admission_denied
 F02-EVT-013 execution_admission_failed
+F02-EVT-014 trust_incompatible
 ~~~
 
 Minimum dimensions：
@@ -1782,7 +1794,7 @@ Evidence：
 - F02-AC-019 每次 validation 可追蹤 stage / error / trace。
 - F02-AC-020 validation evidence 不需要 telemetry raw Blueprint body。
 - F02-AC-021 admitted Blueprint 可追到 admitting validation_run。
-- F02-AC-022 trust revoke / incompatible 可追蹤但不 mutation Blueprint body。
+- F02-AC-022 trust revoke / incompatible transition 由 trusted server authority 執行；成功 transition 以 F02-EVT-008 / F02-EVT-014 可追蹤，且不 mutation Blueprint body / immutable admission lineage。
 
 # 43. Test Mapping Seed
 

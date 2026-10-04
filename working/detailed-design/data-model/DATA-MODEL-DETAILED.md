@@ -259,6 +259,8 @@ admitted_by_validation_run_id
 
 `trust_status` 可因 security / compatibility revocation 改變，但不能修改 Blueprint body。
 
+Phase 1 trust transition invariant：只有 trusted F02 server transition boundary 可更新此欄位；public/client 無 authority。Repository 只允許 compare-and-set `VALIDATED → REVOKED | INCOMPATIBLE`，不得原地恢復 terminal status。transition 不得改動 canonical_blueprint、content_hash、schema_version、registry_version、created_at、admitted_by_validation_run_id 或 byte_size。成功 transition 的 Evidence 由 F02-EVT-008（REVOKED）/ F02-EVT-014（INCOMPATIBLE）承接；Evidence delivery failure 不得 rollback 已成立的安全 terminal status。
+
 規則：
 
 - Candidate 不直接進此表。
