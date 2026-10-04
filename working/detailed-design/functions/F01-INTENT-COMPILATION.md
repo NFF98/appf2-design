@@ -471,7 +471,7 @@ Rules：
 
 1. `answered_question_ids[]` 只在 server 接受合法 F01-API-002 answer 後加入 stable question_id。
 2. `changed_semantic_item_ids[]` 由 trusted answer merge / re-evaluation 產生，只代表**本次 evaluation 前實際改變**的 semantic items；Client / LLM 不得直接提供。
-3. policy-visible item 的 description/source/source_ref/resolution_state/expected_value_type/question_type/required_for_execution/impact_level/materiality/policy_risk_flags/depends_on_ids/can_default/proposed_default/alternatives 等 semantic-policy truth，或 KnownInput 的 value/source/source_ref 發生實質改變，都必須把該 stable ID 記入 changed set；純 formatting normalization 不算 semantic change。
+3. policy-visible item 的 description/source/source_ref/resolution_state/resolved_value/expected_value_type/question_type/required_for_execution/impact_level/materiality/policy_risk_flags/depends_on_ids/can_default/proposed_default/alternatives 等 semantic-policy truth，或 KnownInput 的 value/source/source_ref 發生實質改變，都必須把該 stable ID 記入 changed set；純 formatting normalization 不算 semantic change。
 4. 每個 question 的 re-ask basis = `semantic_item_ids[]` 加上這些 target items 的遞迴 `depends_on_ids[]` closure。
 5. 若 question_id 已在 answered set，且本次 `changed_semantic_item_ids[]` 與 re-ask basis **無交集** → 必須 suppress，不得重問。
 6. 只有交集非空時，該已回答 question 才重新變成 eligible；policy 仍須重新跑 CP-003 > CP-001 > CP-002 > CP-003A > CP-004 > CP-005 > CP-006，不能因 upstream change 自動決定一定要問。
@@ -514,7 +514,7 @@ Rules：
 - unrelated fact change 不得重開已回答 question。
 - provenance 必須保留。
 - re-evaluation 記 policy_version + triggered_rule_ids。
-- Client / LLM 不得提交 `resolved_value`、`answered_question_ids[]`、`changed_semantic_item_ids[]` 或直接標示「可重問」來繞過 server-owned/trusted merge。
+- Client 不得在 F01-API-002 直接提交 `resolved_value`、`answered_question_ids[]`、`changed_semantic_item_ids[]` 或直接標示「可重問」來繞過 trusted merge。Prompt A 可從 User 原始輸入抽取 USER_EXPLICIT / DOMAIN_KNOWN 的候選 `resolved_value`，但仍屬 untrusted analysis，必須通過 F01-DATA-001 invariant validation，不能直接覆寫 server trusted state。
 
 # 10. Visible Assumptions
 
