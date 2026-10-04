@@ -14,7 +14,7 @@
 
 | Count | Lost Time / Incident | Total Lost Time |
 |---:|---:|---:|
-| 18 | mixed | **>1095 min / >18.25 hr** |
+| 19 | mixed | **>1140 min / >19.0 hr** |
 
 ---
 
@@ -40,6 +40,7 @@
 | SHAME-016 | 2026-10-01 | BF-014 後仍優先提出窄修 A1/A2/B，沒有先以 Product correctness 為最高原則做 SP2 全面 Contract Re-Audit | BF-014 已證明 SP2 pre-activation review 漏掉可執行語意層級 defect，且 User 已明確要求沿用 Sprint 1 Build Constitution、Product correctness 是最高優先；但 ChatGPT 仍先提出 A1 scope-isolated rebaseline、A2 全量 freeze、B governance interpretation 三個局部修復選項，而沒有第一時間提出真正正確的路徑：先保持 HOLD，對 SP2 T001–T009、F01/F02/F04/F07、Evidence Registry、所有 regex/enum/type/bounds/serialization/hash/version/Acceptance-Test/projection 做 comprehensive re-audit，將同類 defect 一次找完再 rebaseline。這把「盡快解除當前 blocker」放在「先證明整體 Product correctness」之前，屬於優先級錯誤。 | 永久規則：任何 Build blocker 一旦證明可能屬於 class-level / shared-contract defect，不得先推薦 narrow hotfix。預設先執行 Comprehensive Contract Re-Audit：擴大到同一 shared path、同 Sprint remaining Tasks、相關 registries、canonical values、negative cases、serialization/encoding、projection drift；只有 audit 證明 blast radius bounded 後才允許窄修。Product correctness 永遠高於恢復 Cursor 的速度。 | 45 min | OPEN / PRIORITY & AUDIT FAILURE |
 | SHAME-017 | 2026-10-01 | BF-026 / BF-027 過早 closure：用 indirect green 取代 direct proof，且未做 next-T001 future-diff dry-run | BF-026 remediation 只擴大 T001 write scope，沒有以真正下一個 T001 fixture diff 執行 CI-mode `validate-test-integrity`，因此漏掉 Test ownership gate 仍會阻擋 7 個既有 Test IDs；BF-027 remediation 則把 HOLD / control-only 的綠色 CI 誤當成 `npm run check:lint` 已 PASS，但實際 `product:ci` 在 HOLD 直接 exit 0、reactivation control-only 也 skip，導致 2 個 lint errors 被錯誤帶過並提前宣告 RESOLVED。這不是新 defect 無限冒出，而是 closure audit 本身不完整。 | 永久規則：任何 blocker 在標記 RESOLVED 前，必須直接執行它聲稱修復的 command / gate，不能用間接 CI 綠燈推論；若 remediation 會影響下一個 implementation，還必須用預期的 next-task diff 做 CI-mode future-diff dry-run，證明 scope / integrity / ownership / lint / test gates 全部可通過。對 shared governance defect，closure 前再做同 class audit，避免只修 symptom。 | 45 min | OPEN / PREMATURE CLOSURE & VERIFICATION FAILURE |
 | SHAME-018 | 2026-10-02 | T002 Preflight 重大治理失守：明知 executable schema 未定義，仍默許 Cursor 自行補 Product truth | BS-P1-004 只定義 ENUM/LIST/RECORD 等 state semantics，沒有 freeze exact JSON keys / machine schema；Preflight 本應立即建立 SPEC_AMBIGUITY blocker，卻反而在 Cursor 指令中允許用「fail-closed 結構」自行採用 `constraints.allowed`、`item_type`、`max_length`、`fields` 等未授權 syntax。這等於由 ChatGPT 把未定 Product/Schema 決策下放給 Cursor，直接違反 `product_decision_allowed=false`、Human 決策權與「shared contract defect 先 comprehensive re-audit」規則。 | 永久規則：只要 executable contract 的 exact machine shape、key、type、enum、binding/type relation 或 serialization 未被 canonical truth 明確定義，Preflight 必須先 HARD STOP + SPEC_AMBIGUITY Finding；不得用「合理預設」「fail-closed」「implementation detail」替 Product truth 補空白。且恢復 Cursor 前必須完成同 class schema ambiguity 全面審核，證明相鄰 contract 無同型缺口。 | 45 min | OPEN / CRITICAL PRODUCT-TRUTH GOVERNANCE FAILURE |
+| SHAME-019 | 2026-10-04 | T004 嚴重審核／時序失職：兩次錯讀「Cursor 再執行前」，且過早宣告 deep audit PASS 與 closure | User 明確授權的是「一路做到下一次 Cursor 再開始執行前才停」，但 ChatGPT 先連續兩次把這個邊界錯讀成可以直接觸發 Cursor，再在 T004 implementation audit 中過早以既有測試與表面 invariant 判定 PASS，導致 PR #188 merge、Evidence normalization、T004 closure 後，重新深審才發現 `admitBlueprint()` 存在 getter/Proxy TOCTOU bypass：先以 genuine sealed pair 通過 provenance，再替換 forged PASSED report + rejected body 進 durable admission。這表示 review depth 與 execution-timing gate 都沒有被可靠遵守。 | 永久規則：① Human 說「到 Cursor 再執行前」＝所有 audit/governance 可連續完成，但**真正發出 execution authority 前必停**；不得自行提前觸發。② Security/admission boundary audit 不得只驗 plain-object happy/negative tests，必須做 hostile object model / accessor / Proxy / TOCTOU / re-entrancy 類 counterexample。③ Task closure 前若核心 invariant 依賴 identity/sealing/caller-owned object，必須檢查「驗證後到 persistence 前」是否仍讀取 mutable/untrusted reference。④ 發現 post-closure blocker 時，立即建立 Finding、撤銷 completion-evidence final binding、重新啟用原 Task，不得把錯誤 closure 當歷史既成事實。 | 45 min | OPEN / CRITICAL AUDIT & EXECUTION-GATE FAILURE |
 
 ---
 
@@ -64,9 +65,10 @@ SHAME-015   45 min
 SHAME-016   45 min
 SHAME-017   45 min
 SHAME-018   45 min
+SHAME-019   45 min
 -----------------
-TOTAL    >1095 min
-         >18.25 hr
+TOTAL    >1140 min
+         >19.0 hr
 ~~~
 
 ---
@@ -174,10 +176,15 @@ TOTAL    >1095 min
    - `product_decision_allowed=false` 時，ChatGPT 與 Cursor 都不得以「合理預設」「fail-closed shape」「implementation detail」補出 Product truth。
    - 恢復 implementation 前，必須對同一 schema/type/Registry path 做 class-level ambiguity audit，確認相鄰語意也已 canonicalized。
 
+19. **Execution-timing boundary + hostile-object audit are hard gates**
+   - Human 指示「批准到 Cursor 再開始執行前」時，ChatGPT 可連續完成 audit / Finding / governance / reactivation，但不得發出任何可觸發 Cursor 的 execution authority；必須在真正 execution comment / command 前停下。
+   - 對 admission / trust / sealing / identity 類邊界，plain-object tests 不足；closure audit 必須主動測 getter / Proxy / TOCTOU / object-identity swap / re-entrancy 等 hostile-object counterexample。
+   - provenance / seal check 後若仍重新讀 caller-owned object，即視為高風險 TOCTOU candidate，未證明 snapshot-stable 前不得 closure。
+
 ---
 
 ## Current Status
 
-> **18 incidents / >1095 minutes lost / >18.25 hr.**
+> **19 incidents / >1140 minutes lost / >19.0 hr.**
 
 本表為 Working Project Management 紀錄，不屬 Formal Spec。
