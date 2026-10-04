@@ -148,6 +148,7 @@ description
 source
 source_ref?
 resolution_state
+resolved_value?
 expected_value_type
 question_type
 required_for_execution
@@ -234,9 +235,16 @@ Rules：
 - NFF_DEFAULT 必須帶 `source_ref.policy_id` + `source_ref.policy_version`；不得只標 NFF_DEFAULT 而遺失 policy provenance。
 - LLM_PROPOSED 永遠只是 proposal。
 - USER_ACCEPTED_PROPOSAL 表示 User 接受 proposal，不偽裝成原本 User 自己提出；若 proposal 原本有 source_ref，接受後保留該 origin provenance。
-- `resolution_state=CONFIRMED` 表示該 semantic truth 已可作為本輪 policy 的已解決輸入；`UNRESOLVED` 表示尚無可用決定；`PROPOSED` 表示已有 default/proposal，但尚未完成必要的 User decision。
-- USER_EXPLICIT / USER_ACCEPTED_PROPOSAL item 必須是 CONFIRMED。LLM_PROPOSED 在 User decision 前必須是 PROPOSED。NFF_DEFAULT 在 User 接受前必須是 PROPOSED；接受後可變 CONFIRMED，但 source/source_ref 保留 NFF_DEFAULT provenance。DOMAIN_KNOWN 只有在不需要 User decision 的 domain fact 時才可直接 CONFIRMED。
+- `resolution_state=CONFIRMED` 表示該 semantic truth 已可作為本輪 policy 的已解決輸入；`UNRESOLVED` 表示尚無可用決定；`PROPOSED` 表示已有具體 default/proposal value，但尚未完成必要的 User decision。
+- `resolved_value` 是 policy-visible item 的 **唯一 canonical confirmed value**。它屬於 StructuredIntentEnvelope / `intent_record.structured_intent` semantic truth；不得另建平行 durable `user_explicit_values`、answer-value sidecar、第二份 JSON truth 或新 DB 欄位來保存同一答案。
+- State/value invariant：
+  - `CONFIRMED` → `resolved_value` 必須存在、shape 必須符合 `expected_value_type` / choice alternatives；`proposed_default` 必須不存在，`can_default=false`。
+  - `UNRESOLVED` → `resolved_value` / `proposed_default` 都必須不存在，且 `can_default=false`。因此 `UNRESOLVED + can_default=true` 是 Envelope invariant failure，不得交 policy engine 再以 F01-ERR-014 補洞。
+  - `PROPOSED` → `resolved_value` 必須不存在、`proposed_default` 必須存在且 type-valid；source 只可為 `NFF_DEFAULT` 或 `LLM_PROPOSED`。`can_default=true` 表示這個 proposal 是安全、可逆、可直接作為 CP-004 default；`can_default=false` 表示 proposal value 可被呈現/詢問但不可默認採用。
+- USER_EXPLICIT / USER_ACCEPTED_PROPOSAL item 必須是 CONFIRMED 並帶 canonical `resolved_value`。LLM_PROPOSED 在 User decision 前必須是 PROPOSED。NFF_DEFAULT 在 User 接受前必須是 PROPOSED；接受後變 CONFIRMED，但 source/source_ref 保留 NFF_DEFAULT provenance，接受值移入 `resolved_value`。DOMAIN_KNOWN 不得是 PROPOSED；已知 domain fact 可為 CONFIRMED，未知則使用 UNRESOLVED 而不是偽裝成 proposal。
 - `can_default=true` 代表存在安全、可逆、可具體使用的 default，且 `proposed_default` 必須存在；只有一個抽象「可以 default」旗標但沒有 value 是 Envelope invariant failure。
+- `resolved_value` / `proposed_default` 必須符合 `expected_value_type`；SINGLE_CHOICE / MULTI_CHOICE 還必須落在 `alternatives[]` 合法集合內。
+- 上述 state/value/source invariant 在 Clarification Policy 前先驗證：不可信 Prompt A 違反時走 F01-ERR-002；server persisted/trusted state 違反時走既有 F01-ERR-014。
 - `materiality` 與 `impact_level` 是不同軸；**不得**用 LOW/MEDIUM/HIGH/CRITICAL 自行推導 MATERIAL/COSMETIC。
 - `COSMETIC` 只表示 presentation/cosmetic preference；必須 `required_for_execution=false` 且 `policy_risk_flags=[]`。
 - 任一 `policy_risk_flags` 命中都代表該 item 是 MATERIAL；不得標成 COSMETIC。Risk item 不得用 assumption Accept 取代 clarification；要解除 CP-003，trusted answer merge 必須得到 USER_EXPLICIT truth。
@@ -463,7 +471,7 @@ Rules：
 
 1. `answered_question_ids[]` 只在 server 接受合法 F01-API-002 answer 後加入 stable question_id。
 2. `changed_semantic_item_ids[]` 由 trusted answer merge / re-evaluation 產生，只代表**本次 evaluation 前實際改變**的 semantic items；Client / LLM 不得直接提供。
-3. policy-visible item 的 description/source/source_ref/resolution_state/expected_value_type/question_type/required_for_execution/impact_level/materiality/policy_risk_flags/depends_on_ids/can_default/proposed_default/alternatives 等 semantic-policy truth，或 KnownInput 的 value/source/source_ref 發生實質改變，都必須把該 stable ID 記入 changed set；純 formatting normalization 不算 semantic change。
+3. policy-visible item 的 description/source/source_ref/resolution_state/resolved_value/expected_value_type/question_type/required_for_execution/impact_level/materiality/policy_risk_flags/depends_on_ids/can_default/proposed_default/alternatives 等 semantic-policy truth，或 KnownInput 的 value/source/source_ref 發生實質改變，都必須把該 stable ID 記入 changed set；純 formatting normalization 不算 semantic change。
 4. 每個 question 的 re-ask basis = `semantic_item_ids[]` 加上這些 target items 的遞迴 `depends_on_ids[]` closure。
 5. 若 question_id 已在 answered set，且本次 `changed_semantic_item_ids[]` 與 re-ask basis **無交集** → 必須 suppress，不得重問。
 6. 只有交集非空時，該已回答 question 才重新變成 eligible；policy 仍須重新跑 CP-003 > CP-001 > CP-002 > CP-003A > CP-004 > CP-005 > CP-006，不能因 upstream change 自動決定一定要問。
@@ -491,11 +499,22 @@ Rules：
 
 - answer 不直接 patch Blueprint。
 - User answer 與 LLM proposal 衝突時，User answer 優先。
+- clarification answer / EDIT 的 canonical transition：target `source=USER_EXPLICIT`、`resolution_state=CONFIRMED`、`resolved_value=validated answer`、`can_default=false`，並移除 `proposed_default`。
+- ACCEPT LLM_PROPOSED：把原 `proposed_default` 移入 `resolved_value`，source 變 `USER_ACCEPTED_PROPOSAL`，resolution_state=CONFIRMED，保留 origin provenance，移除 `proposed_default` 並設 `can_default=false`。
+- ACCEPT NFF_DEFAULT：把原 `proposed_default` 移入 `resolved_value`，source 保持 `NFF_DEFAULT`，resolution_state=CONFIRMED，保留 policy source_ref，移除 `proposed_default` 並設 `can_default=false`。
+- REJECT proposal/default：target 變 `UNRESOLVED`，清除 `resolved_value` / `proposed_default`，`can_default=false`，再重新跑 policy。
+- accepted/edited clarification value 的 durable owner只有 StructuredIntentEnvelope target item 的 `resolved_value`；不得新增平行 `user_explicit_values` persistent state。後續 ResolvedIntent 由這份 canonical structured truth 投影。
+- trusted merge 先計算直接 semantic change IDs，再於 policy re-evaluation 前執行 **dependent stale-proposal invalidation**：
+  1. 對任何 `resolution_state=PROPOSED` 的 policy-visible item，若其 recursive `depends_on_ids[]` closure 與本次 changed set 有交集，該 proposal/default 已 stale；
+  2. stale item deterministic 轉成 `UNRESOLVED`、`can_default=false`，清除 `resolved_value` / `proposed_default`，source/source_ref/id/question-shape provenance保留；
+  3. 被 invalidated 的 item stable ID 加入 `changed_semantic_item_ids[]`；
+  4. 以上步驟以新增 changed IDs 繼續往 downstream 做 fixpoint，直到沒有新的 PROPOSED item 被 invalidated；
+  5. `depends_on_ids[]` 交集本身**不得**自動刪除 CONFIRMED USER_EXPLICIT / USER_ACCEPTED_PROPOSAL truth；若 trusted re-evaluation 真正判定該 User truth 已不再適用，必須先形成新的 semantic truth，再由一般 no-reask 規則決定是否重新提問。
 - trusted merge 必須以 stable semantic item ID 產生本次 `changed_semantic_item_ids[]`；只有落在已回答 question re-ask basis 的 changed fact 才可重新打開該 downstream ambiguity。
 - unrelated fact change 不得重開已回答 question。
 - provenance 必須保留。
 - re-evaluation 記 policy_version + triggered_rule_ids。
-- Client / LLM 不得提交 `answered_question_ids[]`、`changed_semantic_item_ids[]` 或直接標示「可重問」來繞過 server-owned policy state。
+- Client 不得在 F01-API-002 直接提交 `resolved_value`、`answered_question_ids[]`、`changed_semantic_item_ids[]` 或直接標示「可重問」來繞過 trusted merge。Prompt A 可從 User 原始輸入抽取 USER_EXPLICIT / DOMAIN_KNOWN 的候選 `resolved_value`，但仍屬 untrusted analysis，必須通過 F01-DATA-001 invariant validation，不能直接覆寫 server trusted state。
 
 # 10. Visible Assumptions
 
@@ -510,10 +529,10 @@ UNKNOWN
 
 Canonical classification：
 
-- FACT：`resolution_state=CONFIRMED` 的 USER_EXPLICIT / DOMAIN_KNOWN / USER_ACCEPTED_PROPOSAL truth；internal provenance仍保留，不因 User-facing label 而改寫 source。
-- DEFAULT：尚待 User decision 的 NFF_DEFAULT。
-- PROPOSAL：尚待 User decision 的 LLM_PROPOSED。
-- UNKNOWN：`resolution_state=UNRESOLVED` 且沒有可呈現 value 的 item。
+- FACT：`resolution_state=CONFIRMED` 的 USER_EXPLICIT / DOMAIN_KNOWN / USER_ACCEPTED_PROPOSAL truth；呈現值來自 `resolved_value`，internal provenance仍保留，不因 User-facing label 而改寫 source。
+- DEFAULT：尚待 User decision 的 NFF_DEFAULT；呈現值來自 `proposed_default`。
+- PROPOSAL：尚待 User decision 的 LLM_PROPOSED；呈現值來自 `proposed_default`。
+- UNKNOWN：`resolution_state=UNRESOLVED`，且依 invariant 不得帶 `resolved_value` / `proposed_default`。
 
 READY_WITH_VISIBLE_ASSUMPTIONS 必須把 material DEFAULT / PROPOSAL 顯示給 User；MATERIAL UNKNOWN 不得走 assumption review，必須由 NEEDS_CLARIFICATION 解決。
 
@@ -521,10 +540,10 @@ F00 必須能 edit / accept / reject。
 
 Assumption decision：
 
-- Accept LLM_PROPOSED → source=USER_ACCEPTED_PROPOSAL + resolution_state=CONFIRMED，保留 origin provenance。
-- Accept NFF_DEFAULT → resolution_state=CONFIRMED，source仍為 NFF_DEFAULT，保留 policy source_ref，接受事實記入 accepted_assumptions。
-- Edit → source=USER_EXPLICIT + resolution_state=CONFIRMED。
-- Reject → 原 proposal/default 不得進 Resolved Intent；trusted re-evaluation 必須產生新的 UNRESOLVED / PROPOSED truth並重新跑 policy。
+- Accept LLM_PROPOSED → `resolved_value=proposed_default`、source=USER_ACCEPTED_PROPOSAL、resolution_state=CONFIRMED，保留 origin provenance，並清除 proposed_default。
+- Accept NFF_DEFAULT → `resolved_value=proposed_default`、resolution_state=CONFIRMED，source仍為 NFF_DEFAULT，保留 policy source_ref，清除 proposed_default，接受事實記入 accepted_assumptions。
+- Edit → `resolved_value=edited_value`、source=USER_EXPLICIT、resolution_state=CONFIRMED，並清除 proposed_default。
+- Reject → 原 proposal/default 不得進 Resolved Intent；target 轉 UNRESOLVED、清除 resolved/proposed value，再重新跑 policy。
 - 含 policy_risk_flags 的 MATERIAL item不可用 assumption Accept 解決；必須經 clarification answer形成 USER_EXPLICIT truth。
 
 # 11. Resolved Intent
@@ -611,7 +630,7 @@ Hard contract：
 3. Never invent required business values。
 4. Identify material ambiguity。
 5. Propose only safe/reversible defaults。
-6. Mark provenance / resolution_state / impact / materiality / policy_risk_flags / depends_on_ids / deterministic answer shape for every policy-visible item。
+6. Mark provenance / resolution_state / resolved_value-or-proposed_default state / impact / materiality / policy_risk_flags / depends_on_ids / deterministic answer shape for every policy-visible item，並遵守 F01-DATA-001 source/resolution/value invariant。
 7. Output Structured Intent Envelope only。
 8. Do not output Blueprint。
 9. Do not output executable code。
@@ -904,9 +923,11 @@ Rules：
 - intent_version = optimistic concurrency token。
 - stale version → 409 INTENT_VERSION_CONFLICT。
 - answer type 必須 match expected type。
-- answer provenance = USER_EXPLICIT。
-- accepted proposal = USER_ACCEPTED_PROPOSAL。
+- answer provenance = USER_EXPLICIT，accepted answer value 寫入 target policy-visible item 的 canonical `resolved_value`。
+- accepted proposal = USER_ACCEPTED_PROPOSAL；accepted NFF default 保留 NFF_DEFAULT provenance；兩者 accepted concrete value 都由 `resolved_value` 保存。
+- 不建立獨立 durable answer-value sidecar；`intent_record.structured_intent` 是 clarification-in-progress semantic truth 的唯一 durable owner。
 - REJECT proposal 可重新產生 ambiguity。
+- successful answer/assumption mutation 必須先完成 dependent stale-proposal invalidation，再 re-run policy。
 - response 再回 NEEDS_CLARIFICATION / READY_WITH_VISIBLE_ASSUMPTIONS / READY。
 
 # 21. API 3 — Compile to Validated Blueprint
