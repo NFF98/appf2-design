@@ -147,6 +147,9 @@ semantic_role
 description
 source
 source_ref?
+resolution_state
+expected_value_type
+question_type
 required_for_execution
 impact_level
 materiality
@@ -178,6 +181,27 @@ policy_version?
 origin_item_id?
 ~~~
 
+resolution_state：
+
+~~~text
+CONFIRMED
+UNRESOLVED
+PROPOSED
+~~~
+
+expected_value_type：
+
+~~~text
+NUMBER
+STRING
+BOOLEAN
+ENUM
+LIST
+RECORD
+~~~
+
+`question_type` 使用 F01-DATA-003 的固定 enum；它與 `expected_value_type` 一起決定 server 可驗證的 answer shape，不能由 Client 或 LLM 在 question emission 階段臨時發明。
+
 materiality：
 
 ~~~text
@@ -205,16 +229,23 @@ CRITICAL
 
 Rules：
 
+- `constraints[]`、`candidate_rules[]`、`missing_fields[]`、`ambiguities[]`、`assumptions[]` 的每一個 item 都是 policy-visible；Phase 1 不允許同一批陣列中再存在一個「是否參與 policy」的 hidden subset。
 - USER_EXPLICIT 優先於其他來源。
 - NFF_DEFAULT 必須帶 `source_ref.policy_id` + `source_ref.policy_version`；不得只標 NFF_DEFAULT 而遺失 policy provenance。
 - LLM_PROPOSED 永遠只是 proposal。
 - USER_ACCEPTED_PROPOSAL 表示 User 接受 proposal，不偽裝成原本 User 自己提出；若 proposal 原本有 source_ref，接受後保留該 origin provenance。
+- `resolution_state=CONFIRMED` 表示該 semantic truth 已可作為本輪 policy 的已解決輸入；`UNRESOLVED` 表示尚無可用決定；`PROPOSED` 表示已有 default/proposal，但尚未完成必要的 User decision。
+- USER_EXPLICIT / USER_ACCEPTED_PROPOSAL item 必須是 CONFIRMED。LLM_PROPOSED 在 User decision 前必須是 PROPOSED。NFF_DEFAULT 在 User 接受前必須是 PROPOSED；接受後可變 CONFIRMED，但 source/source_ref 保留 NFF_DEFAULT provenance。DOMAIN_KNOWN 只有在不需要 User decision 的 domain fact 時才可直接 CONFIRMED。
+- `can_default=true` 代表存在安全、可逆、可具體使用的 default，且 `proposed_default` 必須存在；只有一個抽象「可以 default」旗標但沒有 value 是 Envelope invariant failure。
 - `materiality` 與 `impact_level` 是不同軸；**不得**用 LOW/MEDIUM/HIGH/CRITICAL 自行推導 MATERIAL/COSMETIC。
 - `COSMETIC` 只表示 presentation/cosmetic preference；必須 `required_for_execution=false` 且 `policy_risk_flags=[]`。
-- 任一 `policy_risk_flags` 命中都代表該 item 是 MATERIAL；不得標成 COSMETIC。
+- 任一 `policy_risk_flags` 命中都代表該 item 是 MATERIAL；不得標成 COSMETIC。Risk item 不得用 assumption Accept 取代 clarification；要解除 CP-003，trusted answer merge 必須得到 USER_EXPLICIT truth。
 - policy-visible item `id` 與 `KnownInput.id` 在同一 Envelope 內都必須唯一且穩定。
+- `ambiguities[]` 的 item 必須有至少 2 個 distinct `alternatives[]`；否則是 Envelope invariant failure，不得交 policy engine 猜「是否真的有兩個 interpretation」。
 - `depends_on_ids[]` 只可引用同一 Envelope 內 policy-visible item `id` 或 `KnownInput.id`；不得 self-reference。整體 dependency graph 必須 acyclic；cycle / unknown ref 是 Envelope invariant failure，不得交 ClarificationPolicyEngine 猜測。
 - `depends_on_ids[]` 表示「此 item 的 semantic/policy truth 依賴哪些 upstream fact/item」，只供 deterministic policy/re-evaluation 使用。
+- 每個可能產生 clarification 的 item 都必須在 Prompt A output 時帶固定 `expected_value_type` + `question_type`。SINGLE_CHOICE / MULTI_CHOICE 必須有至少 2 個 distinct `alternatives[]`；其他 question type 不得靠 runtime 猜 answer schema。
+- Question type / expected value type 固定配對：FREE_TEXT→STRING、NUMBER→NUMBER、BOOLEAN→BOOLEAN、SINGLE_CHOICE→ENUM、MULTI_CHOICE→LIST、STRUCTURED_FIELDS→RECORD；不符合即 Envelope invariant failure。
 - Prompt A 可輸出上述 semantic classification；輸出仍是不可信 semantic analysis，必須先過 F01 shape/invariant validation。ClarificationPolicyEngine 只依通過驗證的 Envelope + trusted policy state 決定 outcome，LLM 不可直接指定 final clarification status。
 
 # 5. Known Input
@@ -266,26 +297,40 @@ Rules：
 Clarification Policy 是 deterministic appf2 code，不是 Prompt。
 
 ## F01-POL-CP-001
-必要執行值缺失且沒有安全明確 default → NEEDS_CLARIFICATION。
+`missing_fields[]` 中 `resolution_state!=CONFIRMED`、`required_for_execution=true`，且沒有安全明確 default → NEEDS_CLARIFICATION。
+
+> Machine rule：safe default 只在 `can_default=true && proposed_default is present` 時成立；否則不得把 required missing 當成「已有 default」。
 
 ## F01-POL-CP-002
-有兩個以上合理 interpretation 且結果差異 HIGH / CRITICAL → NEEDS_CLARIFICATION。
+`ambiguities[]` 中 `resolution_state!=CONFIRMED` 且有兩個以上合理 interpretation，結果差異 HIGH / CRITICAL → NEEDS_CLARIFICATION。
+
+> Machine rule：`alternatives.length >= 2 && impact_level in {HIGH, CRITICAL}`。Envelope invariant 已保證 ambiguity alternatives 可機械判定。
 
 ## F01-POL-CP-003
 任何 policy-visible item 的 `policy_risk_flags[]` 含 MONEY / PERMISSION / EXTERNAL_COST / IRREVERSIBLE，且該 material rule 的 source 不是 USER_EXPLICIT → NEEDS_CLARIFICATION。
 
 > Machine rule：`policy_risk_flags.length > 0 && source !== USER_EXPLICIT` 必須命中 CP-003。Risk flag invariant 已保證此類 item 為 MATERIAL。
 
+## F01-POL-CP-003A
+沒有更高優先 NEEDS_CLARIFICATION rule 命中時，只要 policy-visible item 同時符合：
+- `materiality=MATERIAL`
+- `resolution_state in {UNRESOLVED, PROPOSED}`
+- `can_default=false`
+
+→ NEEDS_CLARIFICATION。
+
+這是 material uncertainty 的 totality fallback；它只補上「material、尚未解決、又沒有安全 default」的既有 Product intent，不允許把該狀態偷塞進 READY 或 READY_WITH_VISIBLE_ASSUMPTIONS。
+
 ## F01-POL-CP-004
-沒有更高優先 rule 命中時，`materiality=MATERIAL` 且有安全可逆 default（`can_default=true`），但 default/proposal 會影響 outcome → READY_WITH_VISIBLE_ASSUMPTIONS。
+沒有更高優先 rule 命中時，`materiality=MATERIAL`、`resolution_state=PROPOSED` 且有安全可逆 default（`can_default=true`），default/proposal 會影響 outcome → READY_WITH_VISIBLE_ASSUMPTIONS。
 
 ## F01-POL-CP-005
-沒有更高優先 rule 命中時，`materiality=COSMETIC`（只影響 cosmetic / presentation）→ READY。
+沒有更高優先 rule 命中時，`materiality=COSMETIC`（只影響 cosmetic / presentation）→ READY；未解決的 cosmetic item 只能進 ResolvedIntent.unresolved_non_material_items，不得升格為 material truth。
 
 > `impact_level` 只用於 consequence/ranking，不是 materiality threshold。
 
 ## F01-POL-CP-006
-資訊完整且無 material ambiguity → READY。
+所有 MATERIAL policy-visible item 都已 `resolution_state=CONFIRMED`，且沒有其他 material ambiguity / blocker → READY。
 
 Precedence：
 
@@ -293,12 +338,18 @@ Precedence：
 CP-003
 > CP-001
 > CP-002
+> CP-003A
 > CP-004
 > CP-005
 > CP-006
 ~~~
 
-任一 NEEDS_CLARIFICATION rule 命中，overall decision 就是 NEEDS_CLARIFICATION。
+Totality rules：
+
+1. 任一未被 suppression 排除的 NEEDS_CLARIFICATION rule 命中，overall decision 就是 NEEDS_CLARIFICATION。
+2. 通過 Envelope invariant 的 policy-visible item 必須能由上列 precedence 得到唯一 outcome；若同一 item 在 precedence 後仍無 outcome，這是 F01-ERR-014 INTERNAL_INVARIANT，不得由 implementation 自行 fallback。
+3. READY_WITH_VISIBLE_ASSUMPTIONS 只可來自 CP-004。
+4. READY 只可在沒有任何未解決 MATERIAL item 時成立。
 
 # 7. Question Ranking
 
@@ -325,12 +376,28 @@ downstream_unknowns_resolved
 already_asked
 ~~~
 
+Canonical derivation：
+
+- `policy_priority`：有 MONEY / PERMISSION / IRREVERSIBLE / safety-sensitive risk → Safety / Money / Permission；required_for_execution → Execution Blocker；CP-002 HIGH/CRITICAL ambiguity → High Outcome Divergence；其他 MATERIAL → Core Business Rule；其他非 cosmetic → Secondary Preference；COSMETIC → Cosmetic。
+- `impact_level`：CRITICAL > HIGH > MEDIUM > LOW。
+- `required_for_execution`：true > false。
+- `downstream_unknowns_resolved`：整數，代表若此 target 被解決，可直接解除的 unresolved descendant 數；由 `depends_on_ids[]` DAG 機械計算，數量高者優先。
+- `already_asked`：false > true；只有 relevant upstream change 重新開啟時，已問過的 question 才能重新進 eligible set。
+
+Phase 1 sort 必須依上列欄位做 lexicographic comparison；完全同分才以 stable semantic item ID ascending 作最後 tie-break。不得另加 model score、array insertion order 或 prompt wording 作排序權重。
+
+Question grouping：
+
+1. Phase 1 一個 ClarificationQuestion 只對應一個 policy-visible target item；`semantic_item_ids[]` 長度固定為 1。
+2. 同一 item 同時命中多個 NEEDS_CLARIFICATION rule 時，只用 precedence 最高的 rule 建立 question；該 rule 成為 `policy_rule_id`。
+3. 完成 suppression 後依 canonical ranking 取前 3 題；沒有被選到的 eligible blockers保留到下一輪，不可視為已回答。
+
 Rules：
 
 - answered question 不重問，除非 upstream fact 改變。
 - 「upstream fact 改變」必須由 trusted merge/re-evaluation 以 stable semantic item ID 機械判斷；不得用「任何 Intent edit 都可重問」的 coarse rule。
 - 同分按 stable semantic item ID 排序。
-- LLM 可協助把問題講人話，但不能決定 blocker priority。
+- LLM 可協助把問題講人話，但不能決定 blocker priority、grouping、type、options 或 identity。
 
 # 8. Clarification Question
 
@@ -360,10 +427,16 @@ MULTI_CHOICE
 STRUCTURED_FIELDS
 ~~~
 
-Question identity：
+Question identity / projection：
 
 - `question_id` 必須對同一 `policy_rule_id + sorted(semantic_item_ids[])` 保持 deterministic stable identity；可用 deterministic encoding/hash，但同一 tuple 不得產生不同 logical question。
-- `semantic_item_ids[]` 是此問題直接要解決的 target items。
+- Phase 1 `semantic_item_ids[]` 固定只含單一 target item ID。
+- `question_type = target.question_type`。
+- `expected_value_type = target.expected_value_type`。
+- SINGLE_CHOICE / MULTI_CHOICE 的 `options[] = target.alternatives[]`；其他 question type 的 options 省略。
+- `required=true`：進入 NEEDS_CLARIFICATION 的 question 都是解除 blocker 所需的 User decision；optional preference 不應進 NEEDS_CLARIFICATION。
+- `rationale_key = policy_rule_id` 的 stable presentation mapping key；User-facing copy可被 F00 humanize，但不可改變 rule identity。
+- `prompt` 可由 `description` 做 deterministic template 或由受控 phrasing layer humanize；prompt wording 不參與 question identity、ranking 或 answer schema。
 
 UI 由 F00 決定。
 
@@ -393,9 +466,11 @@ Rules：
 3. policy-visible item 的 description/proposed_default/alternatives/source/source_ref/materiality/policy_risk_flags/depends_on_ids 等 semantic-policy truth，或 KnownInput 的 value/source/source_ref 發生實質改變，都必須把該 stable ID 記入 changed set；純 formatting normalization 不算 semantic change。
 4. 每個 question 的 re-ask basis = `semantic_item_ids[]` 加上這些 target items 的遞迴 `depends_on_ids[]` closure。
 5. 若 question_id 已在 answered set，且本次 `changed_semantic_item_ids[]` 與 re-ask basis **無交集** → 必須 suppress，不得重問。
-6. 只有交集非空時，該已回答 question 才重新變成 eligible；policy 仍須重新跑 CP-003 > CP-001 > CP-002 > CP-004 > CP-005 > CP-006，不能因 upstream change 自動決定一定要問。
+6. 只有交集非空時，該已回答 question 才重新變成 eligible；policy 仍須重新跑 CP-003 > CP-001 > CP-002 > CP-003A > CP-004 > CP-005 > CP-006，不能因 upstream change 自動決定一定要問。
 7. `changed_semantic_item_ids[]` 是單次 evaluation input；本次 policy evaluation 完成後不得持續當作下一輪新 change。未發生新的 relevant change 時，同一已回答 question 必須再次被 suppress。
 8. unrelated item edit 不得 reopen 已回答 question。
+9. accepted answer 的 trusted merge 必須先更新 target semantic truth，再把 question_id 加入 answered set。若同一未變更 target 在 merge 後仍命中同一 NEEDS_CLARIFICATION rule，表示 answer merge 沒有真正解除 blocker，必須 F01-ERR-014 INTERNAL_INVARIANT；不得回傳 NEEDS_CLARIFICATION + 空 questions[]。
+10. 完成 suppression 後，只要 overall decision=NEEDS_CLARIFICATION，就必須至少有 1 個且最多 3 個 eligible questions。若存在 unsuppressed NC blocker卻無法投影合法 question，或所有 NC question 被 suppression 但 blocker semantic truth仍未解除，皆是 F01-ERR-014，不得讓 Client 卡在 zero-question clarification state。
 
 # 9. Answer Merge / Re-evaluation
 
@@ -433,11 +508,24 @@ PROPOSAL
 UNKNOWN
 ~~~
 
-READY_WITH_VISIBLE_ASSUMPTIONS 必須把 material DEFAULT / PROPOSAL 顯示給 User。
+Canonical classification：
+
+- FACT：`resolution_state=CONFIRMED` 的 USER_EXPLICIT / DOMAIN_KNOWN / USER_ACCEPTED_PROPOSAL truth；internal provenance仍保留，不因 User-facing label 而改寫 source。
+- DEFAULT：尚待 User decision 的 NFF_DEFAULT。
+- PROPOSAL：尚待 User decision 的 LLM_PROPOSED。
+- UNKNOWN：`resolution_state=UNRESOLVED` 且沒有可呈現 value 的 item。
+
+READY_WITH_VISIBLE_ASSUMPTIONS 必須把 material DEFAULT / PROPOSAL 顯示給 User；MATERIAL UNKNOWN 不得走 assumption review，必須由 NEEDS_CLARIFICATION 解決。
 
 F00 必須能 edit / accept / reject。
 
-accepted proposal 轉成 USER_ACCEPTED_PROPOSAL 後才能進 Resolved Intent。
+Assumption decision：
+
+- Accept LLM_PROPOSED → source=USER_ACCEPTED_PROPOSAL + resolution_state=CONFIRMED，保留 origin provenance。
+- Accept NFF_DEFAULT → resolution_state=CONFIRMED，source仍為 NFF_DEFAULT，保留 policy source_ref，接受事實記入 accepted_assumptions。
+- Edit → source=USER_EXPLICIT + resolution_state=CONFIRMED。
+- Reject → 原 proposal/default 不得進 Resolved Intent；trusted re-evaluation 必須產生新的 UNRESOLVED / PROPOSED truth並重新跑 policy。
+- 含 policy_risk_flags 的 MATERIAL item不可用 assumption Accept 解決；必須經 clarification answer形成 USER_EXPLICIT truth。
 
 # 11. Resolved Intent
 
