@@ -1016,6 +1016,27 @@
       "deprecated": false
     },
     {
+      "event_type": "F02-EVT-014",
+      "event_name": "trust_incompatible",
+      "function_id": "F02",
+      "schema_version": "2.0.0",
+      "collection_class": "RELIABILITY",
+      "required_context": [
+        "function_id"
+      ],
+      "allowed_properties": [
+        "content_hash",
+        "blueprint_schema_version",
+        "registry_version",
+        "validation_stage"
+      ],
+      "retention_class": "RAW_90D",
+      "metric_tags": [
+        "f02"
+      ],
+      "deprecated": false
+    },
+    {
       "event_type": "F03-EVT-001",
       "event_name": "runtime_hydration_started",
       "function_id": "F03",
