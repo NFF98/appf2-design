@@ -304,7 +304,7 @@ Clarification Policy 是 deterministic appf2 code，不是 Prompt。
 ## F01-POL-CP-002
 `ambiguities[]` 中 `resolution_state!=CONFIRMED` 且有兩個以上合理 interpretation，結果差異 HIGH / CRITICAL → NEEDS_CLARIFICATION。
 
-> Machine rule：`alternatives.length >= 2 && impact_level in {HIGH, CRITICAL}`。Envelope invariant 已保證 ambiguity alternatives 可機械判定。
+> Machine rule：`materiality=MATERIAL && alternatives.length >= 2 && impact_level in {HIGH, CRITICAL}`。Envelope invariant 已保證 ambiguity alternatives 可機械判定；COSMETIC ambiguity 不得因 impact_level 單獨升格成 clarification blocker。
 
 ## F01-POL-CP-003
 任何 policy-visible item 的 `policy_risk_flags[]` 含 MONEY / PERMISSION / EXTERNAL_COST / IRREVERSIBLE，且該 material rule 的 source 不是 USER_EXPLICIT → NEEDS_CLARIFICATION。
@@ -378,7 +378,7 @@ already_asked
 
 Canonical derivation：
 
-- `policy_priority`：有 MONEY / PERMISSION / IRREVERSIBLE / safety-sensitive risk → Safety / Money / Permission；required_for_execution → Execution Blocker；CP-002 HIGH/CRITICAL ambiguity → High Outcome Divergence；其他 MATERIAL → Core Business Rule；其他非 cosmetic → Secondary Preference；COSMETIC → Cosmetic。
+- `policy_priority`：PERMISSION / IRREVERSIBLE → Safety / Permission；MONEY / EXTERNAL_COST → Money；required_for_execution → Execution Blocker；CP-002 HIGH/CRITICAL material ambiguity → High Outcome Divergence；其他 MATERIAL → Core Business Rule；其他非 cosmetic → Secondary Preference；COSMETIC → Cosmetic。
 - `impact_level`：CRITICAL > HIGH > MEDIUM > LOW。
 - `required_for_execution`：true > false。
 - `downstream_unknowns_resolved`：整數，代表若此 target 被解決，可直接解除的 unresolved descendant 數；由 `depends_on_ids[]` DAG 機械計算，數量高者優先。
@@ -463,7 +463,7 @@ Rules：
 
 1. `answered_question_ids[]` 只在 server 接受合法 F01-API-002 answer 後加入 stable question_id。
 2. `changed_semantic_item_ids[]` 由 trusted answer merge / re-evaluation 產生，只代表**本次 evaluation 前實際改變**的 semantic items；Client / LLM 不得直接提供。
-3. policy-visible item 的 description/proposed_default/alternatives/source/source_ref/materiality/policy_risk_flags/depends_on_ids 等 semantic-policy truth，或 KnownInput 的 value/source/source_ref 發生實質改變，都必須把該 stable ID 記入 changed set；純 formatting normalization 不算 semantic change。
+3. policy-visible item 的 description/source/source_ref/resolution_state/expected_value_type/question_type/required_for_execution/impact_level/materiality/policy_risk_flags/depends_on_ids/can_default/proposed_default/alternatives 等 semantic-policy truth，或 KnownInput 的 value/source/source_ref 發生實質改變，都必須把該 stable ID 記入 changed set；純 formatting normalization 不算 semantic change。
 4. 每個 question 的 re-ask basis = `semantic_item_ids[]` 加上這些 target items 的遞迴 `depends_on_ids[]` closure。
 5. 若 question_id 已在 answered set，且本次 `changed_semantic_item_ids[]` 與 re-ask basis **無交集** → 必須 suppress，不得重問。
 6. 只有交集非空時，該已回答 question 才重新變成 eligible；policy 仍須重新跑 CP-003 > CP-001 > CP-002 > CP-003A > CP-004 > CP-005 > CP-006，不能因 upstream change 自動決定一定要問。
@@ -611,7 +611,7 @@ Hard contract：
 3. Never invent required business values。
 4. Identify material ambiguity。
 5. Propose only safe/reversible defaults。
-6. Mark provenance / impact。
+6. Mark provenance / resolution_state / impact / materiality / policy_risk_flags / depends_on_ids / deterministic answer shape for every policy-visible item。
 7. Output Structured Intent Envelope only。
 8. Do not output Blueprint。
 9. Do not output executable code。
