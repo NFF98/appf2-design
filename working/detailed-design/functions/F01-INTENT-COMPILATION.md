@@ -137,15 +137,21 @@ StructuredIntentEnvelope
 └─ analysis_metadata
 ~~~
 
-missing / ambiguity / assumption 共用欄位：
+Policy-visible semantic item contract：
+
+`constraints[]`、`candidate_rules[]`、`missing_fields[]`、`ambiguities[]`、`assumptions[]` 中凡會參與 Clarification Policy 的 item，都使用以下 bounded machine-readable fields。這些欄位只把既有 Product policy 變成可機械判斷的輸入，不新增新的 clarification outcome。
 
 ~~~text
 id
 semantic_role
 description
 source
+source_ref?
 required_for_execution
 impact_level
+materiality
+policy_risk_flags[]
+depends_on_ids[]
 confidence
 can_default
 proposed_default?
@@ -164,6 +170,30 @@ LLM_PROPOSED
 USER_ACCEPTED_PROPOSAL
 ~~~
 
+source_ref（需要時）：
+
+~~~text
+policy_id?
+policy_version?
+origin_item_id?
+~~~
+
+materiality：
+
+~~~text
+MATERIAL
+COSMETIC
+~~~
+
+policy_risk_flags：
+
+~~~text
+MONEY
+PERMISSION
+EXTERNAL_COST
+IRREVERSIBLE
+~~~
+
 impact_level：
 
 ~~~text
@@ -176,9 +206,16 @@ CRITICAL
 Rules：
 
 - USER_EXPLICIT 優先於其他來源。
-- NFF_DEFAULT 必須帶 policy ID/version。
+- NFF_DEFAULT 必須帶 `source_ref.policy_id` + `source_ref.policy_version`；不得只標 NFF_DEFAULT 而遺失 policy provenance。
 - LLM_PROPOSED 永遠只是 proposal。
-- USER_ACCEPTED_PROPOSAL 表示 User 接受 proposal，不偽裝成原本 User 自己提出。
+- USER_ACCEPTED_PROPOSAL 表示 User 接受 proposal，不偽裝成原本 User 自己提出；若 proposal 原本有 source_ref，接受後保留該 origin provenance。
+- `materiality` 與 `impact_level` 是不同軸；**不得**用 LOW/MEDIUM/HIGH/CRITICAL 自行推導 MATERIAL/COSMETIC。
+- `COSMETIC` 只表示 presentation/cosmetic preference；必須 `required_for_execution=false` 且 `policy_risk_flags=[]`。
+- 任一 `policy_risk_flags` 命中都代表該 item 是 MATERIAL；不得標成 COSMETIC。
+- policy-visible item `id` 與 `KnownInput.id` 在同一 Envelope 內都必須唯一且穩定。
+- `depends_on_ids[]` 只可引用同一 Envelope 內 policy-visible item `id` 或 `KnownInput.id`；不得 self-reference。整體 dependency graph 必須 acyclic；cycle / unknown ref 是 Envelope invariant failure，不得交 ClarificationPolicyEngine 猜測。
+- `depends_on_ids[]` 表示「此 item 的 semantic/policy truth 依賴哪些 upstream fact/item」，只供 deterministic policy/re-evaluation 使用。
+- Prompt A 可輸出上述 semantic classification；輸出仍是不可信 semantic analysis，必須先過 F01 shape/invariant validation。ClarificationPolicyEngine 只依通過驗證的 Envelope + trusted policy state 決定 outcome，LLM 不可直接指定 final clarification status。
 
 # 5. Known Input
 
@@ -186,6 +223,7 @@ Rules：
 
 ~~~text
 KnownInput
+├─ id
 ├─ key
 ├─ value
 ├─ value_type
@@ -216,10 +254,12 @@ DO_NOT_PERSIST
 
 Rules：
 
+- `id` 是同一 logical Intent 內的 stable semantic fact ID；同一 fact 在 re-analysis / answer merge 前後保持 identity，不得因 wording normalization 任意換 ID。
 - User explicit value 不被 LLM 任意改 business meaning。
 - formatting normalization 可以；semantic conversion 要明確。
 - DO_NOT_PERSIST 只存在 request-scoped context。
 - sensitive values 不進 telemetry。
+- 需要作為 no-reask upstream dependency 的 User/domain fact 必須有 stable `KnownInput.id`；沒有 stable ID 的欄位不得單獨作為「upstream changed」理由來重問。
 
 # 6. Clarification Policy
 
@@ -232,13 +272,17 @@ Clarification Policy 是 deterministic appf2 code，不是 Prompt。
 有兩個以上合理 interpretation 且結果差異 HIGH / CRITICAL → NEEDS_CLARIFICATION。
 
 ## F01-POL-CP-003
-涉及 money / permission / external cost / irreversible action，material rule 不是 USER_EXPLICIT → NEEDS_CLARIFICATION。
+任何 policy-visible item 的 `policy_risk_flags[]` 含 MONEY / PERMISSION / EXTERNAL_COST / IRREVERSIBLE，且該 material rule 的 source 不是 USER_EXPLICIT → NEEDS_CLARIFICATION。
+
+> Machine rule：`policy_risk_flags.length > 0 && source !== USER_EXPLICIT` 必須命中 CP-003。Risk flag invariant 已保證此類 item 為 MATERIAL。
 
 ## F01-POL-CP-004
-有安全可逆 default，但會影響 material outcome → READY_WITH_VISIBLE_ASSUMPTIONS。
+沒有更高優先 rule 命中時，`materiality=MATERIAL` 且有安全可逆 default（`can_default=true`），但 default/proposal 會影響 outcome → READY_WITH_VISIBLE_ASSUMPTIONS。
 
 ## F01-POL-CP-005
-只影響 cosmetic / presentation → READY。
+沒有更高優先 rule 命中時，`materiality=COSMETIC`（只影響 cosmetic / presentation）→ READY。
+
+> `impact_level` 只用於 consequence/ranking，不是 materiality threshold。
 
 ## F01-POL-CP-006
 資訊完整且無 material ambiguity → READY。
@@ -284,6 +328,7 @@ already_asked
 Rules：
 
 - answered question 不重問，除非 upstream fact 改變。
+- 「upstream fact 改變」必須由 trusted merge/re-evaluation 以 stable semantic item ID 機械判斷；不得用「任何 Intent edit 都可重問」的 coarse rule。
 - 同分按 stable semantic item ID 排序。
 - LLM 可協助把問題講人話，但不能決定 blocker priority。
 
@@ -315,7 +360,42 @@ MULTI_CHOICE
 STRUCTURED_FIELDS
 ~~~
 
+Question identity：
+
+- `question_id` 必須對同一 `policy_rule_id + sorted(semantic_item_ids[])` 保持 deterministic stable identity；可用 deterministic encoding/hash，但同一 tuple 不得產生不同 logical question。
+- `semantic_item_ids[]` 是此問題直接要解決的 target items。
+
 UI 由 F00 決定。
+
+## F01-DATA-003A — Clarification Policy State（server-owned）
+
+這是 appf2-owned policy engine state，不是 Prompt A / Client 可寫欄位。
+
+Canonical location：
+
+~~~text
+StructuredIntentEnvelope.analysis_metadata.clarification_policy_state
+~~~
+
+因此 F01-AC-006 的「same Envelope + policy version」包含同一份 server-owned clarification state；不同 answered/change state 本身就是不同 Envelope truth，不構成 determinism 例外。
+
+~~~text
+ClarificationPolicyState
+├─ policy_version
+├─ answered_question_ids[]
+└─ changed_semantic_item_ids[]
+~~~
+
+Rules：
+
+1. `answered_question_ids[]` 只在 server 接受合法 F01-API-002 answer 後加入 stable question_id。
+2. `changed_semantic_item_ids[]` 由 trusted answer merge / re-evaluation 產生，只代表**本次 evaluation 前實際改變**的 semantic items；Client / LLM 不得直接提供。
+3. policy-visible item 的 description/proposed_default/alternatives/source/source_ref/materiality/policy_risk_flags/depends_on_ids 等 semantic-policy truth，或 KnownInput 的 value/source/source_ref 發生實質改變，都必須把該 stable ID 記入 changed set；純 formatting normalization 不算 semantic change。
+4. 每個 question 的 re-ask basis = `semantic_item_ids[]` 加上這些 target items 的遞迴 `depends_on_ids[]` closure。
+5. 若 question_id 已在 answered set，且本次 `changed_semantic_item_ids[]` 與 re-ask basis **無交集** → 必須 suppress，不得重問。
+6. 只有交集非空時，該已回答 question 才重新變成 eligible；policy 仍須重新跑 CP-003 > CP-001 > CP-002 > CP-004 > CP-005 > CP-006，不能因 upstream change 自動決定一定要問。
+7. `changed_semantic_item_ids[]` 是單次 evaluation input；本次 policy evaluation 完成後不得持續當作下一輪新 change。未發生新的 relevant change 時，同一已回答 question 必須再次被 suppress。
+8. unrelated item edit 不得 reopen 已回答 question。
 
 # 9. Answer Merge / Re-evaluation
 
@@ -336,9 +416,11 @@ Rules：
 
 - answer 不直接 patch Blueprint。
 - User answer 與 LLM proposal 衝突時，User answer 優先。
-- changed fact 可重新打開 downstream ambiguity。
+- trusted merge 必須以 stable semantic item ID 產生本次 `changed_semantic_item_ids[]`；只有落在已回答 question re-ask basis 的 changed fact 才可重新打開該 downstream ambiguity。
+- unrelated fact change 不得重開已回答 question。
 - provenance 必須保留。
 - re-evaluation 記 policy_version + triggered_rule_ids。
+- Client / LLM 不得提交 `answered_question_ids[]`、`changed_semantic_item_ids[]` 或直接標示「可重問」來繞過 server-owned policy state。
 
 # 10. Visible Assumptions
 
