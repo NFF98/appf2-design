@@ -212,7 +212,9 @@ Rules：
 - `materiality` 與 `impact_level` 是不同軸；**不得**用 LOW/MEDIUM/HIGH/CRITICAL 自行推導 MATERIAL/COSMETIC。
 - `COSMETIC` 只表示 presentation/cosmetic preference；必須 `required_for_execution=false` 且 `policy_risk_flags=[]`。
 - 任一 `policy_risk_flags` 命中都代表該 item 是 MATERIAL；不得標成 COSMETIC。
-- `depends_on_ids[]` 只可引用同一 Envelope 內 policy-visible item `id` 或 `KnownInput.id`；不得 self-reference。它表示「此 item 的 semantic/policy truth 依賴哪些 upstream fact/item」，只供 deterministic policy/re-evaluation 使用。
+- policy-visible item `id` 與 `KnownInput.id` 在同一 Envelope 內都必須唯一且穩定。
+- `depends_on_ids[]` 只可引用同一 Envelope 內 policy-visible item `id` 或 `KnownInput.id`；不得 self-reference。整體 dependency graph 必須 acyclic；cycle / unknown ref 是 Envelope invariant failure，不得交 ClarificationPolicyEngine 猜測。
+- `depends_on_ids[]` 表示「此 item 的 semantic/policy truth 依賴哪些 upstream fact/item」，只供 deterministic policy/re-evaluation 使用。
 - Prompt A 可輸出上述 semantic classification；輸出仍是不可信 semantic analysis，必須先過 F01 shape/invariant validation。ClarificationPolicyEngine 只依通過驗證的 Envelope + trusted policy state 決定 outcome，LLM 不可直接指定 final clarification status。
 
 # 5. Known Input
