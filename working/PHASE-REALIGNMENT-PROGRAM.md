@@ -229,3 +229,4 @@ A0 exit：blocking Findings resolved → cross-contract re-audit PASS → projec
 | 2026-10-01 | PFR-02 | Human 批准 BS-P1-004 / SP-P1-002 Activation；Build PR #115 全 gates PASS 後 merge。CURRENT=BS-P1-004、implementation_enabled=true、SP2 ACTIVE、T001 IN_PROGRESS、38 unfinished backlog rebind，BL-P1-032/F07-AC-008 revalidation IN_PROGRESS | CURRENT / T001 EXECUTION |
 
 | 2026-10-04 | PFR-02 / Naming | T001–T003 已 CLOSED、SP2 HOLD before T004；全面清理 stale future BS/SP reservations，Product Proof future stages改用 stable stage names，numeric ID改為 Freeze/Sprint creation 時才分配 | NAMING NORMALIZED / NO PRODUCT SEMANTIC CHANGE |
+| 2026-10-05 | PFR-12 / Phase 4 Hardening Carry-forward | Human 指示把 SP-P1-002 T004–T006 implementation re-audit 的全部 non-blocking improvement points正式規劃進 Phase 4；新增 P4-HARD-001..011，並同步 F01/F02/F07 owner spec。Phase 1 T004–T006 closure不重開。 | PHASE 4 MANDATORY / PLANNED |
