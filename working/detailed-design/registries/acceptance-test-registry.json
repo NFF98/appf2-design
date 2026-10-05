@@ -2074,9 +2074,9 @@
     {
       "acceptance_id": "F07-AC-027",
       "function_id": "F07",
-      "criterion": "bounded non-identifying evidence_daily_aggregate 可在 raw deletion後保留，且不含 event/user/session/intent/share/trace identity。",
+      "criterion": "bounded non-identifying evidence_daily_aggregate 可在 source deletion 後保留 event_count 與七個 F07 Evidence-quality metric 的 canonical count/rate truth，且不含 event/user/session/intent/share/trace identity 或 raw content。",
       "test_id": "TEST-F07-AC-027",
-      "expected_observable": "eligible raw rows完成 aggregate materialization並刪除後，evidence_daily_aggregate 仍保留對應 bounded count/rate；schema 不含 event_id / anonymous_id / session_id / intent_id / share_id / trace_id 或 raw content。",
+      "expected_observable": "product_event / evidence_intake_observation / evidence_client_quality_report 各自先完成其 owned metric aggregate materialization + watermark verification 再刪除；evidence_daily_aggregate 保留 event_count、clock_invalid_rate、event_batch_accept_rate、event_rejection_rate、duplicate_retry_rate、unknown_event_type_count、local_queue_drop_count、offline_expired_event_count 的 applicable bounded truth，schema 不含 event_id / anonymous_id / session_id / intent_id / share_id / trace_id 或 raw content。",
       "contract_status": "ACTIVE",
       "proof_scope": "BEHAVIOR",
       "required_for_build_freeze": true
@@ -2084,9 +2084,9 @@
     {
       "acceptance_id": "F07-AC-028",
       "function_id": "F07",
-      "criterion": "evidence rejection/drop/queue expiry本身可觀測。",
+      "criterion": "evidence batch/event rejection、local queue drop、offline queue expiry本身必須經 appf2-owned production Evidence-quality path 成為可持久化與可 aggregate 的 observable；optional callback-only proof 不足。",
       "test_id": "TEST-F07-AC-028",
-      "expected_observable": "evidence rejection/drop/queue expiry本身可觀測。",
+      "expected_observable": "route-level pre-service rejection 形成 evidence_intake_observation；event-level rejected/duplicate/unknown counts 形成 bounded intake observation；browser queue drop/expiry 形成 retry-idempotent quality_report 並以 report_id server dedupe；上述 source 可 materialize 對應 evidence_daily_aggregate rows，且 production path 不以 optional/null observer 為 default。",
       "contract_status": "ACTIVE",
       "proof_scope": "RUNTIME_EVIDENCE",
       "required_for_build_freeze": true
@@ -2094,9 +2094,9 @@
     {
       "acceptance_id": "F07-AC-029",
       "function_id": "F07",
-      "criterion": "DEBUG_ONLY不默認 durable到 production product_event。",
+      "criterion": "DEBUG_ONLY 不默認 durable 到 production product_event，且 client/server 都 fail closed。",
       "test_id": "TEST-F07-029",
-      "expected_observable": "DEBUG_ONLY不默認 durable到 production product_event。",
+      "expected_observable": "production client collector 不 admission DEBUG_ONLY；server 收到 registry-classified DEBUG_ONLY 時以 F07-ERR-016 DEBUG_ONLY_PRODUCTION_REJECTED non-retryable reject，rejected 增加且不得 ensure identity / insert product_event；canonical locked registry 即使目前沒有 DEBUG_ONLY entry，也必須有 server policy test fixture 證明此 defense-in-depth path。",
       "contract_status": "ACTIVE",
       "proof_scope": "RUNTIME_EVIDENCE",
       "required_for_build_freeze": true

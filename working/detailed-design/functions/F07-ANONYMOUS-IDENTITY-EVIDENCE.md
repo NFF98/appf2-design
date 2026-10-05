@@ -734,6 +734,33 @@ Partial acceptance允許。
 - duplicate retry增加 `duplicates`；不得用 retry request的新 server time重新 clock-classify，也不產生新的 clock diagnostic。
 - diagnostic item Phase 1 canonical shape = `event_id + code + field + action`；BF-011 的 action 固定為 `USE_RECEIVED_AT`。
 
+### Phase 1 Evidence-quality report extension
+
+`/api/v1/events/batch` 可額外帶一個 optional、non-identifying、bounded `quality_report`：
+
+~~~json
+{
+  "batch_id": "uuid",
+  "events": [],
+  "quality_report": {
+    "report_id": "uuid",
+    "local_queue_drop_count": 3,
+    "offline_expired_event_count": 1
+  }
+}
+~~~
+
+Canonical rules：
+
+1. `quality_report` 不是 Product Event，不進 Evidence Registry，也不建立 F07-EVT-*；避免用 Evidence event 監控 Evidence pipeline 自己而形成 recursion。
+2. `report_id` 是 quality-report idempotency identity，不是 User / session / event identity。
+3. 兩個 count 都必須是 non-negative safe integer，至少一個 > 0；不得夾帶 anonymous_id / session_id / event_id / intent_id / share_id / trace_id / free-form content / raw properties。
+4. Browser 只回報自上次 confirmed HTTP 2xx acknowledge 後累積的 queue-quality delta；同一 sealed report 的 retry 永遠重用同一 `report_id` 與相同 counts。
+5. `sendBeacon()` 只代表 browser 接受 handoff，不代表 server confirmed；因此 pagehide beacon 不得清除 pending quality report。後續 foreground / normal flush 可重送同一 `report_id`，server 必須 idempotent dedupe。
+6. Server 對 duplicate `report_id` 必須 `first durable receipt wins / ON CONFLICT DO NOTHING`，不得 double count，也不得改寫 first durable `received_at`。
+7. 允許 `events=[]` 的 quality-only batch；但若 events 為空且沒有有效 quality_report，視為 `F07-ERR-003 EVENT_SCHEMA_INVALID`。
+8. batch request 256 KB hard bound 必須包含 quality_report bytes；quality report 不得繞過既有 request bound。
+
 # 24. Event Intake Validation
 
 ## F07-RQ-009
@@ -752,7 +779,7 @@ Server validate：
 10. envelope-aware cross-field constraints（例如 envelope error_code 觸發 property requirement）
 11. forbidden user-content fields
 12. occurred_at parseability + clock sanity；parse failure拒絕，future skew >10m依 F07-RQ-008 accepted + diagnostic，不得混成 rejection
-13. collection class production policy
+13. collection class production policy：production intake 若 registry entry 為 `DEBUG_ONLY`，該 event 必須 fail closed 以 `F07-ERR-016 DEBUG_ONLY_PRODUCTION_REJECTED` 作為 non-retryable event rejection；不得 silent durable、不得轉成其他 collection class、不得先 ensure identity / insert product_event
 14. anonymous identity ensure when present
 
 Invalid event不使整 batch rollback。
@@ -839,6 +866,12 @@ Local unsent queue：
 ~~~
 
 Operational debug logs若含 raw provider/request payload，Phase 1 maximum retention = 7 days，且 access-controlled。
+
+Evidence-quality operational sources：
+
+- `evidence_intake_observation`：90 days from first durable `received_at`；在刪除前 materialize / verify 對應 quality aggregate watermark。
+- `evidence_client_quality_report`：90 days from first durable `received_at`；duplicate `report_id` 不延長 retention；在刪除前 materialize / verify queue-quality aggregate watermark。
+- 這兩個 source 都只能保存 bounded operational counts/status，不得保存 User/session/event identity 或 raw event content。
 
 # 28.1 Shared User-Content Retention Matrix
 
@@ -1134,19 +1167,29 @@ F04 gap evidence要能回答：
 
 # 42. Evidence Quality Metrics
 
-F07本身也要量測：
+F07本身也要量測，而且 Phase 1 的每個 quality metric 必須有唯一 source、bucket、numerator / denominator 與 idempotence semantics；不得只留 metric name 給 implementation 猜。
 
-~~~text
-event_batch_accept_rate
-event_rejection_rate
-duplicate_retry_rate
-local_queue_drop_count
-offline_expired_event_count
-unknown_event_type_count
-clock_invalid_rate
-~~~
+| metric_key | canonical source | bucket_date | numerator_count | denominator_count |
+|---|---|---|---:|---:|
+| event_batch_accept_rate | evidence_intake_observation | source received_at UTC day | batch_accepted=true 的 request attempts | 所有 /api/v1/events/batch request attempts |
+| event_rejection_rate | evidence_intake_observation | source received_at UTC day | rejected_count sum | event_received_count sum |
+| duplicate_retry_rate | evidence_intake_observation | source received_at UTC day | duplicate_count sum | event_received_count sum |
+| unknown_event_type_count | evidence_intake_observation | source received_at UTC day | unknown_event_type_count sum | NULL |
+| local_queue_drop_count | evidence_client_quality_report | first durable report received_at UTC day | local_queue_drop_count sum | NULL |
+| offline_expired_event_count | evidence_client_quality_report | first durable report received_at UTC day | offline_expired_event_count sum | NULL |
+| clock_invalid_rate | product_event | F07 effective_event_at UTC day | clock-invalid accepted durable rows | accepted durable rows in same aggregate logical key |
 
-Evidence pipeline壞掉時，不能把「沒有 event」誤讀成「User沒做」。
+Additional canonical rules：
+
+1. `event_count` 仍由 product_event derive；它與上述七個 quality metrics 共同構成 DATA-MODEL §6.11 Phase 1 minimum aggregate support。
+2. pre-service malformed / oversized / batch-too-large request 只影響 `event_batch_accept_rate`；因沒有 canonical event candidates，不得假造 event_rejection_rate denominator。
+3. `event_rejection_rate` / `duplicate_retry_rate` 的 denominator = `event_received_count = accepted + duplicates + rejected`；denominator 0 時不得產生 percentage。
+4. `F07-ERR-004` event-level rejection同時增加 `rejected_count` 與 `unknown_event_type_count`。
+5. `F07-ERR-016 DEBUG_ONLY_PRODUCTION_REJECTED` 增加 `rejected_count`，但不增加 `unknown_event_type_count`。
+6. operational quality aggregate 的 optional dimensions `function_id / event_type / collection_class` Phase 1 一律 NULL；不得從 malformed / rejected input 猜 dimension。
+7. Browser queue drop / expiry 只透過 bounded quality_report 上送；不得建立 recursive Product Event。
+8. 每個 source table 的 raw/source row 只能在它所擁有的 metric aggregate watermark 覆蓋 deletion cutoff 後刪除；一個 source class 的 failure 不得假造另一 source class 的 coverage。
+9. Evidence pipeline壞掉時，不能把「沒有 event」誤讀成「User沒做」。
 
 # 43. Frontend Behavior
 
@@ -1171,6 +1214,7 @@ EvidenceCollector
 EvidenceRegistry
 EvidenceIngestionService
 EvidenceRepository
+EvidenceQualityRecorder
 EvidenceMetricQuery
 ~~~
 
@@ -1180,14 +1224,20 @@ Flow：
 Browser emit
 → local validation
 → queue
-→ batch
+→ bounded quality counter accumulation
+→ batch + optional quality_report
 → Edge/API intake
+→ EvidenceQualityRecorder records the request attempt before any pre-service return
 → server validation
+→ collection-class production policy
 → identity ensure
 → event_id dedupe
 → semantic dedupe where required
 → product_event insert
-→ metric query / evidence review
+→ EvidenceQualityRecorder records event-level intake result / dedupes quality_report
+→ metric materialization / evidence review
+
+Production rule：`EvidenceQualityRecorder` 是 appf2-owned mandatory production dependency；production batch handler 不得以 optional/null observer 作為 canonical wiring。Test-only no-op 可存在，但不得成為 production default。
 ~~~
 
 Phase 1不需要 event streaming platform。
@@ -1245,6 +1295,7 @@ max accepted events / anonymous_id = 500 per 10 minutes
 | F07-ERR-013 | EVENT_CLOCK_INVALID | NO | accepted ingestion diagnostic；preserve occurred_at + received_at；aggregate uses received_at |
 | F07-ERR-014 | EVIDENCE_REGISTRY_MISMATCH | NO | deployment issue |
 | F07-ERR-015 | INTERNAL_INVARIANT | NO | diagnostics |
+| F07-ERR-016 | DEBUG_ONLY_PRODUCTION_REJECTED | NO | instrumentation bug；drop event / never durable |
 
 這些錯誤預設不打擾 Consumer UI。
 
@@ -1304,9 +1355,9 @@ Metrics：
 Retention / Quality：
 
 - F07-AC-026 raw product_event 以 first durable received_at 為 cutoff anchor，透過 appf2-owned EvidenceRetentionMaintenance 可執行 90-day retention。
-- F07-AC-027 bounded non-identifying evidence_daily_aggregate 可在 raw deletion後保留，且不含 event/user/session/intent/share/trace identity。
-- F07-AC-028 evidence rejection/drop/queue expiry本身可觀測。
-- F07-AC-029 DEBUG_ONLY不默認 durable到 production product_event。
+- F07-AC-027 bounded non-identifying evidence_daily_aggregate 可在 source deletion後保留 event_count + 七個 F07 Evidence-quality metric 的 canonical count/rate truth；aggregate 不含 event/user/session/intent/share/trace identity 或 raw content，且每個 source deletion 都受自己的 aggregate watermark fail-closed 保護。
+- F07-AC-028 evidence rejection / batch rejection、local queue drop、offline queue expiry 必須經 appf2-owned production EvidenceQualityRecorder / bounded quality_report 成為可持久化與可 aggregate 的 observable；只證明 optional callback 可注入不算 PASS。
+- F07-AC-029 DEBUG_ONLY 不默認 durable 到 production product_event：client production collector 不 admission；server 即使收到 registered DEBUG_ONLY 也必須以 F07-ERR-016 non-retryable reject，且不得 ensure identity / insert product_event。
 - F07-AC-030 parseable occurred_at > received_at + 10m 的 event仍 accepted；保留兩個原始時間，response以 diagnostics[]回 F07-ERR-013 / occurred_at / USE_RECEIVED_AT，且不得增加 rejected。
 - F07-AC-031 effective_event_at必須由 durable occurred_at / received_at deterministic derive：clock-invalid用 received_at，其餘用 occurred_at；exactly +10m valid；duplicate retry不得改寫 received_at或以新的 retry time重算 classification。
 
