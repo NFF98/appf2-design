@@ -504,6 +504,17 @@ OR important outcome flush
 
 pagehide優先用 sendBeacon / fetch keepalive equivalent。
 
+### Phase 1 terminal handoff precedence
+
+Human-approved T007 decision（2026-10-05）：
+
+- `pagehide` / terminal lifecycle 優先建立 synchronous browser-safe handoff；不得把「先完成另一輪 IndexedDB / cross-tab async verification」當成 terminal handoff 的前置條件。
+- 只可 handoff 本 collector 當下仍持有、未超過 24h TTL、且已通過 privacy contract 的 immutable event snapshot。
+- normal flush / retry 仍必須以 shared durable queue 的 latest observable membership 為準；shared durable queue 的 200 events / 1 MB hard bound、priority eviction 與 TTL 不因 pagehide 放寬。
+- Narrow race exception：若另一 tab 在本 tab 最後一次 reconcile 後、pagehide handoff 前剛好因 shared overflow 淘汰同一 event，本 tab 仍可 handoff 該 stale local copy。此 exception **只限 terminal lifecycle handoff**，不得擴張成一般 retry / flush 規則。
+- Server 仍以 `event_id` dedupe；Evidence 不是 Product truth，這個 race 不得改變 ownership、authorization、Blueprint、entitlement 或其他 Product state。
+- Browser-safe handoff 必須遵守 sendBeacon / fetch keepalive 的可接受 transport budget；被 browser 拒絕或未 handoff 的 record 在頁面仍存活時保留於 queue。
+
 Evidence upload失敗不得阻斷 User workflow。
 
 # 18. Offline / Unsent Queue
@@ -1278,7 +1289,7 @@ Batch / Reliability：
 - F07-AC-015 transient ingest failure不阻斷 product flow。
 - F07-AC-016 unsent queue最多保留24h。
 - F07-AC-017 queue overflow優先保留 CORE_OUTCOME / RELIABILITY。
-- F07-AC-018 pagehide可 best-effort flush。
+- F07-AC-018 pagehide可 best-effort flush；terminal handoff 不以 fresh cross-tab async verification 為前置，並遵守 browser-safe sendBeacon / fetch keepalive transport budget。
 
 Metrics：
 
@@ -1391,6 +1402,7 @@ working/detailed-design/registries/evidence-event-registry.json
 1. F08定 anonymous → account explicit claim，不回頭用 telemetry推斷 ownership。
 2. Product Evidence Review可調 PRODUCT_SAMPLE sampling rate，但 CORE_OUTCOME meaning不能隨意改。
 3. 若90日 raw retention因法規/市場需要變更，屬 Material privacy change，需 Review。
+4. **Phase 4 Architecture Review 必須重新評估 centralized browser Evidence delivery coordinator**（例如 Service Worker / single-owner sender），目標是同時取得 shared eviction finality 與 terminal lifecycle handoff。若 Phase 4 review 未明確提前納入，**預設 Phase 5 implementation**；這項升級不得回灌 Phase 1–3 scope。
 
 # Conclusion
 
