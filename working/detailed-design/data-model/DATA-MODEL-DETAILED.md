@@ -427,32 +427,87 @@ F08 / F10 若需要 Blueprint family / ownership，可新增 metadata layer，�
 
 目的：
 
-> 保存 raw `product_event` 90-day deletion 後仍需保留的 **non-identifying bounded aggregate truth**；不是第二個 raw event store，也不是 BL-P1-034 final cross-function Product metrics model。
+> 保存 raw Evidence source deletion 後仍需保留的 **non-identifying bounded aggregate truth**；不是第二個 raw event store，也不是 BL-P1-034 final cross-function Product metrics model。
 
 | Field | Type | Required | Rule |
 |---|---|---:|---|
 | aggregate_id | uuid | YES | PK；aggregate row identity，非 User / session identity |
-| bucket_date | date | YES | UTC day bucket；以 F07 `effective_event_at` 歸桶 |
+| bucket_date | date | YES | UTC day bucket；product_event-derived metrics 用 F07 effective_event_at；operational quality metrics 用 canonical source first durable received_at |
 | metric_key | text | YES | F07 allowlisted aggregate key；不得任意 free-form |
-| function_id | text | NO | coarse Function dimension |
-| event_type | text | NO | registered Fxx-EVT-*；需要 event-level count 時使用 |
-| collection_class | text | NO | CORE_OUTCOME / RELIABILITY / PRODUCT_SAMPLE / DEBUG_ONLY |
+| function_id | text | NO | coarse Function dimension；operational quality metrics Phase 1 = NULL |
+| event_type | text | NO | registered Fxx-EVT-*；operational quality metrics Phase 1 = NULL |
+| collection_class | text | NO | CORE_OUTCOME / RELIABILITY / PRODUCT_SAMPLE / DEBUG_ONLY；operational quality metrics Phase 1 = NULL |
 | numerator_count | bigint | YES | >= 0 |
 | denominator_count | bigint | NO | >= 0；rate 類 metric 才使用 |
 | policy_version | text | YES | aggregate policy version |
-| materialized_through_received_at | timestamptz | YES | 此 aggregate 已涵蓋的 raw ingest watermark |
+| materialized_through_received_at | timestamptz | YES | 此 aggregate 已涵蓋的 canonical source ingest watermark |
 | updated_at | timestamptz | YES | maintenance metadata |
 
 Canonical rules：
 
 1. 不得包含 `event_id / anonymous_id / session_id / intent_id / share_id / trace_id`。
 2. 不得保存 free-form content、raw properties dump、raw Prompt / Result / Runtime state。
-3. aggregate key / dimensions 必須是 F07 明確 allowlist；Phase 1 最低支援 event count 與 Evidence pipeline quality counters/rates。
+3. aggregate key / dimensions 必須是 F07 明確 allowlist；Phase 1 最低支援 `event_count` 與 F07 §42 七個 Evidence pipeline quality counters/rates。
 4. rate = `numerator_count / denominator_count`；denominator 為 0 時不得假造 percentage。
 5. logical unique key = `bucket_date + metric_key + normalized(function_id?) + normalized(event_type?) + normalized(collection_class?) + policy_version`；nullable dimension 必須用 DB-level deterministic normalization / unique index表達，不能靠 application best effort。
-6. materialization 必須 idempotent；相同 logical unique key 重跑以 deterministic upsert / recompute 寫入，不得累加造成 double count。
-7. raw row deletion前必須先 materialize / verify 對應 aggregate watermark；aggregate failure 時 fail closed，不刪除尚未安全聚合的 eligible raw rows。
-8. 本表是 F07 retention/evidence quality owner；不得藉此提前定義 BL-P1-034 final cross-function Product metric semantics。
+6. materialization 必須 idempotent；相同 logical unique key 重跑以 deterministic recompute / upsert 寫入，不得用 blind increment 造成 double count。
+7. source row deletion前必須先 materialize / verify **該 source class 所擁有 metrics** 的 aggregate watermark；coverage 不足時 fail closed，不刪除該 source class 的 eligible rows。
+8. Source ownership：`product_event → event_count + clock_invalid_rate`；`evidence_intake_observation → event_batch_accept_rate + event_rejection_rate + duplicate_retry_rate + unknown_event_type_count`；`evidence_client_quality_report → local_queue_drop_count + offline_expired_event_count`。
+9. 一個 source class 的 coverage 不得拿來替另一 source class 背書；同時，一個 unrelated source class 暫時失敗不得偽造或抹除已驗證的其他 source coverage。
+10. 本表是 F07 retention/evidence quality aggregate owner；不得藉此提前定義 BL-P1-034 final cross-function Product metric semantics。
+
+---
+
+### 6.11A evidence_intake_observation
+
+目的：
+
+> 保存 `/api/v1/events/batch` 每個 server request attempt 的 bounded、non-identifying pipeline-quality source，使 pre-service rejection 與 event-level intake quality 可 deterministic recompute；不是 Product Event store。
+
+| Field | Type | Required | Rule |
+|---|---|---:|---|
+| observation_id | uuid | YES | PK；server-generated operational row identity |
+| received_at | timestamptz | YES | first durable server observation time；retention / aggregate watermark anchor |
+| batch_accepted | boolean | YES | request 通過 route-level bounds/envelope 並完成 canonical ingestion response |
+| event_received_count | bigint | YES | >=0；實際送入 event-level ingestion 的 candidate count |
+| accepted_count | bigint | YES | >=0 |
+| duplicate_count | bigint | YES | >=0 |
+| rejected_count | bigint | YES | >=0 |
+| unknown_event_type_count | bigint | YES | >=0；F07-ERR-004 subset |
+| route_rejection_code | text | NO | bounded pre-service code；Phase 1 only API-REQUEST-TOO-LARGE / F07-ERR-003 / F07-ERR-007 |
+
+Rules：
+
+1. 不保存 `batch_id`、event_id、anonymous_id、session_id、intent_id、share_id、trace_id、event properties 或 raw request body。
+2. 同一 HTTP retry 是新的 request attempt，因此是新的 observation；這正是 event_batch_accept_rate 的 denominator semantics，不做跨 request hidden dedupe。
+3. 單一 request invocation 內若 persistence retry，必須重用同一 observation_id，避免 infrastructure retry double count。
+4. event-level ingestion完成時：`event_received_count = accepted_count + duplicate_count + rejected_count`；quality-only batch 可全部為 0。
+5. pre-service rejection 時 event-level counts 全為 0；不得假造 rejected event count。
+6. `unknown_event_type_count <= rejected_count`。
+7. retention = 90 days from first durable received_at；刪除前必須先 materialize / verify 它所擁有的四個 F07 quality aggregates。
+
+---
+
+### 6.11B evidence_client_quality_report
+
+目的：
+
+> 保存 Browser queue drop / expiry 的 bounded delta report，讓 client-only failure 可被 server aggregate，同時避免建立 recursive Evidence Product Event。
+
+| Field | Type | Required | Rule |
+|---|---|---:|---|
+| report_id | uuid | YES | PK；client-generated idempotency identity，非 User / session / event identity |
+| received_at | timestamptz | YES | first durable server receipt；duplicate report不得改寫 |
+| local_queue_drop_count | bigint | YES | non-negative safe integer |
+| offline_expired_event_count | bigint | YES | non-negative safe integer |
+
+Rules：
+
+1. 至少一個 count > 0；不得包含任何 User/session/event identity、client timestamp、raw event、properties 或 free-form content。
+2. Browser 把尚未 confirmed HTTP 2xx acknowledge 的 queue-quality delta seal 成 report；retry 必須重用完全相同 report_id + counts。
+3. Server `ON CONFLICT(report_id) DO NOTHING`；first durable receipt wins，duplicate retry 不 double count、不改寫 received_at。
+4. sendBeacon handoff 本身不算 confirmed ack；pending report 可在後續 foreground normal flush 重送，由 server report_id dedupe。
+5. retention = 90 days from first durable received_at；刪除前必須先 materialize / verify local_queue_drop_count + offline_expired_event_count aggregate watermark。
 
 ---
 
