@@ -1853,6 +1853,72 @@ Compatibility：
 - incompatible / revoked → Recovery
 - migration 若產生新 Blueprint body → new content_hash + lineage
 
+## 45A. Phase 4 Production Admission / Trust Hardening Carry-forward
+
+> 來源：SP-P1-002 T004 / T005 final implementation re-audit（2026-10-05）。  
+> Phase 1 implementation 維持 PASS / CLOSED；本節只鎖定 **Phase 4 production hardening obligations**，不得回灌 Phase 1 scope。
+
+### F02-P4-HARD-001 — Production validation / admission wiring
+
+Phase 4 必須把 F02 validator、admission boundary、durable Blueprint repository 接上正式 HTTP / service / Runtime creation path。不能以 unit/contract module 可呼叫視為 production wiring 完成。
+
+Required proof：
+
+- production request 產生 Candidate；
+- F02 validation 真正執行；
+- 只有 admissible / issued validation result 可進 durable admission；
+- durable read-back 的 content identity / trust metadata 與 admitted result一致；
+- forged/rejected result 不得透過 alternate service path寫入。
+
+### F02-P4-HARD-002 — Real PostgreSQL admission / persistence proof
+
+Phase 4 必須以正式 PostgreSQL schema 跑 admission integration suite，不得只依 in-memory / faithful fake。
+
+至少覆蓋：
+
+- first insert；
+- same-hash idempotent reuse；
+- canonical body tamper；
+- byte_size mismatch；
+- transaction failure / rollback；
+- durable read-back後重新驗證 identity。
+
+### F02-P4-HARD-003 — Same-hash metadata collision defense
+
+若相同 content hash 已存在，DB admission boundary 除 canonical body 與 byte_size 外，必須同時驗證 pinned identity metadata，至少包括：
+
+- `schema_version`
+- `registry_version`
+
+若 Phase 4 identity contract新增其他 pinned metadata，也必須納入同一 collision check。任何 mismatch 必須 fail closed；不得因 hash 相同就 silently reuse 一筆 metadata 不一致的 row。
+
+### F02-P4-HARD-004 — Production trust-transition wiring
+
+T005 建立的 VALIDATED → REVOKED / INCOMPATIBLE trusted transition 必須接入正式 service / persistence path。Terminal state durable commit 必須先於 Evidence delivery outcome；Evidence intake failure 不得 rollback terminal safety truth。
+
+### F02-P4-HARD-005 — Real PostgreSQL concurrent CAS proof
+
+Phase 4 必須對正式 PostgreSQL 執行 concurrent trust-transition test：
+
+- 同一 VALIDATED row 同時收到多個 terminal transition；
+- 只有 contract-authorized transition成功；
+- loser / stale / replay update count = 0（或等價 fail-closed result）；
+- 已 terminal row 不得被另一 terminal transition或 reverse transition改寫。
+
+### F02-P4-HARD-006 — DB-level trust state-machine defense-in-depth
+
+Application repository guard 不是唯一防線。Phase 4 要在 DB authority boundary 加一層 protection，避免其他 privileged writer 繞過 repository 任意改 `trust_status`。
+
+可採 trigger、constrained stored function、column privilege / write role boundary 或等價機制；但必須：
+
+- 與 canonical F02 trust state machine一致；
+- 不建立第二套不同 transition semantics；
+- direct SQL bypass 有 executable negative proof。
+
+### Phase 4 Exit Proof
+
+上述六項必須各自有 executable production/DB proof。僅有 fake repository tests、SQL 字串 inspection、或 application-layer unit tests 不足以宣告 Phase 4 hardening完成。
+
 # 46. Open Decisions
 
 BF-036 Blueprint machine-schema completeness remediation 已完成：exact nested schema closure、RECORD optional_fields machine token、lexical/action-dispatch SCOPE typing、repeat/result/support/kind/intake bounds、Registry 4.0.0。

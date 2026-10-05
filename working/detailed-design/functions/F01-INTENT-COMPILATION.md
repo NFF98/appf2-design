@@ -1355,6 +1355,83 @@ evaluation_fixture_version
 api_version
 ~~~
 
+## 35A. Phase 4 Intent Authority / Persistence Hardening Carry-forward
+
+> 來源：SP-P1-002 T006 final implementation re-audit（2026-10-05）。  
+> T006 Phase 1 semantic foundation維持 PASS / CLOSED；本節是 Phase 4 production boundary加強，不改寫既有 Clarification Policy outcome。
+
+### F01-P4-HARD-001 — Production HTTP / persistence wiring
+
+Phase 4 必須把 StructuredIntentEnvelope validation、Clarification Policy、trusted answer merge、re-analysis merge、resolved-intent gate 接入正式 HTTP / service / persistence flow。
+
+Required round-trip proof：
+
+~~~text
+analyze
+→ persist StructuredIntentEnvelope
+→ restore trusted state
+→ answer / assumption decision
+→ persist new canonical truth
+→ re-evaluate
+→ resolved-intent gate
+~~~
+
+不得以 module-level/in-memory tests取代 production integration proof。
+
+### F01-P4-HARD-002 — Narrow trusted-state mint authority
+
+Trusted clarification state是 server authority，不是「shape valid 就可信」。
+
+Phase 4 architecture 必須把等價於 `issueTrustedState()` / `restoreTrustedIntentState()` 的能力縮到明確 trusted boundary：
+
+- trusted repository read；
+- approved server-owned answer/re-analysis transition；
+- 其他 module 不得只靠 import generic issuer + 自組合法 JSON 就 mint trusted state；
+- Client / Prompt A payload 永遠不能進 generic restore/mint path。
+
+可用 module-private factory、capability token、repository-scoped adapter 或等價方式；重點是 **authority provenance**，不是函式名稱。
+
+Required proof：
+
+- forged server-owned `answered_question_ids[]` / `changed_semantic_item_ids[]` 不能藉 generic issuer升格；
+- normal repository restore仍可安全 rehydrate；
+- answer/re-analysis transition仍能 mint下一版 trusted state。
+
+### F01-P4-HARD-003 — intent_version optimistic concurrency
+
+Phase 1 T006 只需要 parse `intent_version` shape；Phase 4 production API 必須完整落實既有 F01 optimistic concurrency owner：
+
+- request `intent_version` 與 durable current version compare；
+- stale answer / compile / mutation fail closed（依 canonical API status/error contract）；
+- concurrent updates只有合法 winner；
+- retry / replay不得覆蓋較新的 User truth。
+
+Required proof 包含 real persistence concurrency / replay tests，不只 request-parser unit test。
+
+### F01-P4-HARD-004 — Re-analysis source-transition matrix
+
+Phase 4 必須把 same-stable-ID re-analysis precedence寫成 explicit table，而不是讓各 caller自行猜測。
+
+至少要定義：
+
+| Trusted current truth | Fresh Prompt A candidate | Phase 4 required treatment |
+|---|---|---|
+| USER_EXPLICIT / USER_ACCEPTED_PROPOSAL | 任一 non-trusted candidate | 不可直接覆寫 trusted User decision。 |
+| DOMAIN_KNOWN | DOMAIN_KNOWN | 可在可信 re-evaluation條件下 refresh；actual semantic change進 changed_semantic_item_ids。 |
+| DOMAIN_KNOWN | Prompt A 標記 USER_EXPLICIT | **不得只因 Prompt A label 就直接覆寫**；必須定義如何證明這確實來自新的 User edit，並經 trusted boundary升格。 |
+| pending proposal/default | fresh validated proposal/default | 依 canonical merge + stale-dependency rules處理，不得破壞 resolved_value single-truth。 |
+
+Phase 4 必須補齊「真正 User edit 如何成為 trusted USER_EXPLICIT」的 production ownership path，並保留：
+
+- untrusted analysis cannot directly overwrite trusted state；
+- provenance不可洗白；
+- DOMAIN_KNOWN refresh仍可驅動 no-reask dependency reopen；
+- same value / unrelated change不得產生 false changed IDs。
+
+### Phase 4 Exit Proof
+
+上述四項需映射到 Phase 4 Task / Acceptance / executable test。若 source-transition matrix需要新的 Product semantic decision，必須 Human approval；不得由 implementation自行擴張 precedence。
+
 # 36. Open Decisions
 
 目前沒有阻擋 F00 / F05 / F06 Detailed Design 的 architecture-level open decision。

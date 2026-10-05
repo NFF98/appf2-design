@@ -1388,6 +1388,18 @@ working/detailed-design/registries/evidence-event-registry.json
 
 它把各 Fxx stable Event ID 轉成可供 CI / instrumentation 使用的 event_type、function_id、collection_class、required_context、allowed_properties、retention_class 與 metric_tags。Event meaning仍由各 Fxx擁有；F07擁有 shared envelope / privacy / ingestion policy。
 
+## Phase 4 Registry Consumer Hardening — T005 Carry-forward
+
+Phase 4 production consumer **不得把 Evidence Registry 綁死在某個歷史 Build Spec source path**（例如固定 import `BS-P1-013/.../evidence-event-registry.json`）。目前歷史 baseline registry bytes 相同不代表這種 coupling 可長期依賴。
+
+Phase 4 必須：
+
+1. active runtime / validator 透過 current canonical generated registry、versioned artifact、digest-aware resolver 或等價 SSOT mechanism取得 Evidence Registry；
+2. historical event / replay 依 explicit `registry_version`（與需要時的 digest）解析，不使用「目前 source tree剛好還有舊 baseline file」作 authority；
+3. registry upgrade 必須有 executable test，證明 active consumer跟隨 canonical version；
+4. historical replay 必須有 executable test，證明舊版本仍可被明確解析；
+5. 不得讓 generated registry變成可被 runtime caller手改的第二份 truth。
+
 # 53. Open Decisions
 
 目前沒有阻擋 Phase 1 Core Evidence 的 architecture-level open decision。

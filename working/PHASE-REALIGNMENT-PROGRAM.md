@@ -144,6 +144,34 @@ Phase 2–Phase 4+ 必須重排，但**不在 Phase 1 尚未產生真實 Evidenc
 
 未來 Phase 5+ 可以存在，但現在不預先 Freeze 名稱或內容。只有 Evidence 顯示需要新的獨立 Phase 時，才由 Human approval 建立。
 
+## 5A. Phase 4 Mandatory Hardening Carry-forward — SP-P1-002 T004–T006 Re-audit
+
+> 狀態：**PHASE_4_MANDATORY / NOT A PHASE 1 REOPEN**  
+> 來源：2026-10-05 Human-requested independent implementation re-audit of SP-P1-002 T004 / T005 / T006。三個 Task 的 final implementation verdict 均為 PASS；以下項目皆為 non-blocking hardening / production-readiness debt，不改寫 Phase 1 closure truth。  
+> Phase 4 replan **不得刪除、合併到不可驗證的籠統敘述、或默認視為完成**。每一項都必須有 explicit owner、implementation scope 與 executable proof。
+
+| ID | Source | Phase 4 mandatory hardening | Required proof before Phase 4 exit |
+|---|---|---|---|
+| P4-HARD-001 | T004 | 將 F02 validation / admission 真正接入 production HTTP / Runtime / Postgres path；不可只停留在 isolated module / fake repository proof。 | production integration test：request → validation → admission → durable read-back，全程使用正式 boundary。 |
+| P4-HARD-002 | T005 | 將 F02 trust transition 與其 Evidence emission 接入 production service / persistence path，保持 terminal durable state 先成立、Evidence failure 不 rollback safety truth。 | production integration test：VALIDATED → REVOKED / INCOMPATIBLE + Evidence success/failure cases。 |
+| P4-HARD-003 | T004 | 用**真 PostgreSQL**驗證 Blueprint admission / persistence，而非只依 faithful fake DB。 | PostgreSQL-backed integration suite，含 insert、same-hash reuse、read-back、tamper / conflict negative cases。 |
+| P4-HARD-004 | T004 | Same content hash collision/reuse 在 DB boundary 除 canonical body + byte_size 外，還要核對與 identity/trust 有關的 pinned metadata（至少 schema_version / registry_version；若 Phase 4 identity contract增加其他 pinned metadata，一併納入）。不一致必須 fail closed。 | same-hash + metadata mismatch negative integration tests。 |
+| P4-HARD-005 | T005 | 用**真 PostgreSQL concurrency**證明 trust CAS：多個 concurrent terminal transition 只能有 contract-authorized winner，stale/replay 不得成功。 | concurrent DB test with deterministic winner/loser assertions。 |
+| P4-HARD-006 | T005 | DB 層增加 trust-state defense-in-depth，使其他 privileged writer 也不能繞過 application repository 任意改 trust_status。具體可用 trigger / constrained function / privilege boundary 等，但不得形成第二套相衝突的 state machine。 | direct-SQL bypass tests + migration/DB policy review。 |
+| P4-HARD-007 | T005 | Production Evidence Registry consumption 不得綁死歷史 Build Spec 路徑（例如固定讀 BS-P1-013）。Runtime/validator 應透過 current canonical generated registry / versioned artifact / digest-aware resolver 取得 registry；歷史 replay 則明確依 event/record 的 registry_version 解析。 | active-registry upgrade test + historical-version replay test；不得靠 source-path coincidence。 |
+| P4-HARD-008 | T006 | 將 F01 StructuredIntentEnvelope / clarification engine / answer merge / resolved-intent gate 接入 production HTTP + persistence boundary；Phase 1 semantic foundation 不應永久停在 in-memory/module-only integration。 | API + durable round-trip integration：analyze → answer/re-evaluate → persist/restore → gate。 |
+| P4-HARD-009 | T006 | 縮窄 trusted intent-state mint authority。等價於 `issueTrustedState()/restoreTrustedIntentState()` 的 generic issuer 不應成為可被任意 server module import 的公開鑄造能力；只有 trusted repository read 與明確 server-owned transition path 可取得/mint trusted state。 | import/architecture boundary test + forged trusted-state negative test。 |
+| P4-HARD-010 | T006 | `intent_version` 不只做格式解析；production API / persistence boundary 必須落實 optimistic concurrency / stale version rejection（對應既有 F01-AC-015 contract owner），並有 concurrent/replay proof。 | stale version 409 / concurrency integration tests。 |
+| P4-HARD-011 | T006 | 明文化 re-analysis 的 same-ID source-transition matrix，特別是 trusted DOMAIN_KNOWN、trusted USER_EXPLICIT、Prompt A 抽出的 USER_EXPLICIT candidate 之間如何轉換。維持「untrusted analysis 不可直接覆寫 trusted state」，同時定義真正 User edit 如何經 trusted boundary 升格成 USER_EXPLICIT truth，避免未來 implementation 各自猜 precedence。 | table-driven transition tests covering allowed/forbidden transitions and provenance preservation。 |
+
+Phase 4 governance rules：
+
+1. 上述項目是 **mandatory hardening carry-forward**，不是 T004/T005/T006 的 Phase 1 blocker，也不要求 reopen 已 CLOSED Task。
+2. Phase 4 replan 時，每個 ID 必須被映射到具體 Task / Acceptance / executable test；未映射視為 replan 不完整。
+3. P4-HARD-001/002/003/004/005/006 由 F02 production admission/trust boundary主責；P4-HARD-007 由 F07 Registry ownership 與 consumer contract共同負責；P4-HARD-008/009/010/011 由 F01 production intent boundary主責。
+4. 若 Phase 4 實作需要改變 Phase 1 Product outcome，而非只加強 authority / persistence / verification / wiring，必須另走 Human Product decision，不可把 hardening 名義當成 semantic backdoor。
+5. PFR-12 / Phase 4+ replan 完成前必須逐項給出 DONE / DEFER-with-Human-approval；不得以「production hardening」單一總項取代逐項 closure evidence。
+
 # 6. Current Timing Target
 
 2026-09-30 Working planning estimate：
@@ -201,3 +229,4 @@ A0 exit：blocking Findings resolved → cross-contract re-audit PASS → projec
 | 2026-10-01 | PFR-02 | Human 批准 BS-P1-004 / SP-P1-002 Activation；Build PR #115 全 gates PASS 後 merge。CURRENT=BS-P1-004、implementation_enabled=true、SP2 ACTIVE、T001 IN_PROGRESS、38 unfinished backlog rebind，BL-P1-032/F07-AC-008 revalidation IN_PROGRESS | CURRENT / T001 EXECUTION |
 
 | 2026-10-04 | PFR-02 / Naming | T001–T003 已 CLOSED、SP2 HOLD before T004；全面清理 stale future BS/SP reservations，Product Proof future stages改用 stable stage names，numeric ID改為 Freeze/Sprint creation 時才分配 | NAMING NORMALIZED / NO PRODUCT SEMANTIC CHANGE |
+| 2026-10-05 | PFR-12 / Phase 4 Hardening Carry-forward | Human 指示把 SP-P1-002 T004–T006 implementation re-audit 的全部 non-blocking improvement points正式規劃進 Phase 4；新增 P4-HARD-001..011，並同步 F01/F02/F07 owner spec。Phase 1 T004–T006 closure不重開。 | PHASE 4 MANDATORY / PLANNED |
