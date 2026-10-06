@@ -28,9 +28,9 @@ Phase 1 目前採 **6 個主要 Screen / Surface + 5 類 Overlay / State**。
 |---|---|---|---|---|
 | S01 | Discover / Start | 從想法或靈感開始 Create | F00 | **④A LOW_FI_APPROVED / ④B STEP1–4 CLOSED** |
 | S02 | Create Workspace | 分析、補充必要資訊、確認假設並生成 App | F00 + F01 | **④A LOW_FI_APPROVED / ④B STEP1–4 CLOSED** |
-| S03 | App / Runtime | 使用生成 App，進入 Share / Refine / Remix / Correct；承接 S05 Inspection Mode | F00 + F03 + F06 | **④A LOW_FI_APPROVED / FUNCTION_DELTA_CLOSED / ④B STEP1–4 RE-CLOSED** |
-| S04 | Shared App Entry / Restore | 從分享連結恢復並立即使用 App | F05 + F00 | **④A LOW_FI_APPROVED / ④B STEP1–4 CLOSED** |
-| S05 | Refine / Remix Workspace | 修改既有 App、Preview child、決定是否採用 | F06 + F00 | **④A LOW_FI_APPROVED / ④B STEP1–4 CLOSED** |
+| S03 | App / Runtime | 使用生成 App，進入 Share / Refine / Remix / Correct；承接 S05 Inspection Mode | F00 + F03 + F06 + F19 | **④A LOW_FI_APPROVED / FUNCTION_DELTA_CLOSED / PFR-04_F19_DELTA_CLOSED / ④B STEP1–4 RE-CLOSED** |
+| S04 | Shared App Entry / Restore | 從分享連結恢復並立即使用 App | F05 + F00 + F19 | **④A LOW_FI_APPROVED / PFR-04_F19_DELTA_CLOSED / ④B STEP1–4 CLOSED** |
+| S05 | Refine / Remix Workspace | 修改既有 App、Preview child、決定是否採用 | F06 + F00 + F19 | **④A LOW_FI_APPROVED / PFR-04_F19_DELTA_CLOSED / ④B STEP1–4 CLOSED** |
 | S06 | Correction Compare | 比較修正前後並 Accept / Keep / Adjust | F16 + F00 | **④A LOW_FI_APPROVED / ④B STEP1–4 CLOSED** |
 
 S01–S06 與 O01–O05 的 ④A / ④B baseline均已完成。2026-09-24 FG-01–FG-07均已處理；FG-02 / FG-03已同步到 Function/UI Working；S03 Step 1–4已 re-closed，v2 replacement PNG path / SHA / size已驗證。Final full-set re-audit結果為 **0 個新的 material finding**，因此 Final Cross-Screen High-fi Gate 已 **CLOSED / VERIFIED**。
@@ -389,3 +389,11 @@ O05  working/detailed-design/UI-UX/references/O05-Hi-FI-v1.png
 ~~~
 
 > Reference images是 implementation reference，不覆蓋 Step 1–3 textual contract / Design System / Fxx Function truth。
+
+
+## PFR-04 F19 Delta Summary
+
+- S03 / S04 / S05 已完成 F19 Shared Ranking textual delta review。
+- Canonical High-fi PNG不需替換；既有 Step 1–4 visual lock維持。
+- F19 Product behavior仍由 `F19-SHARED-APP-DATA.md` 擁有；Screen檔只承接 presentation / navigation / recovery mapping。
+- Vote / Counter / generic Shared Records不屬本次 Phase 1 UI scope。
