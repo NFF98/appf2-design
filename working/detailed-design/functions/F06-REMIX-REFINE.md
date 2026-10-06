@@ -1028,21 +1028,7 @@ Existing immutable Blueprint
 
 > Remix / Refine 的本質不是「改 JSON」，而是「保留有價值的語意，重新產生一個完整、可驗證的新 App」。
 
-## Phase 1 Shared Data + Future Ownership / Commerce Compatibility
-
-此節固定 F06 與 F08 / F19 / F20 的 future contract，不改 Phase 1 immutable Remix / Refine core。
-
-### Ownership
-
-F08 activation 後：
-
-~~~text
-Purchase Parent App ≠ transfer Parent ownership
-REMIX → create new immutable child Version → child ownership belongs to remixer
-→ Parent ownership unchanged → Direct Parent + Root attribution preserved
-~~~
-
-### Shared Data — Phase 1
+## Phase 1 F19 Shared Data Integration
 
 若 source Blueprint启用 `shared.ranking.v1`：
 
@@ -1067,6 +1053,20 @@ Hard rules：
 - F19 scope id/data不得写入 Semantic Delta作为 executable patch。
 - child creation failure不得污染 Parent ranking data。
 - same-Creator REFINE未来若要保留 scope，必须另做 compatibility/migration Human decision；Phase 1不支持 implicit inheritance。
+
+## Future Ownership / Commerce Compatibility
+
+> Deferred：本節不屬 Phase 1 Build Freeze candidate。
+
+### Ownership
+
+F08 activation 後：
+
+~~~text
+Purchase Parent App ≠ transfer Parent ownership
+REMIX → create new immutable child Version → child ownership belongs to remixer
+→ Parent ownership unchanged → Direct Parent + Root attribution preserved
+~~~
 
 ### Commerce
 
