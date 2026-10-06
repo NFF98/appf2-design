@@ -214,7 +214,6 @@ A0 exit：blocking Findings resolved → cross-contract re-audit PASS → projec
 | Date | Step | Update | Result |
 |---|---|---|---|
 | 2026-10-06 | PFR-03 / PFR-04 | Human批准 Phase 1 remaining alignment；F19收斂为 shared.ranking.v1 bounded proof；S03/S04/S05 delta review仅需 textual contract，不重开 High-fi | DESIGN CANDIDATE READY → PFR-05 |
-|---|---|---|---|
 | 2026-09-30 | PFR-00 | 建立 Product-First Phase Realignment program + canonical progress tracker | COMPLETED |
 | 2026-10-01 | PFR-01 | 完成 Design → Build impact audit；Human 批准 PRESERVE / CHANGE / DEFER / NEW 與 Product-first Phase 1 重排 | COMPLETED |
 | 2026-10-01 | PFR-02 | 進入 SP-P1-002；沿用 BS-P1-003，不 rebaseline；完成 Activation Review PASS | REVIEW PASS |
