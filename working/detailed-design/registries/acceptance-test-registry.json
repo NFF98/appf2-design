@@ -1,5 +1,5 @@
 {
-  "registry_version": "2.4.0",
+  "registry_version": "2.5.0",
   "phase_1_freeze_audit": {
     "status": "PASS",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
@@ -10,7 +10,7 @@
       "F19_VOTE_COUNTER_GENERIC_RECORDS"
     ],
     "audited_on": "2026-10-06",
-    "change_ref": "PFR-03-PFR-04-F19-RANKING-FREEZE-CANDIDATE"
+    "change_ref": "BF-049-T001-COMPILER-CONTRACT-CLOSURE"
   },
   "owner": "working/detailed-design/registries/acceptance-test-registry.json",
   "conventions": "working/common-core/ACCEPTANCE-CONVENTIONS.md",
@@ -405,9 +405,9 @@
     {
       "acceptance_id": "F01-AC-007",
       "function_id": "F01",
-      "criterion": "Prompt B 不得在 gate pass 前執行。",
+      "criterion": "Prompt B / CapabilityRequirement finalization不得在 Clarification Gate pass 前執行；ResolvedIntent durable projection只含已鎖定 truth，DO_NOT_PERSIST不得 durable。",
       "test_id": "TEST-F01-007",
-      "expected_observable": "Prompt B 不得在 gate pass 前執行。",
+      "expected_observable": "Gate未 pass時無 Prompt B / final CapabilityRequirement；Gate pass後 ResolvedIntent依 F01-DATA-005 exact projection持久化，DO_NOT_PERSIST只存在 request-scoped EphemeralResolvedContext。",
       "contract_status": "ACTIVE",
       "proof_scope": "BEHAVIOR",
       "required_for_build_freeze": true
@@ -415,9 +415,9 @@
     {
       "acceptance_id": "F01-AC-008",
       "function_id": "F01",
-      "criterion": "unknown Capability 不可由 LLM 創造並進 Blueprint。",
+      "criterion": "LLM只可輸出 bounded semantic CapabilityHint；unknown interaction class / Capability ID注入不得形成 final CapabilityRequirement或 Blueprint CapabilityRef。",
       "test_id": "TEST-F01-008",
-      "expected_observable": "unknown Capability 不可由 LLM 創造並進 Blueprint。",
+      "expected_observable": "CapabilityHint通過 machine invariant後由 deterministic extractor產生 stable requirement_id；hint內 Capability ID、unknown interaction_class 或未 resolved MATERIAL source均 fail closed，F01不自創 CapabilityRef。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
@@ -445,9 +445,9 @@
     {
       "acceptance_id": "F01-AC-011",
       "function_id": "F01",
-      "criterion": "F02 rejection 不可 bypass。",
+      "criterion": "F02 rejection不可 bypass；每個 F02 error只依 F01-RQ-008A authoritative class決定 recompose/recovery，security/resource/integrity terminal不得被普通 retry降級。",
       "test_id": "TEST-F01-AC-011",
-      "expected_observable": "F02 rejection 不可 bypass。",
+      "expected_observable": "F02 REJECTED永遠不成為 VALIDATED；F02-ERR-012/013不 retry，ERR-011不 same-body retry，ERR-015不 recompose；fixable errors只走鎖定的 bounded path。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
@@ -455,9 +455,9 @@
     {
       "acceptance_id": "F01-AC-012",
       "function_id": "F01",
-      "criterion": "validation-driven recompose 最多 1 次。",
+      "criterion": "validation-driven recompose整個 compile logical operation最多 1 次；CAPABILITY_FIXABLE先 refresh F04，任何 class不得重設第二份 budget。",
       "test_id": "TEST-F01-012",
-      "expected_observable": "validation-driven recompose 最多 1 次。",
+      "expected_observable": "所有 fixable rejection合計最多觸發一次 recompose；第二次 rejection停止並回 canonical F01 failure/recovery，不因換 error class再多一次。",
       "contract_status": "ACTIVE",
       "proof_scope": "BEHAVIOR",
       "required_for_build_freeze": true
@@ -465,9 +465,9 @@
     {
       "acceptance_id": "F01-AC-013",
       "function_id": "F01",
-      "criterion": "POST /intents retry 不 duplicate intent。",
+      "criterion": "POST /intents network/same-body retry與 expired-IN_PROGRESS takeover不得 duplicate intent；retryable failure重用同一 idempotency logical operation與 intent_id。",
       "test_id": "TEST-F01-API-001",
-      "expected_observable": "POST /intents retry 不 duplicate intent。",
+      "expected_observable": "FAILED_RETRYABLE可 CAS成新 attempt；有效 IN_PROGRESS回409；expired lease只有一個 takeover winner；所有成功/失敗重試仍只存在一個 logical intent/result_ref，late attempt不可覆寫。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
@@ -475,9 +475,9 @@
     {
       "acceptance_id": "F01-AC-014",
       "function_id": "F01",
-      "criterion": "POST /compile retry 不 duplicate logical compile。",
+      "criterion": "POST /compile retry不 duplicate logical compile；FAILED_RETRYABLE / expired-IN_PROGRESS依 canonical attempt lease/CAS重試，SUCCEEDED replay同一 validated result。",
       "test_id": "TEST-F01-AC-014",
-      "expected_observable": "POST /compile retry 不 duplicate logical compile。",
+      "expected_observable": "同 key+digest只有一個 logical compile；retry/takeover只增加 attempt_no；late attempt commit被拒絕；SUCCEEDED由 durable validation/result_ref重建同 content_hash。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
@@ -495,9 +495,9 @@
     {
       "acceptance_id": "F01-AC-016",
       "function_id": "F01",
-      "criterion": "error envelope 永遠有 request_id + stable code。",
+      "criterion": "所有 F01 error envelope永遠有 request_id + stable code；intent不存在與 anonymous continuity mismatch使用相同404/F01-ERR-015，不洩漏跨 anonymous identity存在性。",
       "test_id": "TEST-F01-API-003",
-      "expected_observable": "error envelope 永遠有 request_id + stable code。",
+      "expected_observable": "malformed/missing identity有 stable 400 code；not-found/mismatch均為不可區分的404 F01-ERR-015 envelope；details無 provider stack/ownership leak。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
@@ -535,9 +535,9 @@
     {
       "acceptance_id": "F01-AC-020",
       "function_id": "F01",
-      "criterion": "timeout 保留 Intent，可 retry。",
+      "criterion": "timeout保留已建立 Intent與 logical operation identity，轉 FAILED_RETRYABLE後可用同 Idempotency-Key安全 retry；stale/late attempt不得覆寫。",
       "test_id": "TEST-F01-AC-020",
-      "expected_observable": "timeout 保留 Intent，可 retry。",
+      "expected_observable": "504後 intent_id/result_ref不丟失；idempotency row不是永久IN_PROGRESS也不是FAILED_TERMINAL；retry取得新attempt並沿用同 intent，late completion fail closed。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
@@ -2805,9 +2805,9 @@
     {
       "acceptance_id": "F01-AC-028",
       "function_id": "F01",
-      "criterion": "network retry不重複 checkpoint；User-triggered retry建立新 progress operation並只重建仍有效 truth。",
+      "criterion": "network retry不重複 checkpoint；same-body User retry建立新 progress operation但沿用同 API idempotency logical operation/Key，只從仍有效 truth重建 progress。",
       "test_id": "TEST-F01-PROG-004",
-      "expected_observable": "same-key retry無 duplicate completion；new retry不直接複製舊百分比。",
+      "expected_observable": "same-key retry無 duplicate completion；FAILED_RETRYABLE/takeover只開新 attempt與新 progress operation，不複製舊百分比；material edit才是新 mutation/new Idempotency-Key。",
       "contract_status": "ACTIVE",
       "proof_scope": "BEHAVIOR",
       "required_for_build_freeze": true
