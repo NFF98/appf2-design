@@ -1,15 +1,16 @@
 {
-  "registry_version": "3.0.0",
+  "registry_version": "3.1.0",
   "phase_1_freeze_audit": {
     "status": "PASS",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
     "eligibility": "HUMAN_APPROVED_BUILD_FREEZE_REQUIRED",
     "excludes": [
       "PHASE_2_PLUS",
-      "DEFERRED_CONTENT"
+      "DEFERRED_CONTENT",
+      "F19_RAW_PARTICIPANT_CONTENT"
     ],
-    "audited_on": "2026-10-01",
-    "change_ref": "A0-BF-016-BF-023-PENDING-REAUDIT"
+    "audited_on": "2026-10-06",
+    "change_ref": "PFR-03-PFR-04-F19-RANKING-FREEZE-CANDIDATE"
   },
   "owner": "working/detailed-design/registries/evidence-event-registry.json",
   "source_of_truth": "Fxx event contracts + F07 evidence policy",
@@ -2585,6 +2586,153 @@
         "f16"
       ],
       "deprecated": false
+    },
+    {
+      "event_type": "F19-EVT-001",
+      "event_name": "shared_ranking_scope_resolved",
+      "function_id": "F19",
+      "schema_version": "3.1.0",
+      "collection_class": "CORE_OUTCOME",
+      "required_context": [
+        "function_id"
+      ],
+      "allowed_properties": [
+        "ranking_ordering",
+        "ranking_update_policy",
+        "resource_policy_version"
+      ],
+      "retention_class": "RAW_90D",
+      "metric_tags": [
+        "f19",
+        "shared_ranking"
+      ],
+      "deprecated": false
+    },
+    {
+      "event_type": "F19-EVT-002",
+      "event_name": "shared_ranking_read_ready",
+      "function_id": "F19",
+      "schema_version": "3.1.0",
+      "collection_class": "CORE_OUTCOME",
+      "required_context": [
+        "function_id"
+      ],
+      "allowed_properties": [
+        "ranking_entry_count_bucket",
+        "resource_policy_version"
+      ],
+      "retention_class": "RAW_90D",
+      "metric_tags": [
+        "f19",
+        "shared_ranking"
+      ],
+      "deprecated": false
+    },
+    {
+      "event_type": "F19-EVT-003",
+      "event_name": "shared_ranking_submit_committed",
+      "function_id": "F19",
+      "schema_version": "3.1.0",
+      "collection_class": "CORE_OUTCOME",
+      "required_context": [
+        "function_id"
+      ],
+      "allowed_properties": [
+        "ranking_operation_outcome",
+        "ranking_ordering",
+        "ranking_update_policy",
+        "resource_policy_version"
+      ],
+      "retention_class": "RAW_90D",
+      "metric_tags": [
+        "f19",
+        "shared_ranking"
+      ],
+      "deprecated": false
+    },
+    {
+      "event_type": "F19-EVT-004",
+      "event_name": "shared_ranking_submit_rejected",
+      "function_id": "F19",
+      "schema_version": "3.1.0",
+      "collection_class": "RELIABILITY",
+      "required_context": [
+        "function_id"
+      ],
+      "allowed_properties": [
+        "ranking_rejection_reason",
+        "resource_policy_version"
+      ],
+      "retention_class": "RAW_90D",
+      "metric_tags": [
+        "f19",
+        "shared_ranking",
+        "reliability"
+      ],
+      "deprecated": false
+    },
+    {
+      "event_type": "F19-EVT-005",
+      "event_name": "shared_ranking_quota_warning",
+      "function_id": "F19",
+      "schema_version": "3.1.0",
+      "collection_class": "PRODUCT_SAMPLE",
+      "required_context": [
+        "function_id"
+      ],
+      "allowed_properties": [
+        "ranking_entry_count_bucket",
+        "resource_policy_version"
+      ],
+      "retention_class": "RAW_90D",
+      "metric_tags": [
+        "f19",
+        "shared_ranking",
+        "quota"
+      ],
+      "deprecated": false
+    },
+    {
+      "event_type": "F19-EVT-006",
+      "event_name": "shared_ranking_write_throttled",
+      "function_id": "F19",
+      "schema_version": "3.1.0",
+      "collection_class": "RELIABILITY",
+      "required_context": [
+        "function_id"
+      ],
+      "allowed_properties": [
+        "ranking_rejection_reason",
+        "resource_policy_version"
+      ],
+      "retention_class": "RAW_90D",
+      "metric_tags": [
+        "f19",
+        "shared_ranking",
+        "quota"
+      ],
+      "deprecated": false
+    },
+    {
+      "event_type": "F19-EVT-007",
+      "event_name": "shared_ranking_fresh_scope_for_derived_version",
+      "function_id": "F19",
+      "schema_version": "3.1.0",
+      "collection_class": "CORE_OUTCOME",
+      "required_context": [
+        "function_id"
+      ],
+      "allowed_properties": [
+        "derived_relation_type",
+        "resource_policy_version"
+      ],
+      "retention_class": "RAW_90D",
+      "metric_tags": [
+        "f19",
+        "shared_ranking",
+        "lineage"
+      ],
+      "deprecated": false
     }
   ],
   "property_schemas": {
@@ -2946,6 +3094,66 @@
     "blueprint_schema_version": {
       "type": "string",
       "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "ranking_ordering": {
+      "type": "string",
+      "enum": [
+        "ASC",
+        "DESC"
+      ]
+    },
+    "ranking_update_policy": {
+      "type": "string",
+      "enum": [
+        "BEST_SCORE",
+        "LATEST_SCORE"
+      ]
+    },
+    "ranking_operation_outcome": {
+      "type": "string",
+      "enum": [
+        "CREATED",
+        "UPDATED",
+        "NO_CHANGE"
+      ]
+    },
+    "ranking_rejection_reason": {
+      "type": "string",
+      "enum": [
+        "SCOPE_NOT_FOUND",
+        "SCOPE_NOT_ACTIVE",
+        "SHARE_NOT_ELIGIBLE",
+        "INVALID_SUBMISSION",
+        "PARTICIPANT_AUTHORITY_UNAVAILABLE",
+        "RATE_LIMITED",
+        "QUOTA_WRITE_THROTTLED",
+        "IDEMPOTENCY_CONFLICT",
+        "PERSISTENCE_FAILED",
+        "INTERNAL_INVARIANT"
+      ]
+    },
+    "ranking_entry_count_bucket": {
+      "type": "string",
+      "enum": [
+        "0",
+        "1",
+        "2_10",
+        "11_50",
+        "51_100",
+        "OVER_100"
+      ]
+    },
+    "resource_policy_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "derived_relation_type": {
+      "type": "string",
+      "enum": [
+        "REFINE",
+        "REMIX"
+      ]
     }
   },
   "event_property_constraints": {
