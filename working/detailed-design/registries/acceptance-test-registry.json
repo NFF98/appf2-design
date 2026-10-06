@@ -2949,7 +2949,7 @@
       "test_id": "TEST-F19-004",
       "expected_observable": "Client 無法建立 arbitrary DB schema/SQL/collection CRUD。",
       "contract_status": "ACTIVE",
-      "proof_scope": "SECURITY",
+      "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
     },
     {
@@ -2969,7 +2969,7 @@
       "test_id": "TEST-F19-006",
       "expected_observable": "participant authority 由 server/F07 解析；Client 不能 spoof participant_ref。",
       "contract_status": "ACTIVE",
-      "proof_scope": "SECURITY",
+      "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
     },
     {
@@ -3059,7 +3059,7 @@
       "test_id": "TEST-F19-015",
       "expected_observable": "revoked/expired/untrusted Share 不能繼續作 public ranking read/write authority。",
       "contract_status": "ACTIVE",
-      "proof_scope": "SECURITY",
+      "proof_scope": "END_TO_END",
       "required_for_build_freeze": true
     },
     {
@@ -3079,7 +3079,7 @@
       "test_id": "TEST-F19-017",
       "expected_observable": "transaction/concurrency failure 不產生 partial rank + false dedupe success。",
       "contract_status": "ACTIVE",
-      "proof_scope": "INTEGRATION",
+      "proof_scope": "END_TO_END",
       "required_for_build_freeze": true
     },
     {
@@ -3089,7 +3089,7 @@
       "test_id": "TEST-F19-018",
       "expected_observable": "read response bounded 且不洩漏 participant_ref、operation history、DB metadata。",
       "contract_status": "ACTIVE",
-      "proof_scope": "SECURITY",
+      "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
     }
   ]
