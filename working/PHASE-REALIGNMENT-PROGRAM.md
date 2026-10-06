@@ -40,16 +40,17 @@
 ~~~text
 Program = PFR-2026
 Status = ACTIVE
-Current Step = PFR-05 — Phase 1 Remaining Build Freeze Candidate
+Current Step = PFR-06 — Product Proof Stage A / DETAILED PLANNING GATE
 Current Build Control Source = appf2-build/build-spec/CURRENT.json + delivery/CURRENT-SPRINT.json
-Current Locked Baseline = BS-P1-018
-Current Build Execution = HOLD
+Current Locked Baseline = BS-P1-019
+Current Build Execution = HOLD / implementation_enabled=false
 SP-P1-002 = CLOSED
 T001–T009 = CLOSED
 Cursor Product Implementation = NOT AUTHORIZED
-PFR-03 = COMPLETED — F19 bounded Shared Ranking detailed design is BUILD_FREEZE_READY
+PFR-03 = COMPLETED — F19 bounded Shared Ranking detailed design frozen
 PFR-04 = COMPLETED — S03/S04/S05 textual delta review PASS; no High-fi reopen required
-Next Step = PFR-05 Human review of one Phase 1 remaining Build Freeze candidate
+PFR-05 = COMPLETED — BS-P1-019 LOCKED / BD-019 CLOSED / BF-048 RESOLVED
+Next Step = Human review of Product Proof Stage A — Playable App detailed Sprint planning; no Sprint ID allocated yet
 Carry-forward = Phase 4 mandatory hardening remains deferred; no Phase 1 reopen
 ~~~
 
@@ -64,8 +65,8 @@ Current status is a tracker convenience only. Canonical Build control state rema
 | PFR-02 | Complete `SP-P1-002 — Validation + Intent Foundation + Evidence Reliability` | 完成 Intent / Validation / Evidence 地基 | **Cursor implementation after Human Activation** | 2–4 days | **COMPLETED — SP-P1-002 CLOSED 2026-10-06** |
 | PFR-03 | Complete `F19 — Shared App Data / Social Persistence` Detailed Design | 把 Shared Ranking 設計到可施工 | Design only | 1–2 days | **COMPLETED — RANKING_ONLY / BUILD_FREEZE_READY** |
 | PFR-04 | UI/UX Delta Review | 重新檢查 S03 / S04 / S05 的 Shared Data / Remix / Lineage 影響 | Design only | ~1 day | **COMPLETED — TEXTUAL DELTA PASS / NO HIGH-FI REOPEN** |
-| PFR-05 | Create next Human-approved Product Proof Build Spec | 最新 Product Truth Freeze 成新的施工圖；**不在 roadmap 預留 BS 編號，實際 BS-P1-NNN 只在 Freeze 建立時依 canonical latest ID 分配** | Build planning / no product code | 0.5–1 day | **CURRENT — FREEZE CANDIDATE PREPARATION / HUMAN GATE** |
-| PFR-06 | Product Proof Stage A — Playable App Vertical Slice | Intent → generated App → render → play；**Sprint numeric ID at creation time** | **Cursor implementation** | 3–5 days | PENDING |
+| PFR-05 | Create next Human-approved Product Proof Build Spec | 最新 Product Truth Freeze 成新的施工圖；**不在 roadmap 預留 BS 編號，實際 BS-P1-NNN 只在 Freeze 建立時依 canonical latest ID 分配** | Build planning / no product code | 0.5–1 day | **COMPLETED — BS-P1-019 LOCKED 2026-10-06** |
+| PFR-06 | Product Proof Stage A — Playable App Vertical Slice | Intent → generated App → render → play；**Sprint numeric ID at creation time** | **Cursor implementation only after separate Human activation** | 3–5 days | **NEXT — DETAILED PLANNING NOT STARTED / NOT ACTIVATED** |
 | PFR-07 | Product Proof Stage B — Share + Shared Ranking | Share → recipient use → asynchronous Shared Ranking；**Sprint numeric ID at creation time** | **Cursor implementation** | 3–5 days | PENDING |
 | PFR-08 | Product Proof Stage C — Remix + Lineage | Remix → child Version → Parent / Root lineage → fresh Shared Data Scope；**Sprint numeric ID at creation time** | **Cursor implementation** | 3–5 days | PENDING |
 | PFR-09 | Product Hardening + Phase 1 Close | Recovery / Correction / Accessibility / performance / evidence 等必要收尾；**Sprint numeric ID(s) at creation time** | **Cursor implementation** | Evidence-driven | PENDING |
@@ -213,6 +214,7 @@ A0 exit：blocking Findings resolved → cross-contract re-audit PASS → projec
 
 | Date | Step | Update | Result |
 |---|---|---|---|
+| 2026-10-06 | PFR-05 | Human批准 Design PR #27 Product semantics + BS-P1-019 Build Freeze candidate；Design PR #27 merged `65d3a63e...`；Build candidate PR #278 merged `24fd40fa...`；formal Freeze PR #279 全 required checks PASS 後 merged `431f532c...`；BS-P1-019 LOCKED，implementation disabled / Sprint HOLD | COMPLETED → PFR-06 PLANNING GATE |
 | 2026-10-06 | PFR-03 / PFR-04 | Human批准 Phase 1 remaining alignment；F19收斂为 shared.ranking.v1 bounded proof；S03/S04/S05 delta review仅需 textual contract，不重开 High-fi | DESIGN CANDIDATE READY → PFR-05 |
 | 2026-09-30 | PFR-00 | 建立 Product-First Phase Realignment program + canonical progress tracker | COMPLETED |
 | 2026-10-01 | PFR-01 | 完成 Design → Build impact audit；Human 批准 PRESERVE / CHANGE / DEFER / NEW 與 Product-first Phase 1 重排 | COMPLETED |
