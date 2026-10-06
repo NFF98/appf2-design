@@ -1009,3 +1009,31 @@ Future directions：
 3. Future UI可形成「分享 App / 分享結果 / 開啟共同遊玩 Room」三種意圖，但 Phase 1 O01只落地「分享 App」。
 
 此 boundary 不修改目前 BUILD_FREEZE_READY F05 semantics。
+
+
+---
+
+## Phase 1 F19 Shared Ranking Integration
+
+此節是 Phase 1 Product Proof delta；不改 F05 immutable Share core，但擴充 eligible Share 的 optional F19 scope handoff。
+
+F05仍只分享 immutable App definition；若 validated Blueprint声明 `shared.ranking.v1`，Durable Share creation必须 idempotently ensure一个 F19 active scope。
+
+Share resolution可以另外带回：
+
+~~~text
+shared_data.capability_id = shared.ranking.v1
+shared_data.scope_ref = opaque reference
+shared_data.policy_version = F19 resource policy version
+~~~
+
+Rules：
+
+- `scope_ref`不是 DB id / credential；
+- recipient仍建立 fresh F03 Runtime Instance；
+- restore不得带回 Creator Runtime state；
+- scope必须与 resolved immutable Blueprint + active Share一致；
+- revoked / expired / untrusted Share不得继续作为 public F19 read/write authority；
+- multiple Shares of同一 immutable Blueprint不得偷偷建立 competing active ranking scopes；
+- F05不实现 ranking mutation；读写语义由 F19拥有；
+- REMIX / new immutable Version scope semantics由 F06 + F19拥有。
