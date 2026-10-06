@@ -211,7 +211,7 @@ Outcome：
 Phase 1 Product Proof extension candidate：
 
 ~~~text
-F19 — bounded Shared Ranking / Vote / Counter
+F19 — bounded Shared Ranking (`shared.ranking.v1`) only
 ~~~
 
 F19 已完成 Phase 1 **Shared Ranking-only** Detailed Design / Acceptance 收斂，现为 BUILD_FREEZE_READY；仍不属于既有 BS-P1-018，必须经下一次 Human-approved Build Freeze 才能成为 implementation authority。Vote / Counter / generic Records仍 deferred。
