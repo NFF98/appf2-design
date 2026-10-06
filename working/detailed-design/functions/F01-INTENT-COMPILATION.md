@@ -115,6 +115,14 @@ Rules：
 2. NEEDS_CLARIFICATION 時不可用 LLM proposal 代替 User answer。
 3. VALIDATED 只在 F02 PASSED 後成立。
 4. refine/correction failure 不破壞既有 validated Blueprint。
+5. Failure lifecycle owner = intent_record.lifecycle_status；compiler_run只保存 attempt detail，不可建立第二個 lifecycle truth。
+6. Canonical failure transition：
+   - ANALYZING technical/provider terminal-for-attempt failure → ANALYSIS_FAILED。
+   - COMPOSING failure → COMPOSITION_FAILED。
+   - final F02 REJECTED after allowed recompose budget → VALIDATION_REJECTED。
+   - deterministic incompatibility → INCOMPATIBLE。
+7. Same-body retry只可依 error taxonomy / F01-RQ-008A與 idempotency state machine執行：eligible ANALYSIS_FAILED → ANALYZING；eligible COMPOSITION_FAILED → COMPOSING；eligible VALIDATION_REJECTED → COMPOSING。INCOMPATIBLE / security / resource terminal不可 direct retry。
+8. retry transition必須與新的 idempotency attempt取得同一 transaction/critical section語意；若 attempt取得失敗，lifecycle不得先行推進。
 
 # 4. Structured Intent Envelope
 
@@ -136,6 +144,63 @@ StructuredIntentEnvelope
 ├─ capability_hints[]
 └─ analysis_metadata
 ~~~
+
+### F01-DATA-001A — Semantic Descriptor / Capability Hint machine shape
+
+`actors[]` / `entities[]` 使用同一個 bounded descriptor，不得留 opaque object 給 implementation 猜：
+
+~~~text
+SemanticDescriptor
+├─ id
+├─ semantic_role
+├─ description
+├─ source
+└─ source_ref?
+~~~
+
+`requested_outputs[]` 使用：
+
+~~~text
+RequestedOutputDescriptor
+├─ id
+├─ semantic_role
+├─ description
+├─ output_type
+├─ required
+├─ source
+└─ source_ref?
+~~~
+
+其中 `output_type` 只可為：
+
+~~~text
+NUMBER | STRING | BOOLEAN | ENUM | LIST | RECORD
+~~~
+
+`capability_hints[]` 是 Prompt A 可輸出的 **semantic requirement hint**，不是 Capability selection，也不得帶 capability_id / capability_version：
+
+~~~text
+CapabilityHintV1
+├─ hint_id
+├─ semantic_need
+├─ required
+├─ impact_level
+├─ input_types[]
+├─ output_types[]
+├─ interaction_class
+├─ constraint_item_ids[]
+└─ source_item_ids[]
+~~~
+
+Rules：
+
+1. `hint_id`、`SemanticDescriptor.id`、`RequestedOutputDescriptor.id` 使用 canonical semantic ID grammar `^[a-z][a-z0-9_]{0,63}$`，且不得與 policy-visible item / KnownInput ID collision；同一 logical fact跨 re-analysis保持同一 ID。
+2. `description` 與 `semantic_need` 都以 Unicode code point計長度，trim後必須 1..512；`semantic_need` 不得包含 provider/model metadata、Capability ID、code、module path 或 runtime handler identity。
+3. `input_types[]` / `output_types[]` 只使用上列六個 canonical root value-type token，排序去重；每個 array最多 16 items。
+4. `interaction_class` 必須是當前 pinned F04 compiler catalog `intent_classes[]` 已存在的 canonical semantic token；unknown token = Envelope invariant failure。F01不得自行創造另一套 interaction taxonomy。
+5. `constraint_item_ids[]` 只可引用同 Envelope policy-visible constraint item；`source_item_ids[]` 只可引用同 Envelope 的 policy-visible item / KnownInput / descriptor ID。Unknown ref / self-inconsistent ref = Envelope invariant failure。
+6. Prompt A 只可提出 hint；CapabilityRequirementExtractor 仍由 appf2 deterministic code擁有，LLM 不可直接輸出 final CapabilityRequirement或 selected CapabilityRef。
+7. Hint 若引用尚未 CONFIRMED 的 MATERIAL truth，不得進 final CapabilityRequirement；先由 Clarification Policy解決。
 
 Policy-visible semantic item contract：
 
@@ -555,17 +620,74 @@ ResolvedIntent
 ├─ resolved_intent_version
 ├─ intent_id
 ├─ goal
-├─ actors[]
-├─ entities[]
-├─ inputs[]
-├─ constraints[]
-├─ outputs[]
-├─ rules[]
-├─ accepted_assumptions[]
-├─ unresolved_non_material_items[]
-├─ capability_requirements[]
-└─ provenance_map
+├─ actors[]                       // SemanticDescriptor[]
+├─ entities[]                     // SemanticDescriptor[]
+├─ inputs[]                       // ResolvedInput[]
+├─ constraints[]                  // ResolvedSemanticItem[]
+├─ outputs[]                      // RequestedOutputDescriptor[]
+├─ rules[]                        // ResolvedSemanticItem[]
+├─ accepted_assumptions[]         // ResolvedAssumption[]
+├─ unresolved_non_material_items[] // UnresolvedNonMaterialItem[]
+├─ capability_requirements[]      // CapabilityRequirement[]
+└─ provenance_map                 // map<resolved_item_id, ProvenanceEntry>
 ~~~
+
+Exact Phase 1 entry shape：
+
+~~~text
+ResolvedInput
+├─ id
+├─ key
+├─ value
+├─ value_type
+├─ source
+├─ source_ref?
+└─ sensitivity                  // NORMAL | SENSITIVE only
+
+ResolvedSemanticItem
+├─ id
+├─ semantic_role
+├─ value
+├─ value_type
+├─ source
+├─ source_ref?
+├─ impact_level
+└─ materiality
+
+ResolvedAssumption
+├─ id
+├─ semantic_role
+├─ value
+├─ value_type
+├─ origin_source                // NFF_DEFAULT | USER_ACCEPTED_PROPOSAL
+└─ source_ref?
+
+UnresolvedNonMaterialItem
+├─ id
+├─ semantic_role
+├─ description
+├─ expected_value_type
+├─ source
+└─ source_ref?
+
+ProvenanceEntry
+├─ structured_item_id
+├─ source
+└─ source_ref?
+~~~
+
+Deterministic projection：
+
+1. `actors[]` / `entities[]` / `outputs[]` 是通過 F01-DATA-001A invariant 的 corresponding descriptor deterministic copy；不得在 ResolvedIntent 時重新由 LLM 改寫語意。
+2. `KnownInput.sensitivity in {NORMAL,SENSITIVE}` 且仍屬有效 resolved truth時投影到 `inputs[]`；保留 id/key/value/value_type/source/source_ref/sensitivity。
+3. `KnownInput.sensitivity=DO_NOT_PERSIST` **永遠不得**寫入 `intent_record.resolved_intent`、compiler_run、Blueprint 或 telemetry。若本次 composition 必須使用它，只能放在 request-scoped `EphemeralResolvedContext.inputs[]` 傳給 Prompt B；request結束即丟棄。之後 retry若該 context不存在，必須要求 User重新提供，不能從 durable truth猜回。
+4. `constraints[]` / `rules[]` 只投影 `resolution_state=CONFIRMED` 的 corresponding policy-visible item，value必須取 canonical `resolved_value`；PROPOSED / UNRESOLVED 不得偷進。
+5. accepted NFF_DEFAULT / USER_ACCEPTED_PROPOSAL 投影到 `accepted_assumptions[]`；USER_EXPLICIT edit後屬一般 resolved truth，不再偽裝 assumption。
+6. `materiality=COSMETIC && resolution_state!=CONFIRMED` 只可投影到 `unresolved_non_material_items[]`，而且不得作為 Prompt B executable/material input。
+7. `provenance_map` 對每個 durable resolved item ID 必須恰有一個 entry，指回 canonical StructuredIntent / KnownInput item與 source/source_ref；不得保存另一份 value truth。
+8. 所有 ID-bearing arrays 按 stable `id` lexicographic order持久化；`provenance_map` key同樣 canonical sort，讓同一 semantic truth byte-stable。
+9. `capability_requirements[]` 只可由 F01-RQ-004 CapabilityRequirementExtractor產生；Prompt A / Client不可直接持久化 final requirement。
+10. `EphemeralResolvedContext` 不是 ResolvedIntent、不是 durable semantic record，也不參與 idempotency request digest以外的持久化 replay payload；其缺失只能 fail closed / request User重新提供。
 
 進 Prompt B 條件：
 
@@ -582,7 +704,7 @@ Resolved Intent 禁止 required unknown、CRITICAL ambiguity、hidden material p
 
 ## F01-RQ-004
 
-F01 從 Resolved Intent 產生：
+F01 從 Resolved Intent deterministic 產生：
 
 ~~~text
 CapabilityRequirement
@@ -594,9 +716,36 @@ CapabilityRequirement
 ├─ output_types[]
 ├─ interaction_class
 └─ constraints[]
+    └─ RequirementConstraint
+       ├─ semantic_item_id
+       ├─ value
+       └─ value_type
 ~~~
 
-交 F04 resolveCapabilityCoverage。
+### F01-RQ-004A — CapabilityRequirementExtractor
+
+Canonical input只包含：
+
+~~~text
+ResolvedIntent without final capability_requirements
++ validated StructuredIntentEnvelope.capability_hints[]
++ pinned F04 compiler_catalog intent_classes
+~~~
+
+Algorithm：
+
+1. 只處理通過 F01-DATA-001A invariant 的 CapabilityHintV1。
+2. 每個 `source_item_ids[]` 必須能 trace到本輪仍有效的 resolved truth；若 MATERIAL source尚未 CONFIRMED，extractor fail closed，不得跳過 Clarification Gate。
+3. 每個 `constraint_item_ids[]` deterministic resolve到 `ResolvedIntent.constraints[]` 的 exact item；投影為 `RequirementConstraint{semantic_item_id,value,value_type}`。
+4. `semantic_need / required / impact_level / input_types / output_types / interaction_class` 必須與 validated hint一致；extractor不得增添、刪除或由 capability名稱反推。
+5. `requirement_id` = `sha256:` + lower-hex SHA-256 of canonical UTF-8 JSON tuple：
+   `{semantic_need,required,impact_level,input_types(sorted),output_types(sorted),interaction_class,constraints(sorted by semantic_item_id)}`。
+   同一 logical requirement 必須得到同一 ID；`hint_id` 不參與 identity。
+6. 完全相同 `requirement_id` dedupe成一項；若同一 requirement_id 對應不同 canonical tuple，F01-ERR-014 INTERNAL_INVARIANT。
+7. Extractor **不呼叫 ModelGateway**、不選 Capability ID/version、不做 fuzzy capability matching；Capability selection只由 F04 coverage resolver依 Registry semantic catalog完成。
+8. final `ResolvedIntent.capability_requirements[]` 按 requirement_id sort後持久化，並交 F04 `resolveCapabilityCoverage(requirements)`。
+
+這個 contract刻意沿用既有 Prompt A `analyzeIntent`；Phase 1不新增第三個 LLM operation。
 
 Result：
 
@@ -646,6 +795,7 @@ Input：
 
 ~~~text
 resolved_intent
+ephemeral_resolved_context?          // request-scoped DO_NOT_PERSIST values only; never durable
 accepted_visible_assumptions
 capability_coverage_result
 compiler_catalog
@@ -768,6 +918,40 @@ Handling：
 - SECURITY_TERMINAL → 不 retry。
 - RESOURCE_TERMINAL → explicit simplification / recovery。
 
+### F01-RQ-008A — Authoritative F02 rejection classification
+
+F02自己的 `Retry` 欄只描述 validator error本身，不授權 F01 recompose。F01 唯一 canonical mapping：
+
+| F02 error | F01 rejection class | F01 action |
+|---|---|---|
+| F02-ERR-001 INVALID_JSON | SCHEMA_FIXABLE | max 1 recompose |
+| F02-ERR-002 SCHEMA_INVALID | SCHEMA_FIXABLE | max 1 recompose |
+| F02-ERR-003 SCHEMA_VERSION_UNSUPPORTED | SCHEMA_FIXABLE | max 1 recompose only against the already pinned supported schema; otherwise terminal incompatible |
+| F02-ERR-004 REGISTRY_INCOMPATIBLE | CAPABILITY_FIXABLE | refresh F04 once, then max 1 recompose |
+| F02-ERR-005 CAPABILITY_INVALID | CAPABILITY_FIXABLE | refresh F04 once, then max 1 recompose |
+| F02-ERR-006 STATE_INVALID | SCHEMA_FIXABLE | max 1 recompose |
+| F02-ERR-007 NODE_GRAPH_INVALID | SCHEMA_FIXABLE | max 1 recompose |
+| F02-ERR-008 BINDING_TYPE_INVALID | SCHEMA_FIXABLE | max 1 recompose |
+| F02-ERR-009 EXPRESSION_INVALID | SCHEMA_FIXABLE | max 1 recompose |
+| F02-ERR-010 ACTION_EVENT_INVALID | SCHEMA_FIXABLE | max 1 recompose |
+| F02-ERR-011 RESOURCE_LIMIT_EXCEEDED | RESOURCE_TERMINAL | no same-body auto recompose; explicit simplify/edit |
+| F02-ERR-012 PERMISSION_NOT_ALLOWED | SECURITY_TERMINAL | no retry/recompose; edit request |
+| F02-ERR-013 FORBIDDEN_EXECUTABLE_CONTENT | SECURITY_TERMINAL | no retry/recompose |
+| F02-ERR-014 DEGRADATION_INVALID | CAPABILITY_FIXABLE | refresh F04 once, then max 1 recompose |
+| F02-ERR-015 HASH_INTEGRITY_FAILURE | SECURITY_TERMINAL | no recompose; surface F01-ERR-014 INTERNAL_INVARIANT / safe recovery |
+| F02-ERR-016 BLUEPRINT_REVOKED | SECURITY_TERMINAL | no recompose |
+| F02-ERR-017 BLUEPRINT_INCOMPATIBLE | CAPABILITY_FIXABLE | refresh compatibility/coverage once; no fake local success |
+
+Rules：
+
+1. 一個 compile logical operation的 validation-driven recompose budget總共最多 1 次；不能每 error class各重設一次。
+2. CAPABILITY_FIXABLE先重跑 pinned/current F04 coverage；若結果變 UNSUPPORTED / EXTERNAL_OR_HEAVY_REQUIRED，轉 F01-ERR-008，不再 compose。
+3. Fixable budget耗盡仍 REJECTED → F01-ERR-011 VALIDATION_REJECTED。
+4. RESOURCE_TERMINAL → F01-ERR-011，`details.rejection_class=RESOURCE_TERMINAL`，只允許 User edit / simpler version，不得 same-body retry。
+5. PERMISSION_NOT_ALLOWED / FORBIDDEN_EXECUTABLE_CONTENT / BLUEPRINT_REVOKED → F01-ERR-012 SECURITY_TERMINAL。
+6. F02-ERR-015 是 integrity fault，不得包成普通 User validation rejection；F01回 F01-ERR-014並交安全 recovery。
+7. `SEMANTIC_CONTRADICTION` 保留給 F01自身對 Resolved Intent / composed candidate semantic consistency的 deterministic contradiction；F02明定不從 Blueprint JSON單獨證明 Intent semantic correctness，因此 Phase 1沒有 F02 error code直接映射此 class。
+
 F01 不偷偷 mutation F02 Candidate。
 
 # 18. Public API Conventions
@@ -827,6 +1011,24 @@ Rules：
 - API version 與 Blueprint schema version 分離。
 - same Idempotency-Key + same body → same logical operation。
 - same key + different body → 409 IDEMPOTENCY_CONFLICT。
+
+## F01-API-ID-001 — Anonymous continuity binding
+
+Canonical request identity：
+
+~~~text
+request_anonymous_id
+~~~
+
+來源規則：
+
+1. `POST /api/v1/intents` 由 request body `anonymous_id` 提供；若 platform同時有 trusted request context identity，兩者必須 exact match，否則 400 / F01-ERR-001。
+2. `POST /api/v1/intents/{intent_id}/answers` 與 `POST /api/v1/intents/{intent_id}/compile` **不得**接受 body anonymous_id；由 appf2 server-owned trusted request context提供 `request_anonymous_id`。
+3. trusted request context是 server adapter boundary；可由 first-party request/session plumbing實現，但 Product contract不固定 cookie/header名稱。Client不可用 arbitrary body field覆寫它。
+4. answers/compile lookup必須以 `(intent_id, request_anonymous_id)` scope，或等價 server-side equality check。若 intent不存在或存在但 `intent_record.anonymous_id != request_anonymous_id`，兩者都回相同 404 / F01-ERR-015 INTENT_NOT_FOUND；不得洩漏另一 anonymous identity是否擁有該 intent。
+5. missing/invalid trusted identity context → 400 / F01-ERR-001。
+6. 這個 equality gate只建立 continuity / idempotency isolation；**不是 authentication、ownership proof或 sensitive-action authorization**，不得改寫 F07 anonymous identity contract。
+7. F01 idempotency scope中的 anonymous_id永遠使用本節 resolved的 `request_anonymous_id`。
 
 # 19. API 1 — Create / Analyze Intent
 
@@ -941,11 +1143,21 @@ POST /api/v1/intents/{intent_id}/compile
 Preconditions：
 
 ~~~text
-intent.status = READY
-resolved_intent exists
-coverage = FULLY_SUPPORTED
-or allowed PARTIALLY_SUPPORTED
+normal entry:
+  intent.lifecycle_status = READY
+
+retry entry:
+  intent.lifecycle_status = COMPOSITION_FAILED | VALIDATION_REJECTED
+  AND previous F01 error / F01-RQ-008A class is retry-eligible
+  AND resolved_intent is still valid for current intent_version
+
+both:
+  resolved_intent exists
+  coverage = FULLY_SUPPORTED
+  or allowed PARTIALLY_SUPPORTED
 ~~~
+
+Retry entry atomic transition：eligible failure state → `COMPOSING`；不得為了通過 precondition先偽造一個 durable READY transition。INCOMPATIBLE、SECURITY_TERMINAL、RESOURCE_TERMINAL與 CANCELLED不得 direct same-body compile retry，必須先有 explicit User edit / compatibility change / new logical mutation。
 
 Request：
 
@@ -1006,11 +1218,15 @@ Canonical persistence：DATA-MODEL `idempotency_operation` / PostgreSQL。
 
 Rules：
 
-- retry 不 duplicate intent / compiler run。
+- retry 不 duplicate intent / logical compiler operation；每個 provider attempt仍可有自己的 compiler_run attempt evidence。
 - compile retry 若 logical operation 已成功，直接回同 logical result。
 - key 不跨 anonymous identity reuse。
-- same key + same body + IN_PROGRESS → 409 IDEMPOTENCY_IN_PROGRESS。
+- same key + same body + IN_PROGRESS 且 lease尚有效 → 409 IDEMPOTENCY_IN_PROGRESS。
+- same key + same body + FAILED_RETRYABLE → 依 Shared API / DATA-MODEL canonical CAS重新取得同 logical operation，attempt_no +1，不建立第二個 intent / logical compile。
+- same key + same body + IN_PROGRESS 但 lease已逾 canonical route deadline → 只允許一個 caller以 CAS takeover成新 attempt；舊 attempt任何 late completion不得覆寫新 attempt。
 - same key + different body → 409 IDEMPOTENCY_CONFLICT。
+- `POST /intents` 在 provider work前就必須把同 logical operation綁到唯一 `intent_record` result_ref；504/provider failure後重試沿用同 intent_id。
+- compile success的 logical_result_ref可指向 admitting validation_run，再 deterministic取得 immutable Blueprint content_hash；不得保存 raw success response作第二份 truth。
 - F01不得建立自己的 idempotency table / KV truth。
 
 # 23. API Timeout / Cancellation
@@ -1142,6 +1358,7 @@ Visual layout 由 F00 決定。
 | F01-ERR-012 | SECURITY_TERMINAL | NO | safe context |
 | F01-ERR-013 | IDEMPOTENCY_CONFLICT | NO | existing operation |
 | F01-ERR-014 | INTERNAL_INVARIANT | NO | trace context |
+| F01-ERR-015 | INTENT_NOT_FOUND | NO | safe request context |
 
 # 29. Recovery
 
@@ -1512,11 +1729,14 @@ Network retry：
 - 不重複完成 checkpoint。
 - 不因 HTTP retry 增加 progress。
 
-User-triggered retry after terminal/recoverable failure：
+User-triggered retry after recoverable failure：
 
-- 建立新的 logical progress operation。
-- 可重新使用仍然有效的 durable Intent / Resolved Intent truth。
+- 建立新的 logical **progress operation**；這不等於建立新的 API idempotency logical operation。
+- 若 request body未變，mutation retry必須沿用原 Idempotency-Key，並由 Shared idempotency `FAILED_RETRYABLE / expired-IN_PROGRESS takeover`規則取得新 attempt。
+- 可重新使用仍然有效的 durable Intent / Resolved Intent truth；`DO_NOT_PERSIST` ephemeral context若已消失，必須要求 User重新提供。
+- accepted retry由失敗 lifecycle state直接進對應 work state（例如 COMPOSITION_FAILED / eligible VALIDATION_REJECTED → COMPOSING），不得先偽造 READY。
 - completed checkpoints 必須從仍有效的 Function truth重新 derive，不得直接複製前一失敗 operation 的百分比。
+- security/resource/incompatible terminal state沒有 direct same-body retry；User edit / compatibility change後是新的 logical mutation，必須使用新的 Idempotency-Key。
 
 Cancel：
 
