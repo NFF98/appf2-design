@@ -101,14 +101,30 @@ Scope：
 anonymous_id + route_key + idempotency_key
 ~~~
 
+Canonical status：
+
+~~~text
+IN_PROGRESS
+FAILED_RETRYABLE
+SUCCEEDED
+FAILED_TERMINAL
+~~~
+
 Rules：
 
 1. same key + same request digest + SUCCEEDED → replay same logical result。
-2. same key + same digest + IN_PROGRESS → HTTP 409 / API-IDEMPOTENCY-IN-PROGRESS / retryable=true。
-3. same key + different digest → HTTP 409 / API-IDEMPOTENCY-CONFLICT。
-4. TTL = 24h。
-5. expired operation不再保證 replay。
-6. Idempotency record不保存 raw request body。
+2. same key + same digest + FAILED_TERMINAL → replay same terminal logical outcome。
+3. same key + same digest + FAILED_RETRYABLE → caller以 atomic compare-and-swap取得新 attempt：status→IN_PROGRESS、attempt_no+1、lease_expires_at重設為該 route canonical server deadline；logical result identity不得換掉。
+4. same key + same digest + IN_PROGRESS 且 `now < lease_expires_at` → HTTP 409 / API-IDEMPOTENCY-IN-PROGRESS / retryable=true。
+5. same key + same digest + IN_PROGRESS 且 lease已過期 → 只允許一個 caller以 CAS takeover：attempt_no+1 + 新 lease；其他 concurrent caller看到新 IN_PROGRESS後回 409。
+6. 每次 side effect / terminal state commit 必須 compare current attempt_no + IN_PROGRESS lease ownership；stale/late attempt completion不得覆寫較新的 attempt outcome。
+7. retryable transient failure → FAILED_RETRYABLE，保存 bounded error_code/http_status與已建立的 logical result_ref；**不得**留永久 IN_PROGRESS，也不得假裝 FAILED_TERMINAL。
+8. non-retryable terminal failure → FAILED_TERMINAL。
+9. same key + different digest → HTTP 409 / API-IDEMPOTENCY-CONFLICT。
+10. TTL = 24h；expired operation不再保證 replay。
+11. Idempotency record不保存 raw request body / raw User content；replay由 durable logical result_ref重建。
+12. `lease_expires_at` 不使用任意 hidden timeout：由 host Function已鎖定的 canonical server request budget建立。沒有 canonical budget的 mutation必須先定義它，不能自行發明 lease。
+13. material User edit / new logical mutation使用新的 Idempotency-Key；network retry / same-body retry沿用原 key。
 
 Exception：
 
@@ -173,7 +189,9 @@ F01 compile <= 30s
 Rules：
 
 - client abort只表示停止等待，不等於 server side一定取消成功。
-- retry mutation必須沿用原 Idempotency-Key。
+- network retry / same-body retry mutation必須沿用原 Idempotency-Key；material User edit / new logical mutation必須使用新 key。
+- retryable failure必須先 durable transition到 FAILED_RETRYABLE；不能靠刪 idempotency row放行 duplicate logical outcome。
+- expired IN_PROGRESS takeover仍是同一 logical operation，只增加 attempt_no；舊 attempt late completion必須被拒絕。
 - Core Phase 1不以 hidden background job完成超時 request。
 
 # 11. Rate-limit / Cost Classes
