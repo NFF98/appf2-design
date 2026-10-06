@@ -752,3 +752,35 @@ Database 不需要 Day 1 multi-region write。
 - settlement audit。
 
 ---
+
+
+# Phase 1 Product Proof Extension — F19 Shared Ranking Infrastructure
+
+> Status：**BUILD_FREEZE_READY SUPPORTING BOUNDARY**。
+>
+> 本節只承接 F19 `shared.ranking.v1`；不啟用 F09 Realtime、dedicated cache cluster、message broker、F13 billing service 或 generic user database。
+
+Canonical deployment shape：
+
+~~~text
+Browser Generated App
+→ appf2 HTTP/API boundary
+→ F05 Share + F19 authority validation
+→ appf2 F19 service/repository
+→ PostgreSQL durable ranking tables
+~~~
+
+Rules：
+
+1. Phase 1 Shared Ranking使用现有 appf2 server/API + PostgreSQL truth boundary；不得要求独立 Realtime service。
+2. public client没有 DB credential / Supabase direct-write authority。
+3. rate limit / abuse guard在 server boundary执行；participant Product identity仍来自 F07 trusted anonymous identity，不用 fingerprint取代。
+4. read可经 bounded application/CDN cache only if active Share/trust gate仍不可被绕过；cache不是 authority。
+5. write必须到 PostgreSQL atomic transaction；不得用 browser local queue假装 durable Shared Ranking success。
+6. no new queue/broker is required for Product Proof；Evidence delivery沿 F07 existing pipeline。
+7. migration必须有 rollback/forward-fix safety、constraint validation与真 PostgreSQL integration proof。
+8. cost simulation至少覆盖：scope count、entry count、monthly participant bucket、read/write request rate、Evidence volume；这些用于校准 `F19ResourcePolicyV1`，不自动启用 F13。
+9. quota exhaustion不得通过“删除 active ranking data”降低成本；先 throttle expensive writes，safe read/local play尽量保留。
+10. production secrets只存在 server/runtime secret boundary，不进入 Blueprint、Share URL、Browser、Evidence。
+
+No Phase 1 infrastructure expansion beyond these requirements is implied.
