@@ -1010,11 +1010,9 @@ Future directions：
 
 此 boundary 不修改目前 BUILD_FREEZE_READY F05 semantics。
 
-## Phase 1 Shared Data + Future Commerce Compatibility
+## Phase 1 F19 Shared Ranking Integration
 
-此節只固定 future compatibility，不改目前 Phase 1 BUILD_FREEZE_READY F05 behavior。
-
-### F19 Shared App Data — Phase 1 Shared Ranking Integration
+此節是 Phase 1 Product Proof delta；不改 F05 immutable Share core，但擴充 eligible Share 的 optional F19 scope handoff。
 
 F05仍只分享 immutable App definition；若 validated Blueprint声明 `shared.ranking.v1`，Durable Share creation必须 idempotently ensure一个 F19 active scope。
 
@@ -1036,6 +1034,10 @@ Rules：
 - multiple Shares of同一 immutable Blueprint不得偷偷建立 competing active ranking scopes；
 - F05不实现 ranking mutation；读写语义由 F19拥有；
 - REMIX / new immutable Version scope semantics由 F06 + F19拥有。
+
+## Future Commerce Compatibility
+
+> Deferred：本節不屬 Phase 1 Build Freeze candidate。
 
 ### F20 FREE / PAID Share Gate
 
