@@ -1,19 +1,20 @@
 {
-  "registry_version": "2.3.0",
+  "registry_version": "2.4.0",
   "phase_1_freeze_audit": {
     "status": "PASS",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
     "eligibility": "HUMAN_APPROVED_BUILD_FREEZE_REQUIRED",
     "excludes": [
       "PHASE_2_PLUS",
-      "DEFERRED_CONTENT"
+      "DEFERRED_CONTENT",
+      "F19_VOTE_COUNTER_GENERIC_RECORDS"
     ],
-    "audited_on": "2026-10-01",
-    "change_ref": "A0-BF-016-BF-023-PENDING-REAUDIT"
+    "audited_on": "2026-10-06",
+    "change_ref": "PFR-03-PFR-04-F19-RANKING-FREEZE-CANDIDATE"
   },
   "owner": "working/detailed-design/registries/acceptance-test-registry.json",
   "conventions": "working/common-core/ACCEPTANCE-CONVENTIONS.md",
-  "total_acceptance": 289,
+  "total_acceptance": 307,
   "entries": [
     {
       "acceptance_id": "F00-AC-001",
@@ -2909,6 +2910,186 @@
       "expected_observable": "session id unchanged；draft/preview preserved；no duplicate lineage/change operation created。",
       "contract_status": "ACTIVE",
       "proof_scope": "BEHAVIOR",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-001",
+      "function_id": "F19",
+      "criterion": "同一 Shared App recipients 可跨時間讀取同一 durable ranking scope。",
+      "test_id": "TEST-F19-001",
+      "expected_observable": "同一 Shared App recipients 可跨時間讀取同一 durable ranking scope。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "END_TO_END",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-002",
+      "function_id": "F19",
+      "criterion": "Shared Ranking read/write 不依賴 F09 Realtime Room。",
+      "test_id": "TEST-F19-002",
+      "expected_observable": "Shared Ranking read/write 不依賴 F09 Realtime Room。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "CONTRACT",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-003",
+      "function_id": "F19",
+      "criterion": "ranking mutable data 不進 immutable Blueprint body，也不等同 Creator Runtime state。",
+      "test_id": "TEST-F19-003",
+      "expected_observable": "ranking mutable data 不進 immutable Blueprint body，也不等同 Creator Runtime state。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "CONTRACT",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-004",
+      "function_id": "F19",
+      "criterion": "Client 無法建立 arbitrary DB schema/SQL/collection CRUD。",
+      "test_id": "TEST-F19-004",
+      "expected_observable": "Client 無法建立 arbitrary DB schema/SQL/collection CRUD。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "SECURITY",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-005",
+      "function_id": "F19",
+      "criterion": "eligible Share restore 只回 opaque scope_ref，不洩漏 internal scope id / DB authority。",
+      "test_id": "TEST-F19-005",
+      "expected_observable": "eligible Share restore 只回 opaque scope_ref，不洩漏 internal scope id / DB authority。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "CONTRACT",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-006",
+      "function_id": "F19",
+      "criterion": "participant authority 由 server/F07 解析；Client 不能 spoof participant_ref。",
+      "test_id": "TEST-F19-006",
+      "expected_observable": "participant authority 由 server/F07 解析；Client 不能 spoof participant_ref。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "SECURITY",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-007",
+      "function_id": "F19",
+      "criterion": "submit 依 Share→trust→scope→identity→payload→quota 順序 fail closed 驗證。",
+      "test_id": "TEST-F19-007",
+      "expected_observable": "submit 依 Share→trust→scope→identity→payload→quota 順序 fail closed 驗證。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "CONTRACT",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-008",
+      "function_id": "F19",
+      "criterion": "duplicate logical submit idempotent；same operation id + different payload fail closed。",
+      "test_id": "TEST-F19-008",
+      "expected_observable": "duplicate logical submit idempotent；same operation id + different payload fail closed。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "CONTRACT",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-009",
+      "function_id": "F19",
+      "criterion": "ASC/DESC + BEST_SCORE/LATEST_SCORE + tie-break 產生 deterministic ranking。",
+      "test_id": "TEST-F19-009",
+      "expected_observable": "ASC/DESC + BEST_SCORE/LATEST_SCORE + tie-break 產生 deterministic ranking。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "BEHAVIOR",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-010",
+      "function_id": "F19",
+      "criterion": "REMIX child 建立 fresh scope，且不能自動讀寫 Parent scope。",
+      "test_id": "TEST-F19-010",
+      "expected_observable": "REMIX child 建立 fresh scope，且不能自動讀寫 Parent scope。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "END_TO_END",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-011",
+      "function_id": "F19",
+      "criterion": "Phase 1 REFINE new immutable Version 也不自動繼承舊 ranking scope。",
+      "test_id": "TEST-F19-011",
+      "expected_observable": "Phase 1 REFINE new immutable Version 也不自動繼承舊 ranking scope。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "CONTRACT",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-012",
+      "function_id": "F19",
+      "criterion": "F19ResourcePolicyV1 不依賴 full F13 runtime / billing。",
+      "test_id": "TEST-F19-012",
+      "expected_observable": "F19ResourcePolicyV1 不依賴 full F13 runtime / billing。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "CONTRACT",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-013",
+      "function_id": "F19",
+      "criterion": "quota/grace exhausted 優先限制新寫入並保留 safe read/local play。",
+      "test_id": "TEST-F19-013",
+      "expected_observable": "quota/grace exhausted 優先限制新寫入並保留 safe read/local play。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "BEHAVIOR",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-014",
+      "function_id": "F19",
+      "criterion": "F19 Evidence 不含 participant_ref、display_name、raw score 或 full ranking。",
+      "test_id": "TEST-F19-014",
+      "expected_observable": "F19 Evidence 不含 participant_ref、display_name、raw score 或 full ranking。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "RUNTIME_EVIDENCE",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-015",
+      "function_id": "F19",
+      "criterion": "revoked/expired/untrusted Share 不能繼續作 public ranking read/write authority。",
+      "test_id": "TEST-F19-015",
+      "expected_observable": "revoked/expired/untrusted Share 不能繼續作 public ranking read/write authority。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "SECURITY",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-016",
+      "function_id": "F19",
+      "criterion": "A/B/C 在不同時間提交後可觀察同一正確排序結果。",
+      "test_id": "TEST-F19-016",
+      "expected_observable": "A/B/C 在不同時間提交後可觀察同一正確排序結果。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "END_TO_END",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-017",
+      "function_id": "F19",
+      "criterion": "transaction/concurrency failure 不產生 partial rank + false dedupe success。",
+      "test_id": "TEST-F19-017",
+      "expected_observable": "transaction/concurrency failure 不產生 partial rank + false dedupe success。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "INTEGRATION",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F19-AC-018",
+      "function_id": "F19",
+      "criterion": "read response bounded 且不洩漏 participant_ref、operation history、DB metadata。",
+      "test_id": "TEST-F19-018",
+      "expected_observable": "read response bounded 且不洩漏 participant_ref、operation history、DB metadata。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "SECURITY",
       "required_for_build_freeze": true
     }
   ]
