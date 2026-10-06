@@ -1706,6 +1706,13 @@ Browser / F03 fresh execution gate由 `working/common-core/EXECUTION-ADMISSION.m
 
 F12 後續定 consumer copy / next action。
 
+Cross-Function retry authority：
+
+- 本表 `Retry` 只說 F02 error是否可能經上游修正後再次 validation；**不等於 F01可自動 recompose**。
+- F01對每個 F02 error的 `SCHEMA_FIXABLE / CAPABILITY_FIXABLE / SEMANTIC_CONTRADICTION / SECURITY_TERMINAL / RESOURCE_TERMINAL` authoritative mapping只由 F01-RQ-008A擁有。
+- 特別是 `F02-ERR-012 PERMISSION_NOT_ALLOWED` 與 `F02-ERR-013 FORBIDDEN_EXECUTABLE_CONTENT` = no retry / security terminal；Recovery Registry不得把它們降級成普通 STATE_OR_ACTION_FAILURE。
+- `F02-ERR-015 HASH_INTEGRITY_FAILURE` = integrity terminal，F01不得拿去 recompose。
+
 # 40. Security / Permission
 
 - F02-SEC-001 Blueprint 是 data，不是 code。
