@@ -82,7 +82,7 @@ working/common-core/DESIGN-TO-DELIVERY.md
 | F16 | Result Feedback / Logic Correction | 錯誤結果可修正、比較、回退 | 0–1 月 | BUILD_FREEZE_READY | `working/detailed-design/functions/F16-RESULT-CORRECTION.md` |
 | F17 | Heterogeneous Workflow Orchestration | 多異質 steps 完成同一 Outcome | Phase 3+ / evidence-gated | DEFERRED_BASELINE | `functions/F17-WORKFLOW-ORCHESTRATION.md` |
 | F18 | Capability Discovery + Evolution | Current App → contextual better ideas → Refine / Remix → better App | Phase 4+ / evidence-gated | DEFERRED_BASELINE | `functions/F18-CAPABILITY-DISCOVERY-EVOLUTION.md` |
-| F19 | Shared App Data / Social Persistence | Shared App → recipients 跨時間共用 bounded durable data | Phase 1 Product Proof extension / evidence-gated | WORKING_BASELINE / NOT_BUILD_FREEZE_READY | `functions/F19-SHARED-APP-DATA.md` |
+| F19 | Shared App Data / Social Persistence | Shared App → recipients 跨時間共用 bounded durable ranking data | Phase 1 Product Proof extension | BUILD_FREEZE_READY — RANKING_ONLY | `functions/F19-SHARED-APP-DATA.md` |
 | F20 | Creator App Commerce | FREE / PAID App → Play + Remix entitlement → bounded creator revenue split | Phase 3 Commerce Pilot / evidence-gated | DEFERRED_BASELINE / NOT_BUILD_FREEZE_READY | `functions/F20-CREATOR-APP-COMMERCE.md` |
 
 Deferred baseline 的存在不等於 activation；只有 `BUILD_FREEZE_READY` Function 才可進當期 Build Freeze candidate set。
@@ -211,10 +211,10 @@ Outcome：
 Phase 1 Product Proof extension candidate：
 
 ~~~text
-F19 — bounded Shared Ranking / Vote / Counter
+F19 — bounded Shared Ranking (`shared.ranking.v1`) only
 ~~~
 
-F19 已是 Human-approved Product Direction，但目前 **不屬於既有 Phase 1 Build Freeze**；必須完成 F19 Detailed Design / Acceptance / Human approval 才可加入任何 Build Spec。
+F19 已完成 Phase 1 **Shared Ranking-only** Detailed Design / Acceptance 收斂，现为 BUILD_FREEZE_READY；仍不属于既有 BS-P1-018，必须经下一次 Human-approved Build Freeze 才能成为 implementation authority。Vote / Counter / generic Records仍 deferred。
 
 Release 1 Gate：
 

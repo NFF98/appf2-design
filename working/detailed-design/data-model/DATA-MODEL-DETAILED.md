@@ -880,53 +880,73 @@ Phase 1 可由 Supabase/Postgres adapter 實作。
 
 ---
 
-# 15.1 Approved Phase 1 Product Proof Extension — F19 Shared App Data
+# 15.1 Approved Phase 1 Product Proof Extension — F19 Shared Ranking
 
-> Status：WORKING PRODUCT-PROOF EXTENSION / NOT PART OF CURRENT PHASE 1 BUILD FREEZE。
+> Status：**BUILD_FREEZE_READY — PHASE_1_SHARED_RANKING_PROOF_ONLY**。
+>
+> Generic Vote / Counter / Record Set remains deferred；本节只冻结 `shared.ranking.v1` 所需 durable truth。
 
-F19不是generic User Database；只允許Registry-approved Shared Ranking / Vote / Counter / bounded Shared Records。
+F19不是generic User Database。
+
+Canonical Phase 1 relational minimum：
 
 ~~~text
 shared_data_scope
-- shared_data_scope_id
-- blueprint_hash
-- created_by_anonymous_id?
-- owner_user_id? / app_version_id?   # F08後
-- status
-- entitlement_policy_version?
+- shared_data_scope_id uuid PK
+- blueprint_hash FK -> immutable Blueprint identity
+- capability_id text CHECK = 'shared.ranking.v1'
+- resource_policy_version text
+- status ACTIVE | ARCHIVED
 - created_at
+- archived_at?
+- unique active-equivalent (blueprint_hash, capability_id)
 
-shared_data_collection
-- collection_id
-- shared_data_scope_id
-- collection_key
-- collection_type        # RANKING / VOTE / COUNTER / RECORD_SET
-- schema_version
-- read_policy / write_policy
-- status
+shared_ranking_entry
+- ranking_entry_id uuid PK
+- shared_data_scope_id FK
+- participant_ref opaque server-owned
+- score bigint
+- display_name? bounded public content
+- achieved_at
+- updated_at
+- UNIQUE (shared_data_scope_id, participant_ref)
 
-shared_data_record
-- record_id
-- collection_id
-- participant_ref?
-- payload                # Capability-defined bounded schema only
-- created_at / updated_at?
+shared_ranking_operation
+- shared_data_scope_id FK
+- participant_ref
+- operation_id
+- request_fingerprint
+- outcome CREATED | UPDATED | NO_CHANGE
+- created_at
+- UNIQUE (shared_data_scope_id, participant_ref, operation_id)
 ~~~
 
 Rules：
 
-1. payload不是arbitrary user-defined schema。
-2. Client不得拿table/SQL/RLS當產品API。
-3. F19-enabled Share activation後可增加optional shared_data_scope resolution；目前frozen F05不自動改schema。
-4. 同一Shared App recipients解析同一scope。
-5. REMIX child預設fresh scope，不繼承Parent data。
-6. same-Creator REFINE若保留scope必須explicit compatibility/migration。
-7. capacity由F13 versioned config決定。
-8. writes要rate limit / abuse / privacy guardrail。
-9. 只有capability-defined shared outcome durable，不是每次local click寫DB。
-10. exact migration/index/retention在F19 Build Freeze前完成。
+1. mutable ranking data不进入 immutable Blueprint body。
+2. Client不得知道 internal `shared_data_scope_id`；F05只给 opaque `scope_ref`。
+3. participant_ref由 server/F07 trusted anonymous identity解析，Client不得提交。
+4. same immutable Blueprint + `shared.ranking.v1`只有一个 active-equivalent scope。
+5. one participant per scope only one current ranking row。
+6. operation dedupe与 rank update必须同一 atomic transaction / equivalent durability boundary。
+7. same operation replay返回同一 logical outcome；same id + different fingerprint fail closed。
+8. score = signed safe integer，且受 immutable capability `score_min/score_max`约束。
+9. ranking ordering由 F19 immutable capability config决定；DB natural order不是 truth。
+10. REMIX child / Phase 1 REFINE new immutable Version均 fresh scope；不得自动继承 Parent mutable data。
+11. active Share/trust/scope relation必须在 public read/write时 server-side重新验证。
+12. F19 Phase 1 resource limits由 versioned `F19ResourcePolicyV1`解析，不依赖 full F13 runtime。
+13. quota/grace exhaustion先 throttle costly writes；safe reads/local Runtime尽量保持。
+14. Evidence不得复制 participant_ref / display_name / raw score / full ranking。
+15. Phase 1无 user-facing reset；archive/retention由 versioned resource policy + maintenance owner管理，不得删除 ACTIVE scope当作 quota处理。
 
-Product Proof：18啦A/B/C不同時間玩仍共享bounded Ranking；Remix child有自己的Ranking空間。
+Required indexes只覆盖已证实 access pattern：
+
+- scope by blueprint_hash + capability_id；
+- participant row；
+- ranking order；
+- operation idempotency key。
+
+Migration / constraint / transaction behavior必须使用真 PostgreSQL integration proof。
 
 # 16. Ownership of Detailed Schemas
 

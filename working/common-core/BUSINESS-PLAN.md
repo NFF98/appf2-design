@@ -412,7 +412,7 @@ Intent
 - Browser Runtime
 - Share / Restore
 - Remix
-- **F19 bounded Shared App Data proof：Shared Ranking / Vote / Counter**
+- **F19 bounded Shared App Data proof：Phase 1 只做 Shared Ranking；Vote / Counter / generic Records deferred**
 - Anonymous Identity
 - Humanized Recovery
 - 最小必要 Evidence

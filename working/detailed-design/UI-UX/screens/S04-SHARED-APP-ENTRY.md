@@ -937,3 +937,20 @@ Step 4：**APPROVED / CLOSED**。
 
 S04 ④B High-fi：**STEP 1–4 COMPLETE / CLOSED**。
 
+
+
+# PFR-04 Delta — F19 Shared Ranking Restore
+
+> Status：**DELTA REVIEW PASS / BUILD_FREEZE_READY**。
+>
+> 结论：不 reopen S04 High-fi；F19只扩展 restore contract，不建立 Share Landing Page。
+
+1. S04继续先解析 F05 Share + Blueprint trust。
+2. 若 Blueprint启用 `shared.ranking.v1`，successful restore再取得 opaque `scope_ref`；internal scope id不得进入 UI。
+3. F19 scope resolution不得阻止 immutable App definition的安全错误处理：trust/integrity失败仍优先 fail closed。
+4. READY后仍自动进入 S03；不新增「排行榜准备好，按继续」页面。
+5. F19 transient scope dependency失败可按 F12 policy retry；permanent inactive/revoked scope不得假装重新生成。
+6. Recipient First Value前仍不要求 account；participant authority由 F07 anonymous identity server-side解析。
+7. S04不得预览 Creator Runtime state、ranking participant identity或 raw ranking payload。
+8. S04 canonical High-fi visual继续有效，无需 replacement PNG。
+

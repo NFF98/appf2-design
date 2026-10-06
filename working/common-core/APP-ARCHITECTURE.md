@@ -102,6 +102,7 @@ flowchart LR
 | **L3 LegoSpec Validation** | schema、semantic boundary、security、compatibility | 只有可信任 Blueprint 可進 Runtime |
 | **L4 Universal Runtime** | state、rules、actions、views、effects | Browser 端低成本、可重播的互動 App |
 | **State / Identity / Evidence** | Blueprint、Instance、result、lineage、anonymous/account evidence | Share、Remix、Reuse、Ownership 與改善證據 |
+| **F19 Shared Data Boundary** | approved Shared App durable mutable data；Phase 1 only `shared.ranking.v1` | 同一 Shared App recipients 跨時間共用 bounded ranking；與 F03 local state / F09 Realtime 分離 |
 | **Result Quality Loop** | User 對執行結果提出「邏輯不對／結果差太多」的修正 | 保留舊版，只修相關語意，產生可比較、可回退的新 Blueprint |
 | **Recovery System** | error classification、context preservation、next action | 不 White Screen、不丟工程碼、不讓 User 全部重來 |
 | **External Capability Plane** | AI / API / payment / booking / heavy compute | 只有需要時才離開 local Runtime |
@@ -291,6 +292,37 @@ L2 can describe
 ---
 
 
+
+
+## 4.3 Shared Durable App Data — Phase 1 F19 Extension
+
+Phase 1 Product Proof新增一條**受控 server-side durable write path**，但不改 Universal Runtime 核心：
+
+~~~text
+F03 Browser Runtime
+= local mutable interaction state
+
+F05 Durable Share
+= immutable Blueprint reference
++ optional opaque F19 scope_ref
+
+F19 shared.ranking.v1
+= appf2 API authority
+→ server validates Share / Blueprint trust / scope / participant / quota
+→ PostgreSQL atomic durable ranking state
+~~~
+
+Architecture invariants：
+
+1. Generated App不得取得 DB credential / SQL / table authority。
+2. F19 mutable ranking data不得寫回 immutable Blueprint。
+3. F19不是 Creator Runtime snapshot；recipient仍建立 fresh F03 Runtime Instance。
+4. F19 public read/write必须重新验证 active Share + scope/Blueprint relation。
+5. Phase 1只啟用 asynchronous Shared Ranking；F09 Realtime仍 deferred。
+6. Phase 1 resource policy由 F19 versioned config承接，不依賴 full F13 entitlement/billing service。
+7. REMIX / new immutable Version不自動繼承 Parent mutable scope。
+
+這是現有 Edge/API + PostgreSQL boundary 的 extension，不引入新的 always-on server / message broker / realtime plane。
 
 # 5. Model Gateway：LLM 可自由切換
 
@@ -742,6 +774,7 @@ appf2 有什麼？
 - Remix
 - Result Feedback / Logic Correction
 - Anonymous Evidence
+- F19 bounded Shared Ranking (`shared.ranking.v1`)
 - Humanized Recovery
 
 架構 Gate：

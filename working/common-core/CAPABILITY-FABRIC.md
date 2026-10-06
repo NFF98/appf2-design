@@ -563,7 +563,7 @@ Random / Dice / Wheel
 Timer / Score / Simple Turn
 Basic Image / Audio / Video playback
 Basic Animation / Confetti
-Bounded Shared Ranking / Vote / Counter（F19 Shared App Data Product Proof）
+Bounded Shared Ranking（F19 Phase 1 Product Proof；Vote / Counter deferred）
 Recovery / Notice presentation
 ~~~
 
@@ -577,7 +577,7 @@ Recovery / Notice presentation
 6. Share / Remix 有意義
 7. 可測試、可版本化
 
-F19 是 Human-approved Product Direction extension；**不因出現在 Phase 1 roadmap 就自動進既有 Build Freeze**。必須完成自己的 Detailed Design、Acceptance、Human approval 後才可 activation。
+F19 是 Human-approved Product Direction extension；Phase 1 `shared.ranking.v1` Detailed Design / Acceptance 已收斂為 BUILD_FREEZE_READY，但**不因出現在 roadmap 就自動進既有 BS-P1-018**。仍需下一次 Human-approved Build Freeze + Sprint/Task activation；Vote / Counter / generic Records維持 deferred。
 
 第 1 個月目標不是全部 RELEASED。
 

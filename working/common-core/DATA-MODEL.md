@@ -163,7 +163,7 @@ F19 Shared Data Scope
 = 同一 Shared App 的 recipients 可跨時間共同讀寫的 bounded durable state
 ~~~
 
-F19 不建立「User 自己管理資料庫」產品。User 只能透過 Registry-approved Shared Ranking / Vote / Counter / Shared Record Capability 使用受控資料模型。
+F19 不建立「User 自己管理資料庫」產品。F19 長期 family 可包含 Registry-approved Ranking / Vote / Counter / bounded Records；**Phase 1 Build Freeze candidate 只啟用 `shared.ranking.v1`**，其餘 deferred。
 
 Share 同一個 F19-enabled App 可解析到同一 Shared Data Scope；Remix child 預設建立新的 Scope，不得偷偷讀寫 Parent 的 shared data。
 
@@ -179,7 +179,7 @@ working/detailed-design/data-model/DATA-MODEL-DETAILED.md
 
 該檔內以 section 區分：
 - Phase 1 Detailed Contract：目前 Build Freeze candidate。
-- Phase 1 Product Proof Extension：F19 Shared App Data，Human-approved direction，但不自動進既有 Build Freeze。
+- Phase 1 Product Proof Extension：F19 Shared Ranking-only 已 BUILD_FREEZE_READY，但不自動進既有 BS-P1-018；仍需 Human-approved replacement Build Freeze。
 - Phase 2 Extensions：deferred。
 - Phase 3 Extensions：deferred。
 - Phase 4+ Extensions：deferred。

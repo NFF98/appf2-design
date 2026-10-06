@@ -1010,22 +1010,34 @@ Future directions：
 
 此 boundary 不修改目前 BUILD_FREEZE_READY F05 semantics。
 
-## Future Shared Data + Commerce Compatibility
+## Phase 1 F19 Shared Ranking Integration
 
-此節只固定 future compatibility，不改目前 Phase 1 BUILD_FREEZE_READY F05 behavior。
+此節是 Phase 1 Product Proof delta；不改 F05 immutable Share core，但擴充 eligible Share 的 optional F19 scope handoff。
 
-### F19 Shared App Data
+F05仍只分享 immutable App definition；若 validated Blueprint声明 `shared.ranking.v1`，Durable Share creation必须 idempotently ensure一个 F19 active scope。
 
-F05 仍只分享 immutable App definition；若某個 Share 啟用 F19，Share resolution 可以另外帶回 **opaque shared_data_scope reference**，讓不同時間打開同一 Shared App 的 recipients 共用受控 durable data。
-
-這不代表分享 Creator 的 private Runtime state。
+Share resolution可以另外带回：
 
 ~~~text
-F05 = resolve App definition
-F19 = resolve approved Shared Data Scope
+shared_data.capability_id = shared.ranking.v1
+shared_data.scope_ref = opaque reference
+shared_data.policy_version = F19 resource policy version
 ~~~
 
-Remix child 預設建立新的 F19 scope，不繼承 Parent shared data。
+Rules：
+
+- `scope_ref`不是 DB id / credential；
+- recipient仍建立 fresh F03 Runtime Instance；
+- restore不得带回 Creator Runtime state；
+- scope必须与 resolved immutable Blueprint + active Share一致；
+- revoked / expired / untrusted Share不得继续作为 public F19 read/write authority；
+- multiple Shares of同一 immutable Blueprint不得偷偷建立 competing active ranking scopes；
+- F05不实现 ranking mutation；读写语义由 F19拥有；
+- REMIX / new immutable Version scope semantics由 F06 + F19拥有。
+
+## Future Commerce Compatibility
+
+> Deferred：本節不屬 Phase 1 Build Freeze candidate。
 
 ### F20 FREE / PAID Share Gate
 
