@@ -149,15 +149,15 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 
 依 `PFR-2026 — Product-First Phase Realignment` 與 appf2-build canonical control state：
 
-1. Current locked baseline = `BS-P1-012`。
+1. Current locked baseline = `BS-P1-018`。
 2. Canonical Build control source = `appf2-build/build-spec/CURRENT.json` + `delivery/CURRENT-SPRINT.json`。
 3. `implementation_enabled=false`；repository execution state = **HOLD**。
-4. `SP-P1-002` 尚未結束；T001–T003 = CLOSED，T004–T009 = PLANNED。
-5. T004 是下一個 Activation Review 對象；**尚未授權 Cursor implementation**。
-6. POI-005 已記錄 T003 production HTTP / Runtime / Postgres fresh-admission wiring debt；它不阻擋 T004，也不得偷偷塞入 T004 scope。
-7. PFR-03 = F19 Shared App Data Detailed Design；PFR-04 = S03/S04/S05 UI/UX Delta Review；兩者是後續 Product Proof Freeze 的前置。
-8. 未來 Product Proof Build Spec / Sprint **不預留數字 ID**；ID 只在實際 Freeze / Sprint creation 時依 canonical latest sequence 分配。
-9. Historical `BS-P1-005`–`BS-P1-012` 保留原 remediation/rebaseline 意義，不 rename、不 recycle。
-10. Next Step = **SP-P1-002 / T004 Activation Review**。
+4. `SP-P1-001` / `SP-P1-002` 均 CLOSED；SP-P1-002 T001–T009 全 CLOSED。
+5. PFR-03 = **COMPLETED**：F19 已收斂為 Phase 1 `shared.ranking.v1` ranking-only BUILD_FREEZE_READY design。
+6. PFR-04 = **COMPLETED**：S03/S04/S05 F19 textual delta review PASS；High-fi 不需 reopen。
+7. PFR-05 = **CURRENT**：產生一個 Phase 1 remaining Build Freeze candidate；尚未授權 Build Freeze activation / Cursor implementation。
+8. Future Vote / Counter / generic Shared Records、F09 Realtime、full F13、F20 均不屬本次 Phase 1 candidate。
+9. Future Build Spec / Sprint 不在 roadmap 預留數字 ID；正式 ID 只在 Human-approved creation 時按 canonical latest sequence 分配。
+10. Next Human Gate = **Review Phase 1 Remaining Build Freeze Candidate**。
 
 > 本 README 只提供人類導覽；真正 Build execution authority 永遠以 `appf2-build/build-spec/CURRENT.json` 與 `delivery/CURRENT-SPRINT.json` 為準。
