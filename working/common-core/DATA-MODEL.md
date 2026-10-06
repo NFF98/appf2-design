@@ -108,6 +108,27 @@ Application 透過 appf2-owned repository / service interface 使用資料層。
 
 ---
 
+## DM-P07 — Phase 1 Shared Ranking 與 Blueprint / Runtime 分離
+
+F19 `shared.ranking.v1` 是 durable mutable App-level data，不是 immutable Blueprint body，也不是單一 Browser Runtime state。
+
+~~~text
+Blueprint = immutable App definition
+F03 Runtime Instance = per-browser local mutable state
+F19 Shared Ranking Scope = same Shared App recipients cross-time durable ranking
+~~~
+
+Phase 1 hard rules：
+
+- only `shared.ranking.v1` activated；
+- public client只持 opaque scope_ref，不持 internal scope id / DB credential；
+- participant authority由 server/F07解析；
+- REMIX / new immutable Version fresh scope，不繼承 Parent mutable data；
+- Vote / Counter / generic Records remain deferred；
+- F09 Realtime / full F13不因 F19 activation而啟用。
+
+---
+
 # 3. Detailed Data Model Owner / Phase Applicability
 
 Shared invariants 只在本文定義一次；所有 detailed schema 由單一 canonical owner 管理：
@@ -118,6 +139,7 @@ working/detailed-design/data-model/DATA-MODEL-DETAILED.md
 
 該檔內以 section 區分：
 - Phase 1 Detailed Contract：目前 Build Freeze candidate。
+- Phase 1 Product Proof Extension：F19 `shared.ranking.v1` ranking-only；requires Human-approved replacement Build Freeze。
 - Phase 2 Extensions：deferred。
 - Phase 3 Extensions：deferred。
 - Phase 4+ Extensions：deferred。
