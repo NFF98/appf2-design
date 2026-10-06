@@ -81,6 +81,7 @@ working/common-core/DESIGN-TO-DELIVERY.md
 | F15 | Transaction / Settlement | Commerce Outcome 可追蹤、對帳、結算 | Phase 3+ / later activation | DEFERRED_BASELINE | `functions/F15-TRANSACTION-SETTLEMENT.md` |
 | F16 | Result Feedback / Logic Correction | 錯誤結果可修正、比較、回退 | 0–1 月 | BUILD_FREEZE_READY | `working/detailed-design/functions/F16-RESULT-CORRECTION.md` |
 | F17 | Heterogeneous Workflow Orchestration | 多異質 steps 完成同一 Outcome | Phase 3+ / evidence-gated | DEFERRED_BASELINE | `functions/F17-WORKFLOW-ORCHESTRATION.md` |
+| F19 | Shared App Data / Social Persistence | Shared App → recipients 跨時間共用 bounded durable ranking | Phase 1 Product Proof extension | BUILD_FREEZE_READY — RANKING_ONLY | `functions/F19-SHARED-APP-DATA.md` |
 
 Deferred baseline 的存在不等於 activation；只有 `BUILD_FREEZE_READY` Function 才可進當期 Build Freeze candidate set。
 
@@ -100,6 +101,7 @@ flowchart TD
     F07[F07 Anonymous Evidence]
     F12[F12 Recovery]
     F16[F16 Result Correction]
+    F19[F19 Shared Ranking]
 
     F08[F08 Identity / Ownership]
     F09[F09 Realtime]
@@ -121,6 +123,11 @@ flowchart TD
     F03 --> F05
     F05 --> F06
     F01 --> F06
+
+    F03 --> F19
+    F05 --> F19
+    F06 --> F19
+    F19 --> F07
 
     F07 --> F01
     F07 --> F05
@@ -177,10 +184,11 @@ flowchart TD
 
 ~~~text
 F00 + F01 + F02 + F03 + F04 + F05 + F06 + F07 + F12 + F16
++ F19 shared.ranking.v1 Product Proof extension
 ~~~
 
 Outcome：
-> Intent → Correct App → Use → Share → Remix → Correct Result → Recover
+> Intent → Correct App → Use → Share → Recipient Shared Ranking → Remix → Correct Result → Recover
 
 Release 1 Gate：
 
@@ -190,6 +198,7 @@ Create works
 + Runtime stable
 + Share works
 + Recipient uses
++ Shared Ranking persists across recipients/time
 + Remix works
 + Wrong result / logic can be corrected without restarting
 + Old / new result can be compared or reverted
