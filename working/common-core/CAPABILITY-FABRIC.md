@@ -393,8 +393,20 @@ Controlled 2D Canvas、3D Scene / Model、Camera、Lighting、Hotspot、Object I
 ## G. Device / Sensor
 Camera、Microphone、Location、Motion、Orientation、File、Clipboard、QR / Barcode、Haptic。
 
-## H. Realtime / Social
-Room、Presence、Shared State、Vote、Shared Score、Turn Sync、Collaborative Input、Broadcast。
+## H. Shared Data / Realtime / Social
+
+~~~text
+F19 Shared App Data / Social Persistence
+= asynchronous bounded durable App data
+= Phase 1 activation: shared.ranking.v1 only
+= Vote / Counter / generic Records deferred
+
+F09 Realtime Room
+= Presence + live mutable shared session
+= deferred / evidence-gated
+~~~
+
+Shared durable data不要求同時在線；Realtime不得取代 F19 durable truth。
 
 ## I. AI / External
 Text / Image / Speech AI、Search、Translation、External API、Data Provider、Specialized Compute。
@@ -560,6 +572,9 @@ Recovery / Notice presentation
 5. Compiler 能合理選擇
 6. Share / Remix 有意義
 7. 可測試、可版本化
+
+
+F19 `shared.ranking.v1` 是 Human-approved Phase 1 Product Proof extension；本次只啟用 Ranking，Vote / Counter / generic Records deferred。它仍需 Human-approved Build Freeze + Sprint/Task activation，roadmap文字本身不授權 implementation。
 
 第 1 個月目標不是全部 RELEASED。
 
