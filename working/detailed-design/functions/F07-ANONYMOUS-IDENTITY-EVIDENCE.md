@@ -119,6 +119,8 @@ Rules：
 5. Client只把 anonymous_id當 correlation identifier。
 6. Server不可用 anonymous_id授權敏感 action。
 7. F08 account claim前，不把 anonymous identity描述成 durable ownership。
+8. Function可以用 trusted request context中的 anonymous_id做 continuity equality / idempotency scope（例如 F01 intent mutation只允許同 anonymous_id continuity）；這種 equality gate不是 authentication或 ownership proof。
+9. 對 opaque resource做 continuity mismatch時，Function應使用自身 not-found/non-disclosure contract，不得因 anonymous_id mismatch洩漏另一 anonymous identity的資源是否存在。
 
 # 5. Server Ensure / Identity Row
 
