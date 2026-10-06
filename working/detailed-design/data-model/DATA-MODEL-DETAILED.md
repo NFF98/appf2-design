@@ -524,11 +524,13 @@ Rules：
 | route_key | text | YES | normalized mutation route / operation class |
 | idempotency_key | text | YES | client-generated opaque key |
 | request_digest | text | YES | canonical request payload digest |
-| status | text | YES | IN_PROGRESS / SUCCEEDED / FAILED_TERMINAL |
-| result_ref_type | text | NO | INTENT / SHARE / CORRECTION / OTHER |
-| result_ref_id | text | NO | logical result identity |
-| http_status | int | NO | terminal response status |
-| error_code | text | NO | terminal stable error code |
+| status | text | YES | IN_PROGRESS / FAILED_RETRYABLE / SUCCEEDED / FAILED_TERMINAL |
+| attempt_no | int | YES | starts at 1；每次合法 retry/takeover +1 |
+| lease_expires_at | timestamptz | CONDITIONAL | IN_PROGRESS時 required；host route canonical server deadline |
+| result_ref_type | text | NO | INTENT / VALIDATION_RUN / SHARE / CORRECTION / OTHER |
+| result_ref_id | text | NO | stable logical result identity；retry不得換掉已建立 identity |
+| http_status | int | NO | latest retryable or terminal response status |
+| error_code | text | NO | latest retryable or terminal stable error code |
 | created_at | timestamptz | YES | |
 | updated_at | timestamptz | YES | |
 | expires_at | timestamptz | YES | created_at + 24 hours |
@@ -542,12 +544,18 @@ unique(anonymous_id, route_key, idempotency_key)
 Rules：
 
 1. same key + same request_digest + SUCCEEDED → return same logical result，不重做 side effect。
-2. same key + same request_digest + IN_PROGRESS → 409 IDEMPOTENCY_IN_PROGRESS，retryable=true。
-3. same key + different request_digest → 409 IDEMPOTENCY_CONFLICT。
-4. FAILED_TERMINAL 可重放同 terminal outcome；retryable transient failure不應先鎖成 FAILED_TERMINAL。
-5. cleanup 可在 expires_at 後刪除；24h idempotency window之外的 request視為新的 logical operation。
-6. 不保存完整 raw request / raw user content，只保存 digest與 bounded logical result reference。
-7. Phase 1 canonical persistence = PostgreSQL；Edge cache可以加速但不是 truth。
+2. same key + same request_digest + FAILED_TERMINAL → replay same terminal logical outcome。
+3. retryable transient failure必須 `IN_PROGRESS → FAILED_RETRYABLE`；保留 logical result_ref，不能刪 row放行另一個 logical outcome。
+4. same key + same request_digest + FAILED_RETRYABLE → atomic CAS取得新 attempt，`attempt_no +1`、status→IN_PROGRESS、`lease_expires_at`重設為 host route canonical server deadline。
+5. same key + same request_digest + IN_PROGRESS 且 lease有效 → 409 IDEMPOTENCY_IN_PROGRESS，retryable=true。
+6. IN_PROGRESS lease到期後只允許一個 caller CAS takeover到新 attempt；其他 caller不得同時獲得 write authority。
+7. side effect / SUCCEEDED / FAILED_* commit必須帶 current attempt_no guard；late/stale attempt不能覆寫新 attempt。
+8. same key + different request_digest → 409 IDEMPOTENCY_CONFLICT。
+9. Host若在 durable entity建立後才遇 retryable failure，result_ref必須保留該 entity；例如 F01 POST /intents retry永遠重用同一 intent_id。
+10. SUCCEEDED replay由 result_ref指向 canonical durable truth重建；不得另存 raw response blob作第二真相。
+11. cleanup 可在 expires_at 後刪除；24h idempotency window之外不再保證 replay。
+12. 不保存完整 raw request / raw user content，只保存 digest與 bounded logical result reference。
+13. Phase 1 canonical persistence = PostgreSQL；Edge cache可以加速但不是 truth。
 
 ---
 
