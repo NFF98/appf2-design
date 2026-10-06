@@ -460,6 +460,31 @@ Phase 1 不同時養：
 
 ---
 
+# 12.1 Phase 1 Product Proof Extension — F19 Shared Ranking
+
+> Status：BUILD_FREEZE_READY SUPPORTING BOUNDARY。
+
+~~~text
+Browser Generated App
+→ appf2 HTTP/API boundary
+→ F05 Share + F19 authority validation
+→ F19 service/repository
+→ PostgreSQL durable ranking tables
+~~~
+
+Rules：
+
+1. reuse existing Edge/API + PostgreSQL plane；no Realtime service / broker / dedicated DB。
+2. Browser无 DB credential / direct-write authority。
+3. server执行 Share/trust/scope/participant/rate/quota validation。
+4. writes use PostgreSQL atomic transaction；browser local state不得伪装 durable success。
+5. Evidence沿 F07 pipeline；no raw score/display name/participant ref telemetry。
+6. cost simulation覆盖 scope/entry/monthly-participant/read-write-rate/Evidence volume，用于校准 F19ResourcePolicyV1，不启用 full F13。
+7. quota exhaustion先 throttle costly writes，不能靠删除 ACTIVE ranking data降成本。
+8. migration必须有 constraint + true PostgreSQL integration proof。
+
+---
+
 # appf2 Infrastructure — Phase 2
 
 > Shared infrastructure truth：`../../common-core/INFRA-ARCHITECTURE.md`
