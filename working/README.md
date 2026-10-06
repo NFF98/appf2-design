@@ -149,15 +149,15 @@ Markdown 以文件頂部單行 boundary marker 表示；3 個 machine-readable r
 
 依 `PFR-2026 — Product-First Phase Realignment` 與 appf2-build canonical control state：
 
-1. Current locked baseline = `BS-P1-018`。
+1. Current locked baseline = `BS-P1-019`；已 supersede `BS-P1-018`。
 2. Canonical Build control source = `appf2-build/build-spec/CURRENT.json` + `delivery/CURRENT-SPRINT.json`。
 3. `implementation_enabled=false`；repository execution state = **HOLD**。
 4. `SP-P1-001` / `SP-P1-002` 均 CLOSED；SP-P1-002 T001–T009 全 CLOSED。
-5. PFR-03 = **COMPLETED**：F19 已收斂為 Phase 1 `shared.ranking.v1` ranking-only BUILD_FREEZE_READY design。
-6. PFR-04 = **COMPLETED**：S03/S04/S05 F19 textual delta review PASS；High-fi 不需 reopen。
-7. PFR-05 = **CURRENT**：產生一個 Phase 1 remaining Build Freeze candidate；尚未授權 Build Freeze activation / Cursor implementation。
-8. Future Vote / Counter / generic Shared Records、F09 Realtime、full F13、F20 均不屬本次 Phase 1 candidate。
-9. Future Build Spec / Sprint 不在 roadmap 預留數字 ID；正式 ID 只在 Human-approved creation 時按 canonical latest sequence 分配。
-10. Next Human Gate = **Review Phase 1 Remaining Build Freeze Candidate**。
+5. PFR-03 = **COMPLETED**：F19 Phase 1 `shared.ranking.v1` ranking-only Product semantics 已收斂。
+6. PFR-04 = **COMPLETED**：S03/S04/S05 F19 textual delta review PASS；High-fi 未 reopen。
+7. PFR-05 = **COMPLETED**：Design PR #27 canonical；`BS-P1-019` LOCKED；BD-019 CLOSED；BF-048 RESOLVED。
+8. Build backlog = 46 total：11 historical DONE + 35 QUEUED；新增 F19 `BL-P1-044..046`。
+9. Future Vote / Counter / generic Shared Records、F09 Realtime、full F13、F20、Phase 4 hardening仍不屬目前 execution scope。
+10. Next Human Gate = **Product Proof Stage A — Playable App detailed Sprint planning review**。尚未分配 Sprint ID、尚未 activation、尚未授權 Cursor。
 
 > 本 README 只提供人類導覽；真正 Build execution authority 永遠以 `appf2-build/build-spec/CURRENT.json` 與 `delivery/CURRENT-SPRINT.json` 為準。
