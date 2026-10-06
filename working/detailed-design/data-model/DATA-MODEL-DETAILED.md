@@ -873,9 +873,66 @@ Phase 1 可由 Supabase/Postgres adapter 實作。
 - Account / Ownership tables；
 - Creator profile；
 - Entitlement / Transaction tables；
+- generic Shared Data tables beyond the approved F19 ranking-only Product Proof；
 - large media blob table；
 - workflow / queue state machine；
 - generic cross-app Context store。
+
+---
+
+# 15.1 Approved Phase 1 Product Proof Extension — F19 Shared Ranking
+
+> Status：**BUILD_FREEZE_READY — PHASE_1_SHARED_RANKING_PROOF_ONLY**。
+
+Canonical durable minimum：
+
+~~~text
+shared_data_scope
+- shared_data_scope_id uuid PK
+- blueprint_hash FK
+- capability_id text CHECK = 'shared.ranking.v1'
+- resource_policy_version text
+- status ACTIVE | ARCHIVED
+- created_at
+- archived_at?
+- unique active-equivalent (blueprint_hash, capability_id)
+
+shared_ranking_entry
+- ranking_entry_id uuid PK
+- shared_data_scope_id FK
+- participant_ref opaque server-owned
+- score bigint
+- display_name? bounded public content
+- achieved_at
+- updated_at
+- UNIQUE (shared_data_scope_id, participant_ref)
+
+shared_ranking_operation
+- shared_data_scope_id FK
+- participant_ref
+- operation_id
+- request_fingerprint
+- outcome CREATED | UPDATED | NO_CHANGE
+- created_at
+- UNIQUE (shared_data_scope_id, participant_ref, operation_id)
+~~~
+
+Rules：
+
+1. mutable ranking data不进入 immutable Blueprint body。
+2. Client只取得 opaque `scope_ref`，不得取得 internal scope id / DB authority。
+3. participant_ref由 server/F07 trusted anonymous identity解析，Client不得提交。
+4. same immutable Blueprint + `shared.ranking.v1`只有一个 active-equivalent scope。
+5. one participant per scope only one current ranking row。
+6. dedupe与 rank update必须在同一 atomic transaction / equivalent durability boundary。
+7. score为 signed safe integer，受 immutable capability min/max约束。
+8. ranking ordering由 F19 capability config决定，不依赖 DB natural order。
+9. REMIX child / Phase 1 REFINE new immutable Version均 fresh scope。
+10. F19 resource limits由 versioned `F19ResourcePolicyV1`解析，不依赖 full F13 runtime。
+11. Evidence不得复制 participant_ref / display_name / raw score / full ranking。
+12. migration / constraint / concurrency必须以真 PostgreSQL integration proof。
+
+Required indexes仅覆盖 scope lookup、participant row、ranking order、operation idempotency。
 
 ---
 
@@ -896,6 +953,7 @@ Phase 1 可由 Supabase/Postgres adapter 實作。
 | Evidence event catalog / batching / retention | F07 |
 | Humanized Recovery state | F12 |
 | Result Snapshot semantic fields / Correction Intent / Delta | F16 |
+| Shared Ranking scope / entry / operation | F19 |
 
 Function 可以增加自己的欄位 / table proposal，但若跨 Function 共用或改變 durable truth，必須先回到本文 Review，不能自行建立第二份 data truth。
 
@@ -934,6 +992,9 @@ Migration tool、SQL layout、test placement與 execution procedure由 appf2-bui
 10. Phase 1 無 Dedicated Vector DB dependency。
 11. 未來 Vector index 不取代 PostgreSQL durable truth。
 12. Account / Realtime / Commerce 擴張不得要求改寫 immutable Blueprint core。
+13. F19 ranking mutable data不进入 Blueprint / Runtime Instance truth。
+14. same Shared App可跨時間解析同一 approved ranking scope。
+15. REMIX/new immutable Version不得自動繼承 Parent ranking data。
 
 # 19. Function-owned Detail / Deferred Decisions
 
