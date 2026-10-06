@@ -1027,3 +1027,32 @@ Existing immutable Blueprint
 ~~~
 
 > Remix / Refine 的本質不是「改 JSON」，而是「保留有價值的語意，重新產生一個完整、可驗證的新 App」。
+
+
+---
+
+## Phase 1 F19 Shared Data Integration
+
+若 source Blueprint启用 `shared.ranking.v1`：
+
+~~~text
+REMIX
+→ child immutable Blueprint
+→ Direct Parent / Root lineage照常成立
+→ child必须建立 fresh F19 Shared Data Scope
+→ child不得自动读写 Parent ranking scope
+
+REFINE
+→ new immutable Blueprint Version
+→ Phase 1同样 fresh F19 scope
+→ 不自动迁移旧 mutable ranking data
+~~~
+
+F06只拥有 derived Blueprint + lineage creation；F19拥有 scope provisioning / ranking data。
+
+Hard rules：
+
+- Shared来源不得自动决定 `relation_type`；User仍明确选择 REFINE / REMIX。
+- F19 scope id/data不得写入 Semantic Delta作为 executable patch。
+- child creation failure不得污染 Parent ranking data。
+- same-Creator REFINE未来若要保留 scope，必须另做 compatibility/migration Human decision；Phase 1不支持 implicit inheritance。
