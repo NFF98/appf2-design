@@ -757,3 +757,21 @@ Reference boundary：
 > Final cross-screen authority：**Step 1–3 textual contract + Design System + Fxx Function truth > Step 4 visual reference。**
 >
 > S03 v2 PNG已驗證；其餘 10 張 PNG不修改。
+
+
+# PFR-04 Delta — F19 Shared Ranking
+
+> Status：**DELTA REVIEW PASS / BUILD_FREEZE_READY**。
+>
+> 结论：不 reopen S03 Step 1–4 High-fi；只增加 Generated App capability behavior / degraded-state textual contract。
+
+1. `shared.ranking.v1` 由 Generated App Runtime Frame呈现，不变成新的 appf2 Dashboard / tab。
+2. S03 Shell不得直接读写 F19 DB；Generated App只能调用 F19 capability operation。
+3. ranking read成功时，Generated App可显示 bounded ranking；不得显示 participant_ref、scope id、operation history。
+4. ranking submit processing使用 existing truthful processing principles；不得 fake progress。
+5. F19 temporary/rate/quota write failure只降级 Shared Ranking action；若 F03 local App仍安全可玩，不得把整个 App踢出 S03。
+6. `QUOTA_WRITE_THROTTLED` 优先保留 ranking read + local play，并给可理解 next action；不显示 raw 429/DB error。
+7. Share / Modify / Correction navigation保持既有 S03 contract。
+8. Shared来源不得自动选择 Remix；User仍需明确选 `改成我的版本`。
+9. normal S03视觉参考无需替换；若未来出现独立 shared-data administration UI，必须另走 UI review。
+
