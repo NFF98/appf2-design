@@ -1,5 +1,5 @@
 {
-  "registry_version": "1.2.0",
+  "registry_version": "1.3.0",
   "phase_1_freeze_audit": {
     "status": "PASS",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
@@ -9,7 +9,7 @@
       "DEFERRED_CONTENT"
     ],
     "audited_on": "2026-10-06",
-    "change_ref": "PFR-03-PFR-04-F19-RANKING-FREEZE-CANDIDATE"
+    "change_ref": "BF-049-T001-COMPILER-CONTRACT-CLOSURE"
   },
   "owner": "working/detailed-design/registries/recovery-registry.json",
   "source_of_truth": "Fxx source errors + F12 recovery policy",
@@ -335,6 +335,21 @@
       "deprecated": false
     },
     {
+      "error_id": "F01-ERR-015",
+      "error_name": "INTENT_NOT_FOUND",
+      "function_id": "F01",
+      "recovery_class": "NOT_FOUND",
+      "policy_id": "F12-POL-006",
+      "severity": "TERMINAL",
+      "retryability": "NO_RETRY",
+      "message_key": "recovery.f01.intent_not_found",
+      "next_actions": [
+        "RETURN_HOME"
+      ],
+      "evidence_class": "RELIABILITY",
+      "deprecated": false
+    },
+    {
       "error_id": "F02-ERR-001",
       "error_name": "INVALID_JSON",
       "function_id": "F02",
@@ -517,13 +532,13 @@
       "error_id": "F02-ERR-012",
       "error_name": "PERMISSION_NOT_ALLOWED",
       "function_id": "F02",
-      "recovery_class": "STATE_OR_ACTION_FAILURE",
-      "policy_id": "F12-POL-004",
-      "severity": "BLOCKING_RECOVERABLE",
-      "retryability": "CONDITIONAL_RETRY",
+      "recovery_class": "SECURITY_TERMINAL",
+      "policy_id": "F12-POL-001",
+      "severity": "TERMINAL",
+      "retryability": "NO_RETRY",
       "message_key": "recovery.f02.permission_not_allowed",
       "next_actions": [
-        "RETRY",
+        "EDIT_REQUEST",
         "KEEP_CURRENT_APP"
       ],
       "evidence_class": "RELIABILITY",
