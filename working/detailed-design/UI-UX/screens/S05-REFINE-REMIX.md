@@ -1319,3 +1319,20 @@ S05 ④B Step 1–4 已完成 User Review並鎖定。
 > Final cross-screen authority：**Step 1–3 textual contract + Design System + Fxx Function truth > Step 4 visual reference。**
 >
 > S05 canonical PNG不修改；Inspection presentation由 S03 Step 1–4承接。
+
+
+# PFR-04 Delta — F19 Fresh Scope / Lineage
+
+> Status：**DELTA REVIEW PASS / BUILD_FREEZE_READY**。
+>
+> 结论：S05既有 Refine / Remix consumer paths与 High-fi不变；F19只增加 derived-Version shared-data boundary。
+
+1. Shared App来源不得让 UI替 User猜 REFINE / REMIX。
+2. `改成我的版本` → REMIX child → lineage成立后，若 child启用 `shared.ranking.v1`，必须 fresh F19 scope。
+3. child Preview不得读取/写入 Parent ranking scope来伪装 child shared-data成功。
+4. `修改这个 App` → REFINE new immutable Version；Phase 1同样 fresh scope，不自动迁移旧 ranking。
+5. Source inspection仍可查看 original App；不因此让 Candidate获得 Parent mutable-data write authority。
+6. Preview / Accept流程只显示 Product-level behavior，不展示 scope id / DB / migration技术细节。
+7. Future same-Creator shared-data migration属于新 Product decision，不在 Phase 1。
+8. S05 canonical High-fi visual继续有效，无需 replacement PNG。
+
