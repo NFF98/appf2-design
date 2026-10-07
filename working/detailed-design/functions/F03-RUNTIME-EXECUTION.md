@@ -1003,6 +1003,35 @@ Render：
 
 Renderer 不直接 mutate Instance Store；同一 static `node_id` 的不同 repeated clones不得共用 capability-local state、timer slot或 node-local error slot。
 
+## 25.1 Dynamic Repeat Clone Lifecycle
+
+Dynamic repeat 的 concrete lifecycle 以 **目前 committed Runtime state 所 materialize 的 NodeInstanceKey set** 為 canonical truth。Runtime 不得用 React component mount/unmount、DOM identity、item object identity或 arbitrary callback identity取代此規則。
+
+~~~text
+M_current = materialized NodeInstanceKey set before the committed mutation
+M_next    = materialized NodeInstanceKey set derived from the new committed state
+
+retained = M_current ∩ M_next
+added    = M_next - M_current
+removed  = M_current - M_next
+~~~
+
+Canonical rules：
+
+1. **retained clone**：相同 exact NodeInstanceKey 代表同一個仍 materialized 的 concrete clone。不得 reinitialize；既有 capability-local state、timer ownership與 node-local error slot繼續屬於該 coordinate。
+2. **added clone**：新出現的 NodeInstanceKey 必須在對 User/render/event intake 可見前執行 `initializeCapability(nodeInstanceKey,...)`，建立 fresh capability-local state與該 incarnation 的 host-owned timer/subscription ownership；不得借用 sibling或歷史 clone state。
+3. **removed clone**：一旦不再屬於 `M_next`，Runtime 必須先把該 clone incarnation標記為 inactive / non-admissible，再 cancel host-owned timers/subscriptions、清除 pending clone-local callbacks/events where still cancellable、呼叫 `disposeCapability(nodeInstanceKey)`，最後刪除其 capability-local state、timer ownership與 node-local error slot。cleanup期間不得再允許該 clone改 committed state。
+4. **shrink → regrow**：某 NodeInstanceKey 被 removed 並完成 lifecycle teardown後，即使未來相同 coordinate再次出現，也是一個 **fresh incarnation**。舊 capability-local state、timer/subscription、error slot不得復活。
+5. Runtime 必須為每個 materialized NodeInstanceKey 維護 local monotonic `lifecycle_generation`。每次 fresh incarnation建立時 generation遞增；timer/subscription/callback/event-source ownership都綁定 `{node_instance_key, lifecycle_generation}`。任何來自非 current generation 的 late callback / event必須 discard，不得 mutate state或重新啟用舊 clone。
+6. `NodeInstanceKey` 的 canonical equality仍只有 exact `node_id + ordered repeat_coordinates`；`lifecycle_generation` 是 Runtime incarnation guard，不進 Blueprint、不參與 content_hash、不改 F02 definition identity。
+7. **index-based identity is positional**：當 repeat item reorder但某 coordinate仍存在，該 coordinate仍是 retained clone；capability-local lifecycle state留在 position，不跟 item value/object移動。Phase 1沒有 item-key identity。若未來要 item-stable identity，必須新增 versioned Product/Blueprint contract，不得由 Runtime自行猜 key。
+8. reconciliation只在新的 app state transaction已 atomic commit後執行，且必須在對應的新 render tree / clone event intake公開前完成。removed clone先失效；added clone再 initialize；最後才 publish新 render tree。
+9. added clone initialize failure不回滾已完成的 app-state commit；該 clone進 node-local isolated failure / safe fallback，其他 clone維持可用。partial initialize產生的 host-owned timer/subscription必須撤銷。
+10. removed clone dispose handler failure不得讓 clone復活。Runtime host先撤銷 admissibility與 host-owned resources，再做 handler cleanup；若 host仍可證明舊 clone無法再 mutate state，記 node-local error並繼續 teardown。若無法證明 lifecycle/resource integrity，升 `F03-ERR-018 RUNTIME_INVARIANT_BROKEN` 並 fail closed。
+11. Dynamic materialization仍受 admitted `repeat.max_items`、F02/F04 resource ceiling與 F03 §37 dynamic guards；不得因 runtime actual list較小或較晚 growth而放寬任何 ceiling。
+
+此 lifecycle只閉合 Browser Runtime repeated clone semantics；不新增 durable identity、item key、Share/Ranking identity或 F00 presentation contract。
+
 # 26. Node-level Error Isolation
 
 ## F03-RQ-011
@@ -1653,7 +1682,7 @@ Safety / Reliability：
 - F03-AC-016 Action failure rollback current transaction。
 - F03-AC-017 event loop / queue bounded。
 - F03-AC-018 revoked / incompatible Blueprint 不進 READY。
-- F03-AC-019 dispose 後 timers/subscriptions 不再改 state。
+- F03-AC-019 Instance dispose 或 dynamic repeat clone de-materialize 後，舊 timers/subscriptions/late callback 不再改 state；同 coordinate regrow 必須 fresh initialize，不復活舊 lifecycle state。
 - F03-AC-020 Runtime 不可放寬 F02/F04 resource ceiling。
 
 Product / Data：
