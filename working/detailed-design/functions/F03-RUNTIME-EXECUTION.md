@@ -396,6 +396,30 @@ Rules：
 - DIV / MOD denominator 0 → F03-ERR-008
 - non-finite result → F03-ERR-009
 
+Canonical appf2 MOD v1：
+
+~~~text
+MOD(a, b) = a - trunc(a / b) × b
+trunc(x) = toward zero
+~~~
+
+Rules：
+
+- applies to finite NUMBER operands with `b != 0`
+- remainder sign follows the dividend `a` when remainder is non-zero
+- exact multiple MUST return canonical numeric `0`; Runtime MUST NOT expose `-0`
+- no floored / Euclidean remainder reinterpretation
+
+Golden cases：
+
+~~~text
+MOD(7, 3) = 1
+MOD(-7, 3) = -1
+MOD(7, -3) = 1
+MOD(-7, -3) = -1
+MOD(-6, 3) = 0
+~~~
+
 Canonical appf2 ROUND v1：
 
 ~~~text
