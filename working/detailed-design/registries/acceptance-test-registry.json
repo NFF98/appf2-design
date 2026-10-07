@@ -985,9 +985,9 @@
     {
       "acceptance_id": "F03-AC-019",
       "function_id": "F03",
-      "criterion": "dispose 後 timers/subscriptions 不再改 state。",
+      "criterion": "Instance dispose 或 dynamic repeat clone de-materialize 後，舊 timers/subscriptions/late callback 不再改 state；同 coordinate regrow 必須 fresh initialize，不復活舊 lifecycle state。",
       "test_id": "TEST-F03-019",
-      "expected_observable": "dispose 後 timers/subscriptions 不再改 state。",
+      "expected_observable": "removed clone 先失效並清理 host-owned resources；舊 lifecycle generation 的 late callback/event 被 discard；同 coordinate regrow 建立 fresh capability-local lifecycle。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
