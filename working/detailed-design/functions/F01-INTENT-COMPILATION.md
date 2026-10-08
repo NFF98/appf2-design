@@ -611,6 +611,31 @@ Assumption decision：
 - Reject → 原 proposal/default 不得進 Resolved Intent；target 轉 UNRESOLVED、清除 resolved/proposed value，再重新跑 policy。
 - 含 policy_risk_flags 的 MATERIAL item不可用 assumption Accept 解決；必須經 clarification answer形成 USER_EXPLICIT truth。
 
+
+### F01-DATA-004A — Visible Assumption Edit-Shape Projection（T004 SPEC_GAP closure）
+
+**Authority / compatibility.** F01 is the sole owner of a policy-visible item's expected value type, question type and choice alternatives; F00 must not derive an authoritative answer schema from \`proposed_default\`, copy a previous question's options, or ask the LLM to fill missing UI metadata. This material API response-contract addition requires a new locked Build Spec and server/frontend coordinated rollout; it is **not** retroactively part of any prior BS-* baseline.
+
+Every \`visible_assumptions[]\` entry with classification \`DEFAULT\` or \`PROPOSAL\`, in **both F01-API-001 and F01-API-002 responses**, MUST project these additional machine-only fields from the **server-validated target item in canonical structured_intent**:
+
+- \`expected_value_type\`: exactly the target's validated \`STRING | NUMBER | BOOLEAN | ENUM | LIST | RECORD\`.
+- \`question_type\`: exactly the target's validated \`FREE_TEXT | NUMBER | BOOLEAN | SINGLE_CHOICE | MULTI_CHOICE | STRUCTURED_FIELDS\`. The existing fixed \`question_type ↔ expected_value_type\` pairing applies unchanged.
+- \`options[]\`: REQUIRED for \`ENUM/SINGLE_CHOICE\` and \`LIST/MULTI_CHOICE\`; equal (including native JsonValue types) to the target's validated \`alternatives[]\`, with existing distinctness and membership rules. This is **not** a new source of choices. MUST be omitted for all other types.
+- \`record_edit_schema\`: REQUIRED only for \`RECORD/STRUCTURED_FIELDS\`, with the exact static shape \`{"kind":"OPEN_JSON_RECORD_V1","key_policy":"USER_DEFINED","value_kind":"JSON_VALUE","nested":true}\`; MUST be omitted for all other types. It declares the **existing F01 \`RECORD\` validator's open plain-record semantics**, not a new inferred fixed-field model, LLM-proposed field schema or new policy restriction.
+
+**Record editor semantics, locked at the contract boundary:**
+
+1. A RECORD edit remains a plain JSON object with unique property names; it MAY add, remove, rename or change keys. Key sets in \`proposed_default\` provide editable *starting content only*, not required fields, allowed-only keys or schema authority.
+2. Each value is native \`JsonValue\` (string, finite number, boolean, null, list or nested record). Existing JSON recursive typing applies. A User may explicitly change a field's value type; implicit coercion between number/string/boolean/null and JSON array/object is prohibited. Existing F01 validation remains the final authority (\`valueFitsItem\` / plain record).
+3. For nested list/record values, F00 must provide progressively disclosed **typed field controls** that preserve JSON types and permit intentional editing. Do not expose raw JSON source or require the User to write JSON syntax as the normal edit workflow. No fabricated hidden fixed field schema or UI-only domain validation.
+4. LIST edit = an array of distinct native \`options[]\` values selected by the User; cannot add values outside the F01 alternatives. ENUM edit = exactly one value from the F01 \`options[]\`. Other scalar EDITs use their projected native type. Do not fabricate alternatives from \`proposed_default\`.
+5. F00 sends F01-API-002 \`assumption_decisions: [{assumption_id,decision:"EDIT",edited_value:<native JsonValue>}]\`. F01 performs normal \`valueFitsItem\`, version/identity checks, trusted merge and provenance transition. Browser preview/draft or clicking Edit/Accept never changes durable truth.
+6. A pending material assumption whose required edit-shape fields are absent, inconsistent with the item or malformed MUST **fail closed** rather than offer a disabled/fake Edit, guess alternatives, auto-accept, or silently turn the proposal into USER_EXPLICIT. F01 must not emit an apparently usable READY_WITH_VISIBLE_ASSUMPTIONS projection with missing required shape metadata; F00 must treat invalid responses as a bounded error. Existing error-envelope semantics apply; no new ad hoc error code.
+7. \`FACT\` / \`UNKNOWN\` are informational classes and do not acquire an assumption-decision action solely because shape metadata exists. User-facing source label stays tied to the actual F01 classification until a trusted response confirms the new source. Risk-flagged MATERIAL items remain governed by clarification, not shortcut Accept/Edit.
+8. \`record_edit_schema\` is a **generic open-record shape**. Domain-specific required fields, restricted keys, nested per-key validation or custom record types are deliberately **non-scope**: if demanded, they require a separate Design Delta, not inference from model suggestions.
+
+**Minimum executable proof on replacement baseline:** F01 contract/API tests for full projection of STRING/NUMBER/BOOLEAN/ENUM/LIST/RECORD and omission rules, choice membership, open-record add/delete/rename/nested JsonValue, malformed-shape fail-closed and unchanged canonical provenance; F00 TEST-F00-005 browser tests for functional Accept/Edit/Reject across ENUM/LIST/RECORD (not mere button visibility), typed EDIT request, invalid/stale response recovery, keyboard completion, and no raw policy/schema exposure. These proofs expand existing Acceptance mapping without renumbering previously locked stable IDs.
+
 # 11. Resolved Intent
 
 ## F01-DATA-005

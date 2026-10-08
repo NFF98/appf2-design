@@ -123,6 +123,16 @@ required / optional 清楚；答案可修改；Continue 後回 ANALYZING，不�
 
 User-facing source labels只用：已提供 / 預設 / 建議 / 尚未決定。
 
+
+### Assumption Edit — F01-authoritative typed controls（T004 SPEC_GAP closure）
+
+- The approved S02 single-workspace assumption surface also supports material composite proposals. \`修改\` opens a focused, keyboard-operable inline editor in the same card; it is **not** a separate confirmation screen or raw developer JSON editor.
+- \`ENUM\`: one option; \`LIST\`: multiple distinct options, all from authoritative F01 \`options[]\`. The original proposed value is a selectable starting suggestion, not an allowed-options registry.
+- \`RECORD\`: editable rows for a freely named field and a typed value; users can add/delete/rename fields and expand nested records/lists with progressive disclosure. The default rows come from the F01-proposed record; these rows are not a locked key schema. Type changes require an explicit choice. Source tag continues to say \`預設\`/\`建議\` until F01 confirms.
+- Primary action stays \`用這些設定繼續\`. Display localized validation/errors near the actual control, keep prior draft across recoverable failures and never render raw source provenance, field-schema codes or JSON syntax for ordinary users.
+- Exact data and edit-shape ownership is F01-DATA-004A; F00-UX-010A owns user-facing editing rules. If shape metadata is absent/invalid, show a non-success recovery state, not a fake/disabled Edit.
+- This section amends textual interaction semantics only; existing ④B approved high-fi reference, layout geometry and unrelated steps remain unchanged.
+
 # 10. BUILDING / Visible Generation Progress
 
 Proposed 4 stages：

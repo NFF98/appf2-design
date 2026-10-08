@@ -407,6 +407,16 @@ Rules：
 - Reject 後可能回 Clarification。
 - cosmetic default 可以不打斷流程，但應可在後續 Refine 中改。
 
+
+### F00-UX-010A — Shape-aware material assumption Edit（Choice 1 semantic closure）
+
+- F01-DATA-004A is the **only** UI edit-shape authority. Material pending DEFAULT/PROPOSAL rows must retain real functional Accept / Edit / Reject, including ENUM, LIST and RECORD. Never disable Edit simply because the proposed value is composite.
+- For ENUM, render a single selection from F01-projected \`options[]\`; for LIST, show F01-projected \`options[]\` as a multiple selection (distinct selected values). Never invent new options from the proposed value. A missing options projection is a contract failure, not permission to fall back to free text.
+- For RECORD, use F01's \`OPEN_JSON_RECORD_V1\` open-object edit contract: start from the proposed record, allow explicit add/remove/rename keys and typed value changes including nested list/record via progressively disclosed controls. Preserve JSON-native types and never silently convert a record to a string, enforce guessed required fields or display raw JSON editing as the normal User experience.
+- Treat scalar STRING/NUMBER/BOOLEAN with typed controls and the original F01 classification tag. The edit draft remains local; a trusted F01-API-002 response alone can confirm USER_EXPLICIT. F01 errors must preserve editable User input and provide truthful recovery.
+- No new confirmation page, no prompt-first fast-path regression, and no Product meaning change to ACCEPT/EDIT/REJECT. A valid pending row with missing/wrong shape metadata must fail closed, not be auto-accepted or displayed as a false success.
+- F00-AC-005 / TEST-F00-005 must include real browser interaction and actual F01 request/validation for STRING, ENUM, LIST, RECORD, type/option invalid input, keyboard operation and failure recovery. Stable Acceptance/Test IDs remain unchanged.
+
 # 13. Fast Path UX
 
 ## F00-UX-011
