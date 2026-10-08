@@ -123,6 +123,16 @@ required / optional 清楚；答案可修改；Continue 後回 ANALYZING，不�
 
 User-facing source labels只用：已提供 / 預設 / 建議 / 尚未決定。
 
+
+### Assumption Edit — F01-authoritative Typed Controls（T004 SPEC_GAP closure）
+
+- S02 既有單一 Workspace 中，Material composite proposal 的「修改」應展開在同一 surface 的鍵盤可操作 editor；不得另造固定確認頁、把使用者帶到 engineering JSON editor。
+- `ENUM` 單選、`LIST` 不重複多選，選項全取自 F01 `options[]`。Proposal 的當前值是起始建議，不能當選項權威。
+- `RECORD` 使用開放式欄位：User 可以新增、移除、改名 key、選擇 typed value；巢狀 LIST/RECORD 採漸進展開。起始列來自 proposal，但**不是**固定欄位 schema。型別轉換須明確選擇；F01 確認前保留「預設」／「建議」。
+- Primary CTA 仍是「用這些設定繼續」。錯誤靠近對應欄位，recoverable failure 保留編輯內容；一般 User 不見 raw JSON、policy ID 或 schema code。
+- 資料型別權威在 `F01-DATA-004A`，體驗行為在 `F00-UX-010A`。缺少必填投影應顯示真實失敗/回復狀態，不能提供永遠 disabled 的假 Edit。
+- 本節只補齊文字互動契約，不變更既有 ④B High-fi 視覺參照、Geometry 或無關畫面。
+
 # 10. BUILDING / Visible Generation Progress
 
 Proposed 4 stages：
