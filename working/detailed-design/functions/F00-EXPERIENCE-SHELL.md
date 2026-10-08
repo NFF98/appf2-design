@@ -408,14 +408,14 @@ Rules：
 - cosmetic default 可以不打斷流程，但應可在後續 Refine 中改。
 
 
-### F00-UX-010A — Shape-aware material assumption Edit（Choice 1 semantic closure）
+### F00-UX-010A — Material Assumption Typed Edit（Choice 1 semantic closure）
 
-- F01-DATA-004A is the **only** UI edit-shape authority. Material pending DEFAULT/PROPOSAL rows must retain real functional Accept / Edit / Reject, including ENUM, LIST and RECORD. Never disable Edit simply because the proposed value is composite.
-- For ENUM, render a single selection from F01-projected \`options[]\`; for LIST, show F01-projected \`options[]\` as a multiple selection (distinct selected values). Never invent new options from the proposed value. A missing options projection is a contract failure, not permission to fall back to free text.
-- For RECORD, use F01's \`OPEN_JSON_RECORD_V1\` open-object edit contract: start from the proposed record, allow explicit add/remove/rename keys and typed value changes including nested list/record via progressively disclosed controls. Preserve JSON-native types and never silently convert a record to a string, enforce guessed required fields or display raw JSON editing as the normal User experience.
-- Treat scalar STRING/NUMBER/BOOLEAN with typed controls and the original F01 classification tag. The edit draft remains local; a trusted F01-API-002 response alone can confirm USER_EXPLICIT. F01 errors must preserve editable User input and provide truthful recovery.
-- No new confirmation page, no prompt-first fast-path regression, and no Product meaning change to ACCEPT/EDIT/REJECT. A valid pending row with missing/wrong shape metadata must fail closed, not be auto-accepted or displayed as a false success.
-- F00-AC-005 / TEST-F00-005 must include real browser interaction and actual F01 request/validation for STRING, ENUM, LIST, RECORD, type/option invalid input, keyboard operation and failure recovery. Stable Acceptance/Test IDs remain unchanged.
+- `F01-DATA-004A` 是唯一編輯形狀權威。Material `DEFAULT/PROPOSAL` 的 Accept/Edit/Reject 必須可實際操作（含 ENUM、LIST、RECORD），不得因值為 composite 就 disable Edit。
+- `ENUM`：僅一選項；`LIST`：F01 `options[]` 的多選、不重複，且只能用 trusted alternatives。缺失選項是 contract failure，不可退回自由文字猜選項。
+- `RECORD`：依 F01 `OPEN_JSON_RECORD_V1` 呈現開放式 field-name／typed-value 編輯，可新增／刪除／改名欄位，可透過展開式 UI 修改巢狀 LIST／RECORD。proposal 僅當作初始內容，**不得**視為 key whitelist、required-field schema；不得要求一般 User 編寫 raw JSON，或默默將複合值轉成字串。
+- 純量 STRING/NUMBER/BOOLEAN 依投影型別編輯；原有來源標籤不因本地點擊就變為「已提供」。僅 F01-API-002 的可信 response 能確認 USER_EXPLICIT；錯誤必須保存本輪輸入供修改／重試。
+- 不增加固定確認頁、不破壞 clear-Intent fast path、不改 ACCEPT/EDIT/REJECT 的 F01 語意。缺少/錯配 edit-shape metadata 應 fail closed，不可假成功或偷偷 auto-accept。
+- `F00-AC-005 → TEST-F00-005` 必須有實際瀏覽器互動、F01 request/validation 證據、ENUM/LIST/RECORD 編輯、invalid option/type、鍵盤與 recovery；保留 stable Test ID。
 
 # 13. Fast Path UX
 

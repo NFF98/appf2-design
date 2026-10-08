@@ -124,14 +124,14 @@ required / optional 清楚；答案可修改；Continue 後回 ANALYZING，不�
 User-facing source labels只用：已提供 / 預設 / 建議 / 尚未決定。
 
 
-### Assumption Edit — F01-authoritative typed controls（T004 SPEC_GAP closure）
+### Assumption Edit — F01-authoritative Typed Controls（T004 SPEC_GAP closure）
 
-- The approved S02 single-workspace assumption surface also supports material composite proposals. \`修改\` opens a focused, keyboard-operable inline editor in the same card; it is **not** a separate confirmation screen or raw developer JSON editor.
-- \`ENUM\`: one option; \`LIST\`: multiple distinct options, all from authoritative F01 \`options[]\`. The original proposed value is a selectable starting suggestion, not an allowed-options registry.
-- \`RECORD\`: editable rows for a freely named field and a typed value; users can add/delete/rename fields and expand nested records/lists with progressive disclosure. The default rows come from the F01-proposed record; these rows are not a locked key schema. Type changes require an explicit choice. Source tag continues to say \`預設\`/\`建議\` until F01 confirms.
-- Primary action stays \`用這些設定繼續\`. Display localized validation/errors near the actual control, keep prior draft across recoverable failures and never render raw source provenance, field-schema codes or JSON syntax for ordinary users.
-- Exact data and edit-shape ownership is F01-DATA-004A; F00-UX-010A owns user-facing editing rules. If shape metadata is absent/invalid, show a non-success recovery state, not a fake/disabled Edit.
-- This section amends textual interaction semantics only; existing ④B approved high-fi reference, layout geometry and unrelated steps remain unchanged.
+- S02 既有單一 Workspace 中，Material composite proposal 的「修改」應展開在同一 surface 的鍵盤可操作 editor；不得另造固定確認頁、把使用者帶到 engineering JSON editor。
+- `ENUM` 單選、`LIST` 不重複多選，選項全取自 F01 `options[]`。Proposal 的當前值是起始建議，不能當選項權威。
+- `RECORD` 使用開放式欄位：User 可以新增、移除、改名 key、選擇 typed value；巢狀 LIST/RECORD 採漸進展開。起始列來自 proposal，但**不是**固定欄位 schema。型別轉換須明確選擇；F01 確認前保留「預設」／「建議」。
+- Primary CTA 仍是「用這些設定繼續」。錯誤靠近對應欄位，recoverable failure 保留編輯內容；一般 User 不見 raw JSON、policy ID 或 schema code。
+- 資料型別權威在 `F01-DATA-004A`，體驗行為在 `F00-UX-010A`。缺少必填投影應顯示真實失敗/回復狀態，不能提供永遠 disabled 的假 Edit。
+- 本節只補齊文字互動契約，不變更既有 ④B High-fi 視覺參照、Geometry 或無關畫面。
 
 # 10. BUILDING / Visible Generation Progress
 
