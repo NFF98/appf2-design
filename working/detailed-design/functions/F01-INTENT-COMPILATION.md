@@ -611,6 +611,30 @@ Assumption decision：
 - Reject → 原 proposal/default 不得進 Resolved Intent；target 轉 UNRESOLVED、清除 resolved/proposed value，再重新跑 policy。
 - 含 policy_risk_flags 的 MATERIAL item不可用 assumption Accept 解決；必須經 clarification answer形成 USER_EXPLICIT truth。
 
+### F01-DATA-004A — Visible Assumption Edit-Shape Projection（T004 SPEC_GAP semantic closure）
+
+**唯一權威與版本邊界：**F01 擁有每個 policy-visible item 的 value type、question type 與合法 alternatives；F00 不得從 `proposed_default` 推導權威 schema、借用其他題目選項或讓 LLM 補齊 UI metadata。本節是 **material API response-contract 變更**，必須先經新 Build Spec / F01 projection 實作與 F00 同步 rebind；不得回溯改寫已鎖定的 BS-*。
+
+F01-API-001 與 F01-API-002 的 `visible_assumptions[]`，凡 `classification=DEFAULT/PROPOSAL`，均必須由**server 端已驗證的 canonical structured_intent target item**投影下列機器欄位：
+
+- `expected_value_type`：與 target 完全一致，為 `STRING | NUMBER | BOOLEAN | ENUM | LIST | RECORD`。
+- `question_type`：與 target 完全一致，為 `FREE_TEXT | NUMBER | BOOLEAN | SINGLE_CHOICE | MULTI_CHOICE | STRUCTURED_FIELDS`；沿用既有固定 type pairing，不另造組合。
+- `options[]`：僅 `ENUM/SINGLE_CHOICE` 與 `LIST/MULTI_CHOICE` 必填，內容、順序、JsonValue 型別必須與 server 已驗證的 `alternatives[]` 一致；沿用既有 unique/canonical/membership 規則。其他類型**不得**帶此欄位；不得拿 proposal 值自行推測候選項目。
+- `record_edit_schema`：僅 `RECORD/STRUCTURED_FIELDS` 必填，固定為 `{"kind":"OPEN_JSON_RECORD_V1","key_policy":"USER_DEFINED","value_kind":"JSON_VALUE","nested":true}`；其他類型不得帶此欄位。這只描述現有 F01 RECORD plain-object validator 已允許的開放式鍵值規則；**不是** LLM 生產的字段限制、固定 schema 或新的 domain validation。
+
+**RECORD 型別的唯一 Edit 語意：**
+
+1. EDIT 的 native JSON payload 是 plain object；User 可新增、刪除、改名與修改 key，欄位名稱不得重複（避免覆蓋）。`proposed_default` 只提供可編輯初始內容，不是 required keys、allowed keys 或 server schema。
+2. Value 可為 `JsonValue`：字串、有限數字、布林、null、LIST 或巢狀 RECORD。內嵌資料須保留 JSON-native type；變更 type 必須由 User 明確選擇，不得把物件/陣列默默序列化成字串。Server 繼續依現有 `valueFitsItem`／plain-record 規則驗證，**不增加新** key-level 限制。
+3. F00 預設用具有展開/收合能力的**具型別欄位控制**編輯巢狀清單／物件；不能要求一般 User 手寫原始 JSON，不能從 proposal 推測 hidden required fields、leaf schema 或 domain 專屬檢查。
+4. LIST 編輯只能從 F01 `options[]` 選取**不重複**的 native values；ENUM 只能選一個 `options[]` value。不得新增 alternatives 集合之外的項目。其他純量依 F01 所投影之原生型別編輯。
+5. F00 只將 User 意圖送到 F01-API-002 的 `assumption_decisions:[{assumption_id,decision:"EDIT",edited_value:<native JsonValue>}]`。F01 保留既有版本、匿名身份、`valueFitsItem`、trusted merge、provenance 與依賴失效規則；在可信 F01 response 前，UI draft/preview 不得改動 canonical truth。
+6. 任一 material pending assumption 缺少、錯配或破損的必填 edit-shape 欄位，**必須 fail closed**：F01 不得產生看似可用的 READY_WITH_VISIBLE_ASSUMPTIONS；F00 不得顯示假可編輯/長期 disabled Edit、猜選項、自動接受或暗中提升為 USER_EXPLICIT。沿用既有錯誤封包／recoverable-failure 契約，不能新增臨時 error code。
+7. `FACT/UNKNOWN` 是資訊類別，不因 schema metadata 出現就允許 assumption decision。預設/建議 source label 在 F01 trusted transition 前不變。帶 policy_risk_flags 的 material item 仍必須走 clarification，不能藉 Accept/Edit 跳過。
+8. 本節 RECORD schema 為 **OPEN_JSON_RECORD_V1**，不是固定欄位表。將來若要求 domain-specific required fields、key restrictions 或 per-field/nested domain validation，另走 Design Delta，不得由 Cursor 或前端猜測。
+
+**驗收與相容性鎖定：**replacement baseline 應要求 F01 contract/API tests 覆蓋六種 projected types、ENUM/LIST alternatives 完整性、RECORD schema、可增刪改名/巢狀值、malformed metadata fail closed、EDIT server validation 與 provenance；F00 的 `F00-AC-005 → TEST-F00-005` 必須驗證 ENUM/LIST/RECORD 的可操作 Accept/Edit/Reject、鍵盤可完成、native typed request、invalid/stale recovery、source 不偷改。既有 stable AC/Test IDs 不重新編號。舊版 F01 response 不具備新增的 shape metadata，**不得**與新 F00 編輯器混用；先完成 F01 owner implementation 和 API contract 證據，再進行 T004 rebind / UI 結合。
+
 # 11. Resolved Intent
 
 ## F01-DATA-005
