@@ -375,11 +375,11 @@
     {
       "acceptance_id": "F01-AC-004",
       "function_id": "F01",
-      "criterion": "material proposal 必須 visible。",
+      "criterion": "material proposal 必須 visible；pending DEFAULT/PROPOSAL 依 F01-DATA-004A 投影可信 edit-shape（六種 type、ENUM/LIST 完整 alternatives、RECORD OPEN_JSON_RECORD_V1），缺少或錯配 metadata 必須 fail closed，server 保持 source/version/trusted validation。",
       "test_id": "TEST-F01-004",
-      "expected_observable": "material proposal 必須 visible。",
+      "expected_observable": "F01 create/answers response 的 material pending 假設含型別一致的 expected_value_type/question_type；ENUM/LIST options 與 canonical alternatives native-equal、RECORD open record shape；缺失/錯配時拒絕輸出可用假設；User EDIT 維持原生型別與可信 F01 provenance/version 檢查，無 scope/schema guess。",
       "contract_status": "ACTIVE",
-      "proof_scope": "BEHAVIOR",
+      "proof_scope": "API",
       "required_for_build_freeze": true
     },
     {

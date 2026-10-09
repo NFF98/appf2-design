@@ -1500,7 +1500,7 @@ Semantic / Policy：
 - F01-AC-001 User fact 不被 LLM proposal 覆蓋。
 - F01-AC-002 required missing + no safe default → NEEDS_CLARIFICATION。
 - F01-AC-003 money/permission/cost rule 未 USER_EXPLICIT → NEEDS_CLARIFICATION。
-- F01-AC-004 material proposal 必須 visible。
+- F01-AC-004 material proposal 必須 visible，且待決 DEFAULT/PROPOSAL 的 trusted projection 必須完整回傳 F01-DATA-004A 的 expected_value_type / question_type / ENUM-LIST options[] / RECORD OPEN_JSON_RECORD_V1 edit-shape；型別或選項遺失、錯配要 fail closed，保留既有 Accept/Edit/Reject 與 server validated provenance。
 - F01-AC-005 answered question 不重問，除非 upstream condition 改變。
 - F01-AC-006 same Envelope + policy version → same decision。
 - F01-AC-007 Prompt B 不得在 gate pass 前執行。
