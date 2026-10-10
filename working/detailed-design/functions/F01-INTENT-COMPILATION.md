@@ -1075,6 +1075,18 @@ request_anonymous_id
 
 **Threat model / acceptance：** nonextractable 不能防 XSS 使用頁面 key；±90s 內已簽請求有 within-window replay 風險；side-effect duplicate 僅靠 F01 idempotency 和 attempt fencing。必測 foreign `intent_id` / forged anonymous ID / cookie-only / wrong public key / Origin spoof / stale timestamp / signature mismatch / same logical retry / private key-loss / legacy cutover。真 PostgreSQL/Browser 端對端及 F12 recovery 尚須實際測試，不得把 Design 文字當 PASS。
 
+### F01-API-ID-001B — Verified original-Intent Blueprint access grant (Human privacy ruling 2026-10-11)
+
+An immutable `content_hash` is an identifier, **not** sufficient authority to fetch a private Blueprint. The F01 original-holder permission is proven by the existing per-intent P-256 private key plus signed scoped cookie; F01/F02 durable compilation/admission lineage must associate `intent_id` to exact `content_hash`. It must not rely on arbitrary `anonymous_id` equality alone.
+
+New holder-only same-origin endpoint: `GET /api/v1/intents/{intent_id}/blueprint-access-grant?content_hash=<sha256:...>`. The first-party browser presents the existing `HttpOnly; Secure; SameSite=Lax; Path=/api/v1/intents/<intent_id>/` cookie and `X-Appf2-PoP-Key`, `X-Appf2-PoP-Signature`, `X-Appf2-PoP-Timestamp`. Signature input is UTF-8 `JSON.stringify(["APPF2_READ_PoP_V1","GET",actualURL.pathname,content_hash,timestampMs])`, timestamp a strict canonical safe-integer Number, tolerance ±90 seconds. No request body or mutation Idempotency-Key is required for this read-only grant. Server rejects extra query fields, cross-origin/fetch metadata failures, forged key, missing cookie, foreign intent, unadmitted blueprint, unsupported hash format or missing durable lineage **before token issue**.
+
+Only after verifying intent, nonce-independent P-256 signature, exact hash/lineage and current read authority may server return (Shared API envelope) a server-signed `intent_blueprint_access_grant` with canonical `intent_id`, `content_hash`, `key_thumbprint`, `expires_at<=issued_at+60s`, audience `blueprint:read` and `share:create` (both only for this originally owned hash). No raw key, cookie or private User content in token. The caller retains the token memory-only, submits `Authorization: Bearer <grant>` to `GET /b/{content_hash}`, fresh `GET /api/v1/blueprints/{content_hash}/execution-admission` or `POST /api/v1/shares` as applicable. Verifiers must independently check server signature, short expiry, audience, exact lineage/hash and current trust/ownership on every use; token expiry or revocation never falls back to a client UUID.
+
+Uniform `404 / API-RESOURCE-NOT-FOUND` for missing/foreign/private source or invalid PoP/grant (no enumeration); trusted DB/store outage `503 / API-ADMISSION-TEMPORARILY-UNAVAILABLE`. `Cache-Control: private, no-store`; no caching the grant at CDN and no grant in URL, log or telemetry. F12 returns safe KEEP_CURRENT_APP/RETURN_HOME as applicable. A signed token is **read/share-create authority only**, never F03 executable admission. The server enforces Share creation F05-API-001A with the audience `share:create`, not merely proof of hash possession.
+
+**Acceptance:** own intent with valid cookie+matching key+admitted hash yields 60s grant and body; foreign/guessed/mismatched hash, wrong key/cookie, key loss, expired token, revoked durable lineage, unsigned/no-Origin all denied; no outsider can POST a Share for known hash. This is a new explicit API contract and is subject to Human Design Freeze and client migration; not a claim that Cursor already implemented it.
+
 # 19. API 1 — Create / Analyze Intent
 
 ## F01-API-001
