@@ -1547,11 +1547,11 @@ Capability / Blueprint：
 
 API：
 
-- F01-AC-013 POST /intents retry 不 duplicate intent。
+- F01-AC-013 POST /intents retry 不 duplicate intent；〔BD-025 安全 proof 補強，Review 候選〕同一 logical CREATE 重試沿用 same key/body/idempotency identity，正確 P-256 PoP 僅一筆 durable intent；missing/malformed/stale/wrong-key signature 在 INSERT 前拒絕。
 - F01-AC-014 POST /compile retry 不 duplicate logical compile。
 - F01-AC-015 stale intent_version → 409。
-- F01-AC-016 error envelope 永遠有 request_id + stable code。
-- F01-AC-017 Client 無法送 resolved_intent 繞過 policy。
+- F01-AC-016 error envelope 永遠有 request_id + stable code；〔BD-025 安全 proof 補強，Review 候選〕原 Intent read-grant 僅在 scoped cookie + same P-256 signed GET + exact durable hash lineage 時簽發，跨 intent/cookie-only/PoP-only/foreign key/expired grant uniform 404，trusted outage 503。
+- F01-AC-017 Client 無法送 resolved_intent 繞過 policy；〔BD-025 安全 proof 補強，Review 候選〕Client-provided UUID/resolved_intent/hash 不是 private Intent authority；≤60s read-grant audience 不得提升 F03 execution admission。
 - F01-AC-018 Provider secret 不出 Client / Blueprint。
 
 Reliability / Evidence：
