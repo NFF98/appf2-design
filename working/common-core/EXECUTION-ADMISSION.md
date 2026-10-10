@@ -4,16 +4,18 @@
 
 > 狀態：BUILD_FREEZE_READY / STEP2_REVIEWED / Phase 1 — Working Current Truth。
 > Build Freeze / implementation boundary：`working/common-core/DESIGN-TO-DELIVERY.md`。
-> Canonical Role：把 immutable Blueprint content delivery 與 mutable current trust / compatibility decision分開，確保 CDN舊body不能繞過 revoke / incompatibility。
+> Canonical Role：把 immutable Blueprint content、有效的 Share/Intent 讀取權限及 mutable current execution trust 分成三道不同閘門，防止舊快取或洩漏的 hash 繞過 revoke / incompatibility。
 
 # 1. Problem
 
-Blueprint body以 content_hash immutable CDN cache；但 blueprint_content.trust_status可變。
+Blueprint body以 content_hash 指定 immutable 內容，**但必須先驗證讀取權限、禁止公共 CDN body cache**；blueprint_content.trust_status 仍可變。
 
 因此：
 
 ~~~text
-Cached Blueprint Body
+Possessing a Blueprint Hash / Cached Body
+≠
+Current Permission To Read
 ≠
 Current Permission To Execute
 ~~~
@@ -37,9 +39,9 @@ fresh ExecutionAdmission for same content_hash
 GET /api/v1/blueprints/{content_hash}/execution-admission
 ~~~
 
-Public read；不要求 account。
+Read requires a valid, server-verified Share or Original Intent authorization (§8.1); no account login is required merely to receive a public Share. Hash alone is NEVER sufficient.
 
-Public request只攜帶 path `content_hash`。Client不得在 body/query/header提供 `trust_status`、`executable`、`runtime_version`、`registry_version`、`registry_digest` 或 Registry object來覆寫 trusted decision。
+Public request path包含 `content_hash`，另外必須提交 §8.1 的有效 Share context 或 Intent access grant。Client不得在 body/query/header提供 `trust_status`、`executable`、`runtime_version`、`registry_version`、`registry_digest` 或 Registry object來覆寫 trusted decision。
 
 Server flow：
 
@@ -179,7 +181,20 @@ GET /b/{content_hash}
 
 只交付 immutable canonical body；它不是 execution authorization endpoint。
 
-因此 CDN可長快取 body，而 admission保持fresh。
+Protected body must NOT use public CDN cache. Return `Cache-Control: private, no-store` with authorization-sensitive Vary; admission maintains its existing §5 freshness/cache semantics.
+
+### 8.1 Human-approved private hash-read authorization — Option A, 2026-10-11
+
+**Binding ruling:** User/Human approved: `GET /b/{content_hash}` only after validating an effective Share or original Intent permission; `content_hash` is content identity, **never bearer authorization**. The same rule applies to `GET /api/v1/blueprints/{content_hash}/execution-admission` to prevent leaking private trust/eligibility metadata. Authorization must precede any response with body or trust details.
+
+1. **Share recipient:** Same-origin request header `X-Appf2-Share-Id: <share_id>`, with server verified ShareStore lookup on **every request**: canonical v4 Share ID, ACTIVE, not expired, exact `blueprint_hash === requested content_hash`, and server-approved trust status. `share_id` is an intentionally distributed public sharing reference and permits reading **only the referenced Blueprint**; it is not an arbitrary hash. Missing, mismatched, expired or revoked Share fails closed. No User may create a new Share for an arbitrary known hash (F05 owner `F05-API-001`).
+2. **Original Intent holder:** The existing F01 scoped cookie `Path=/api/v1/intents/<intent_id>/` is retained (never loosen it to `/`). The first-party browser calls `GET /api/v1/intents/{intent_id}/blueprint-access-grant?content_hash=<hash>` with valid scoped cookie and per-intent P-256 signed read proof (see F01-API-ID-001B). Server checks durable F01→F02 admitting lineage for the exact intent and hash, then may issue server-signed `intent_blueprint_access_grant` with `intent_id, content_hash, key_thumbprint, expires_at<=now+60s, audience={blueprint:read,share:create}`. Keep token browser memory-only, never URL/log/telemetry. For the existing `/b/{hash}` and execution-admission endpoint, send `Authorization: Bearer <intent_blueprint_access_grant>`. Server validates signature, expiry, audience `blueprint:read`, F01/F02 lineage and current permissions on **every read**. Grant is not F03 execution admission.
+3. F01 signed GET read-proof: `X-Appf2-PoP-Key` (SPKI DER base64url), `X-Appf2-PoP-Signature` (P1363 64-byte ECDSA signature base64url), `X-Appf2-PoP-Timestamp` (canonical epoch millisecond decimal). Signed UTF-8 exact JSON array `["APPF2_READ_PoP_V1","GET",actualURL.pathname,content_hash,timestampMs]` with timestamp safe-integer Number, clock ±90s. Server checks verified P-256 key association, cookie/intent/hash, first-party Origin/fetch metadata and exact query (only content_hash). This GET is read access, **no mutation idempotency key** and no second intent.
+4. Denials for hash-only, missing/expired/revoked/mismatch Share, foreign Intent, invalid signature/cookie/grant, or unknown hash all return indistinguishable `404 / API-RESOURCE-NOT-FOUND` (no resource/ownership leak). If a trusted DB/identity/share dependency fails, `503 / API-ADMISSION-TEMPORARILY-UNAVAILABLE`, never cached allow or false 404. The HTTP distinction is dependent on verified authoritative lookup, not attacker-provided status.
+5. Authorized `/b/{hash}` returns immutable canonical JSON and hash-consistent body with `Cache-Control: private, no-store`, `Vary: Authorization, X-Appf2-Share-Id`, `Referrer-Policy: no-referrer`. Neither shared CDN nor third-party/proxy cache may reuse the body. Existing `5 admission result freshness `Cache-Control: private, max-age=0, must-revalidate` persists **after** authorization with corresponding Vary. Access permission and fresh `executable=true` are separate gates; valid Share/body does not override revocation.
+6. **Mandatory negative proofs:** hash-only, foreign/mismatched/expired/revoked Share, Share creation using only known hash/UUID, cookie-only, PoP-only, foreign intent, lost key, forged/expired read grant, CDN cross-user cache, DB read failure, revoked execution while body exists. Positive proofs: live ACTIVE Share→same hash body; original signed Intent→only its own hash; neither can hydrate F03 without fresh independent admission.
+
+**Scope:** This changes legacy public hash read/CDN assumptions; no automatic migration/old-client bypass. F05/Shared API/F01/F12 are required co-owners. This Draft is not a Build Freeze or shipped access-control implementation.
 
 # 9. Failure / Denial Precedence
 
@@ -261,6 +276,27 @@ Capability REVOKED 在 fresh execution check造成 Blueprint **currently incompa
 Current Registry policy update不得偷偷覆寫 same-version release：例如 `7.0.0/release-A ACTIVE` 要 revoke時，必須發布 PATCH release `7.0.1/release-B REVOKED`；execution_contract_digest / runtime_binding_digest不變，但 registry/validator/runtime artifact digests形成新的 immutable ledger entry。Test fixture也必須遵守；禁止「改 lifecycle但保留同 release tuple」。
 
 Temporary admission failure不得 fallback成 allow。Content body cache hit、Share ACTIVE、validation曾經PASSED、same-hash content REUSED都不是 allow substitute。
+
+### 9.1 Option A — public HTTP denial mapping (PG001/T006 L2 review delta)
+
+本節把 §9 已有的 E01–E08 判斷順序具體化為 HTTP contract；不改 durable trust precedence、≤30 秒 admission freshness 或 §5 既有快取規則。所有 denial 都不得包含 `executable=true`，client 不得覆寫任一 server decision。
+
+| First-matching condition | HTTP | Stable public error code | retryable | Recovery |
+|---|---:|---|---|---|
+| E01 content_hash 不存在 | 404 | `API-RESOURCE-NOT-FOUND` | false | 不揭露其他 resource 狀態 |
+| E02 durable trust REVOKED | 410 | `F02-ERR-016` | false | F12 terminal-safe restart |
+| E03 durable trust INCOMPATIBLE | 422 | `F02-ERR-017` | false | F12 compatibility recovery |
+| E04-A durable trust 非 VALIDATED（且不屬 E02/E03） | 422 | `F02-ERR-017` | false | fail closed；不可用 stale body allow |
+| E04-B durable content hash/schema/registry mismatch | 500 | `F02-ERR-015` | false | integrity terminal；不回傳 sensitive diagnostics |
+| E05 blueprint schema unsupported | 422 | `F02-ERR-017` | false | F12 compatibility recovery |
+| E06 pinned release identity/ledger 不符 | 422 | `F02-ERR-017` | false | F12 compatibility recovery |
+| E07 current runtime release/dependency 不可執行 | 422 | `F02-ERR-017` | false | F12 compatibility recovery |
+| E08 trusted dependency temporary unavailable | 503 | `API-ADMISSION-TEMPORARILY-UNAVAILABLE` | true | retry，不能 fallback allow |
+| allow | 200 | n/a | n/a | fresh admission `expires_at <= issued_at + 30s` |
+
+Denial 統一採 Shared API §6 `{request_id,error:{code,message_key,retryable,retry_after_seconds,details}}`；`details` 只能有 bounded non-sensitive diagnostic key，不能帶 SQL、stack、internal Registry bundle、secrets 或另一 intent 的 existence/lineage。E08 才是 transient retryable；E04-B integrity failure 不得假扮 E08。所有路徑維持 `Cache-Control: private, max-age=0, must-revalidate`，禁止 stale executable allow。
+
+F12 必須為既有 `F02-ERR-015/016/017` 與新增兩個 Shared API code 提供可見的 terminal/compatibility/retry recovery，不能把未支援的 recovery route 當作已實作；本 Review PR 不直接修改 F12 owner。
 
 # 10. Evidence
 

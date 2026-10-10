@@ -699,6 +699,14 @@ F00不決定：
 
 這些屬 F05。
 
+### F00-UX-017A — Human-approved private Blueprint Share / read UX
+
+After successful F01 compile, the consumer Shell may fetch the canonical Blueprint by hash **only after** the F01 original Intent has issued a verified short-lived access grant (valid intent-scoped cookie plus per-intent signed proof; server checks exact F01→F02 lineage). For legitimate F05 restored Share, use the verified Share ID and live ACTIVE/hash bound read path. The Shell may not treat hash as secret, forge trusted identity, or fetch a private body from public CDN.
+
+When Share CTA is tapped for an App created in the same original Intent, F00/F05 must obtain or renew the original-holder `share:create` grant in memory before `POST /api/v1/shares`; send the required `source_intent_id` and exact `blueprint_hash`. A Share recipient with only another user's active Share link does not automatically become the original author or receive `share:create`.
+
+If the holder PoP key is missing/expired, request grant fails, Share is revoked, or an old client cannot supply signed proof, F00 must preserve the current App and present the approved F12 safe return / create-new / upgrade-first UX. Do not automatically create a new Share or recover private Intent using `anonymous_id` alone. No access grant/cookie/private key in local telemetry, URL, Share link or persistent draft. Actual Browser security tests mandatory after Build Freeze/rebind.
+
 # 21. Remix / Refine Entry
 
 ## F00-UX-018

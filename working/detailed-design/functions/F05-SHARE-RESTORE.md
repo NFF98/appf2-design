@@ -216,6 +216,10 @@ Rules：
 5. copy failure 只影響 copy action，不失效 share。
 6. Native Web Share API 是 convenience，不是 dependency。
 
+### F05-UX-001A — Grant before Create Share / no recipient privilege escalation
+
+Creator Share Overlay transition `CLOSED → CREATING` must first acquire a fresh original-holder F01 `blueprint-access-grant` for its exact `source_intent_id + blueprint_hash`, with scope `share:create`. Only then may it POST the Share mutation with normal F05 idempotency key. An expired grant can be reissued only by valid scoped-cookie-plus-PoP original holder, never by anonymous UUID alone. Missing/lost key, foreign hash, or unauthorized Share recipient must enter `FAILED` and preserve current App (F12), without creating a Share row. Valid Share recipients can restore through their active Share ID but are not permitted to mint their own fresh owner-authorized Shares without original-Intent authority.
+
 # 7. Phase 1 Share Privacy
 
 ## F05-SEC-001
@@ -312,7 +316,7 @@ GET /share/{share_id}
 → resolve share mapping
 → verify share status
 → obtain content_hash
-→ fetch /b/{content_hash}
+→ fetch /b/{content_hash} with X-Appf2-Share-Id: verified active share_id
 → fetch fresh ExecutionAdmission for content_hash
 → verify current trust / compatibility
 → F03 hydrate
@@ -334,14 +338,14 @@ Rules：
 
 1. content_hash path resolves only admitted canonical Blueprint。
 2. response body = canonical Blueprint JSON。
-3. cache immutable Blueprint aggressively。
+3. private authorized Blueprint body不得公用 CDN cache；`Cache-Control: private, no-store`，`Vary: Authorization, X-Appf2-Share-Id`。
 4. same hash永遠不得返回不同 body。
 5. F03在 hydrate前必須取得 `working/common-core/EXECUTION-ADMISSION.md` 定義的 fresh ExecutionAdmission。
 6. trust status本身不是 immutable；cached body不能當 execution permission。
 
 因此：
 
-> immutable content可長快取；mutable trust decision不能被永久快取成「永遠可執行」。
+> Content identity 仍 immutable，但 Human 已核准私有 Blueprint 讀取須 Share/Intent 權限；不可公用快取，mutable trust 也不能因舊 body 而永久獲准執行。
 
 # 12. Cache Policy
 
@@ -350,8 +354,8 @@ Rules：
 Blueprint content：
 
 ~~~text
-content-addressed immutable
-→ long CDN cache
+content-addressed immutable **but authorization-gated**
+→ private no-store; no public CDN cache or cross-user body reuse
 ~~~
 
 Share mapping / status：
@@ -364,7 +368,7 @@ mutable reference
 Phase 1 target：
 
 ~~~text
-share mapping edge TTL <= 60 seconds
+share mapping edge TTL <= 60 seconds for public UI/resolve only; **not usable as positive body-read authorization** (each protected read must check current authoritative ACTIVE/non-expired status or verified revocation-safe equivalent)
 ~~~
 
 Security revocation應能 purge / bypass cache。
@@ -399,6 +403,7 @@ Request：
 ~~~json
 {
   "anonymous_id": "uuid",
+  "source_intent_id": "uuid",
   "blueprint_hash": "sha256:...",
   "share_mode": "DURABLE_REFERENCE"
 }
@@ -408,6 +413,7 @@ Header：
 
 ~~~text
 Idempotency-Key: required
+Authorization: Bearer <original-intent-access-grant with share:create audience>
 ~~~
 
 Success：
@@ -433,6 +439,8 @@ Rules：
 4. Blueprint必須通過 preconditions。
 5. API不接受 arbitrary canonical_blueprint body；只接受 admitted blueprint_hash。
 6. Share creation本身不 mutation Blueprint。
+7. `source_intent_id` required；伺服器驗 grant `share:create`、該 Intent/F01→F02 admitting lineage、`blueprint_hash` exact match；client `anonymous_id` 不是 owner 權限。已失效 token/hash-only/foreign intent 不建立 Share。
+8. 此為 Human-approved breaking security change，legacy public minting 不得繼續接受；Build Freeze/rebind 前仍為 Draft Design。
 
 # 15. API 2 — Resolve Share
 
@@ -485,7 +493,7 @@ GET /b/{content_hash}
 
 Purpose：
 
-> CDN-friendly immutable canonical Blueprint delivery。
+> Immutable canonical Blueprint delivery only after live Share or original Intent read authorization; no public CDN reuse.
 
 Success：
 
@@ -493,7 +501,9 @@ Success：
 200
 Content-Type: application/json
 ETag: content_hash
-immutable cache headers
+Cache-Control: private, no-store
+Vary: Authorization, X-Appf2-Share-Id
+Referrer-Policy: no-referrer
 ~~~
 
 Response body：
@@ -504,11 +514,23 @@ canonical_blueprint
 
 Failure：
 
-- unknown hash → 404
+- unknown hash or missing/invalid Share/Intent access → same indistinguishable 404
 - trust revoked/incompatible → resolver / execution gate blocks use
-- storage temporary failure → 503 / F12 recovery
+- trusted Share/Intent authorization or storage temporary failure → 503 / F12 recovery, fail-closed
 
 Implementation可由 Edge Resolver + BlueprintRepository 提供；不要求額外 app server hop。
+
+### F05-API-003A — Human-authorized privacy boundary for hash delivery (2026-10-11)
+
+`GET /b/{content_hash}` is **not PUBLIC_READ**. Hash possession never establishes identity, ownership or sharing rights. Exact read authorization is in `working/common-core/EXECUTION-ADMISSION.md` `8.1. Valid Share path: supply `X-Appf2-Share-Id` for an ACTIVE, non-expired, live server-validated share whose `blueprint_hash` equals requested path hash. Original Intent path: send a fresh original-holder `Authorization: Bearer <intent_blueprint_access_grant>` signed by server after per-intent PoP, cookie and durable F01→F02 lineage verification. Any foreign/cookie-only/anonymous_id-only/hash-only request denied uniformly 404, DB/authority outage 503; no public CDN body caching.
+
+A public `GET /share/{share_id}` or `GET /api/v1/shares/{share_id}` is allowed to advertise a Share reference only if the Share is live, without exposing private User content or an executable authorization. Share status checks must be **repeated at content read time**, not trusted from stale client data. A revoked Share cannot access previously cached body; future releases should purge legacy public cache.
+
+### F05-API-001A — Creating a Share requires original Intent authority
+
+Existing `POST /api/v1/shares` must no longer create Share from only arbitrary caller `anonymous_id` + `blueprint_hash`. New authoritative body field `source_intent_id` is **required**; same-origin request must provide `Authorization: Bearer <intent_blueprint_access_grant>` with server validated `share:create` audience, exact intent ID, exact requested `blueprint_hash` and durable F01 compiler→F02 admitted lineage. F05 must still apply original ACTIVE trust+compatibility and 24h idempotency transaction checks. Share creation from only known hash, mere public share_id, forged intent/UUID or wrong/expired grant is denied **before** any INSERT. An authorized creator can mint a new grant from the F01 scoped holder-only endpoint later; no dependency on a short grant from the original compile response. This does not add an account login or permit recipient re-sharing via unauthorized owner credentials.
+
+Breaking request behavior requires the prescribed Design Freeze/rebind and client migration. Legacy unsigned public share creation MUST fail closed at cutover, no implicit ownership proof from Browser anonymous UUID. The existing `/share/{share_id}` recipient semantics remain available after legitimate share creation.
 
 # 17. Revocation / Expiry Phase Boundary
 
@@ -702,6 +724,15 @@ App exists but cannot safely run here
 | F05-ERR-011 | SHARE_COPY_FAILED | YES | active share URL |
 | F05-ERR-012 | INTERNAL_INVARIANT | NO | trace context |
 
+### F05 Privacy/Read Authorization Additional Acceptance — PG001 / Human 2026-10-11
+
+- Hash-only `GET /b/{content_hash}` returns uniform 404; no canonical body, ETag leakage, cached body or admission metadata.
+- Active, non-expired exact-hash `X-Appf2-Share-Id` fetch succeeds, but foreign/hash mismatch/expired/revoked Share returns uniform 404 and cannot rehydrate.
+- Revoke while private body cached or Share mapping Edge cache exists: next authorized body read must fail; no public CDN cache, no `stale-if-error`.
+- Request `POST /api/v1/shares` from any party holding only hash or arbitrary UUID returns a denial and must not create a row. Holder must present server verified original F01 Intent `share:create` grant tied to compiled hash and source_intent_id.
+- Legitimately shared recipient does not thereby acquire original owner Share-minting rights; unauthorized/private Blueprint data remains undisclosed.
+- New grant client flow requires formal Design version/cutover and independent Browser/real PostgreSQL API tests, never fake PASS from review prose.
+
 # 26. Security / Privacy
 
 - F05-SEC-001 Share URL不含 Runtime input/result。
@@ -771,11 +802,11 @@ share_id
 Blueprint fetch：
 
 ~~~text
-content_hash
-→ CDN
-→ miss: BlueprintRepository/Postgres
+content_hash + verified live Share or original Intent access grant
+→ server re-checks Share/Intent/hash binding and trust
+→ BlueprintRepository/Postgres private read
 → canonical JSON
-→ immutable cache
+→ private no-store; no shared CDN caching
 ~~~
 
 # 29. No-LLM Restore Guarantee

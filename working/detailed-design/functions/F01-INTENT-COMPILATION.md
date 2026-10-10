@@ -1055,6 +1055,38 @@ request_anonymous_id
 6. 這個 equality gate只建立 continuity / idempotency isolation；**不是 authentication、ownership proof或 sensitive-action authorization**，不得改寫 F07 anonymous identity contract。
 7. F01 idempotency scope中的 anonymous_id永遠使用本節 resolved的 `request_anonymous_id`。
 
+### F01-API-ID-001A — Explicit per-intent PoP / continuity amendment (Option A, L2 review delta)
+
+本條以安全校驗補強 F01-API-ID-001；只有通過實際 server-verified PoP 的 request 才能被當成某個 intent 的可信 mutation。先前 `trusted request context` 不再允許僅憑可由客戶端選擇的 `anonymous_id`、global identity cookie 或另一個 intent 的 cookie 形成 mutation authority。F07 定義不變：`anonymous_id` 仍只是相關性/continuity equality，不是持有人認證。
+
+**Logical CREATE：**
+
+1. Browser 每次新的 logical CREATE 生成 dedicated WebCrypto ECDSA P-256 (SHA-256) `extractable=false` key pair；持久保管 private `CryptoKey` 於第一方 IndexedDB，不能送出或匯出。向 Server 送 public `SPKI` 的 base64url DER。
+2. `keyThumbprint = base64url(SHA256(public SPKI DER bytes))`；CREATE `Idempotency-Key=appf2-create-v1.<keyThumbprint>`。24h 同 logical CREATE 保留 key pair、idempotency key、原始 body；HTTP retry 只產生新的 PoP timestamp/signature，不重新生 key/new logical mutation。
+3. 三個 mutation endpoint 均送 `X-Appf2-PoP-Key`、`X-Appf2-PoP-Signature`、`X-Appf2-PoP-Timestamp`。Signature 是 WebCrypto P1363 64-byte ECDSA-SHA256 raw `r||s` base64url。簽入 UTF-8 `JSON.stringify(["APPF2_MUTATION_PoP_V1",method,path,b64url(sha256(rawBodyBytes)),idempotencyKey,timestampMs])`。`method` = uppercase method，`path` = actual request pathname without query（由 server 而非 Client 宣稱），`timestampMs` = Number 型 Unix epoch milliseconds，必須先嚴格解析 canonical decimal ASCII timestamp header（無 leading zero、無負數、finite safe integer），再作 JSON 數字序列化；不容許 string/number 雙形態。
+4. Server 必須檢查 canonical base64url / 64-byte signature / key SPKI parse / signed transcript / timestamp ±90 秒 / trusted allowlisted Origin（拒絕 cross-origin），且在任何 F01 durable write 前完成；同一 logical CREATE 的重試還須依 `F01-API-004` 24h database idempotency rule/CAS，不能憑 PoP 重領另一 intent。
+5. CREATE body `anonymous_id` 必須遵守原 `F01-API-ID-001` 的 continuity equality，但不被當作 authenticated owner。CREATE 成功後 server 只針對 `intent_id + anonymous_id + keyThumbprint` 發簽章保護、≤24h、`HttpOnly; Secure; SameSite=Lax; Path=/api/v1/intents/<intent_id>/` 的 scoped continuity cookie；不能讓 Client 自選可信持有人、不能簽發舊 global unrestricted cookie。
+
+**Answers / Compile：**
+
+6. 每次 mutation 必須出示該 intent 的有效 scoped cookie **以及** 同一 public SPKI 的新簽章；驗證 cookie 認定的 `intent_id/anonymous_id/keyThumbprint` 與實際 route、PoP public key、durable record 一致，才產生可信 `request_anonymous_id`。Client 不能用 body/header 的 arbitrary UUID 指定 owner。
+7. intent 不存在或 foreign intent / identity mismatch 一律走原 `404 / F01-ERR-015` indistinguishable route；不可透過 cookie mismatch 探測其他 intent 是否存在。缺失/失效 PoP 或未允許 Origin 必須在 DB mutation 前 fail-closed，使用原 `F01-ERR-001` 或 `F01-ERR-012`（依既有 malformed/security 分類）；不自創 stable error ID。
+8. 舊 client 沒 PoP 時採 upgrade-first、明確使用者可見 restart/recreate flow；不能接受 unsigned CREATE 再生成一個無法操作的 intent，不能用 UUID/cookie-alone 強行 recover。key 丟失時不允許搶救既有 intent；需要新的 logical CREATE。前端 F00/F12 必須提供可見提示與維持既有 App 不被錯誤 mutation 破壞。
+
+**Threat model / acceptance：** nonextractable 不能防 XSS 使用頁面 key；±90s 內已簽請求有 within-window replay 風險；side-effect duplicate 僅靠 F01 idempotency 和 attempt fencing。必測 foreign `intent_id` / forged anonymous ID / cookie-only / wrong public key / Origin spoof / stale timestamp / signature mismatch / same logical retry / private key-loss / legacy cutover。真 PostgreSQL/Browser 端對端及 F12 recovery 尚須實際測試，不得把 Design 文字當 PASS。
+
+### F01-API-ID-001B — Verified original-Intent Blueprint access grant (Human privacy ruling 2026-10-11)
+
+An immutable `content_hash` is an identifier, **not** sufficient authority to fetch a private Blueprint. The F01 original-holder permission is proven by the existing per-intent P-256 private key plus signed scoped cookie; F01/F02 durable compilation/admission lineage must associate `intent_id` to exact `content_hash`. It must not rely on arbitrary `anonymous_id` equality alone.
+
+New holder-only same-origin endpoint: `GET /api/v1/intents/{intent_id}/blueprint-access-grant?content_hash=<sha256:...>`. The first-party browser presents the existing `HttpOnly; Secure; SameSite=Lax; Path=/api/v1/intents/<intent_id>/` cookie and `X-Appf2-PoP-Key`, `X-Appf2-PoP-Signature`, `X-Appf2-PoP-Timestamp`. Signature input is UTF-8 `JSON.stringify(["APPF2_READ_PoP_V1","GET",actualURL.pathname,content_hash,timestampMs])`, timestamp a strict canonical safe-integer Number, tolerance ±90 seconds. No request body or mutation Idempotency-Key is required for this read-only grant. Server rejects extra query fields, cross-origin/fetch metadata failures, forged key, missing cookie, foreign intent, unadmitted blueprint, unsupported hash format or missing durable lineage **before token issue**.
+
+Only after verifying intent, nonce-independent P-256 signature, exact hash/lineage and current read authority may server return (Shared API envelope) a server-signed `intent_blueprint_access_grant` with canonical `intent_id`, `content_hash`, `key_thumbprint`, `expires_at<=issued_at+60s`, audience `blueprint:read` and `share:create` (both only for this originally owned hash). No raw key, cookie or private User content in token. The caller retains the token memory-only, submits `Authorization: Bearer <grant>` to `GET /b/{content_hash}`, fresh `GET /api/v1/blueprints/{content_hash}/execution-admission` or `POST /api/v1/shares` as applicable. Verifiers must independently check server signature, short expiry, audience, exact lineage/hash and current trust/ownership on every use; token expiry or revocation never falls back to a client UUID.
+
+Uniform `404 / API-RESOURCE-NOT-FOUND` for missing/foreign/private source or invalid PoP/grant (no enumeration); trusted DB/store outage `503 / API-ADMISSION-TEMPORARILY-UNAVAILABLE`. `Cache-Control: private, no-store`; no caching the grant at CDN and no grant in URL, log or telemetry. F12 returns safe KEEP_CURRENT_APP/RETURN_HOME as applicable. A signed token is **read/share-create authority only**, never F03 executable admission. The server enforces Share creation F05-API-001A with the audience `share:create`, not merely proof of hash possession.
+
+**Acceptance:** own intent with valid cookie+matching key+admitted hash yields 60s grant and body; foreign/guessed/mismatched hash, wrong key/cookie, key loss, expired token, revoked durable lineage, unsigned/no-Origin all denied; no outsider can POST a Share for known hash. This is a new explicit API contract and is subject to Human Design Freeze and client migration; not a claim that Cursor already implemented it.
+
 # 19. API 1 — Create / Analyze Intent
 
 ## F01-API-001

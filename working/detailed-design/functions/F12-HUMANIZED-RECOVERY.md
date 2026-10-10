@@ -557,6 +557,33 @@ F00不自行猜 source_error_code的 recovery。
 
 F02 internal validation report不直接顯示 Consumer。
 
+### F12-RCV-PG001 — Option A execution-admission + PoP user recovery (Design review candidate)
+
+此處只指定 Consumer 的恢復行為；Error ID 的權威來源仍是 Shared API/F01/F02，F12 不得重新命名或降級技術錯誤。`EXECUTION-ADMISSION.md` §9.1 是 E01–E08 precedence 和 HTTP 的 source owner。Runtime/F00 不得使用 cached Blueprint body 假裝新 admission 已允許。
+
+| Exact source ID / admission condition | F12 policy/class | User-visible next action | Preserve / prohibitions |
+|---|---|---|---|
+| `API-RESOURCE-NOT-FOUND` / E01 | NOT_FOUND / terminal safe return | RETURN_HOME | 不揭露 Blueprint 是否曾屬於其他人 |
+| `F02-ERR-016` / E02 | F12-POL-001 / SECURITY_TERMINAL | KEEP_CURRENT_APP / RETURN_HOME | 不 rehydrate revoked Blueprint |
+| `F02-ERR-017` / E03/E04-A/E05/E06/E07 | F12-POL-006 / INCOMPATIBLE | REFRESH_COMPATIBILITY / RETURN_HOME / KEEP_CURRENT_APP | 不自動 silent recompile、不修改舊 Blueprint |
+| `F02-ERR-015` / E04-B | F12-POL-001 / SECURITY_TERMINAL | KEEP_CURRENT_APP / RETURN_HOME | integrity failure 不重試、不洩露 raw body/stack |
+| `API-ADMISSION-TEMPORARILY-UNAVAILABLE` / E08 | TRANSIENT_DEPENDENCY / F12-POL-003 | RETRY / RETRY_LATER / KEEP_CURRENT_APP | 不能 fallback 至 cached `executable=true`，不得改寫仍可使用的本地 App |
+| `F01-ERR-012` / invalid/forged PoP, cross-origin, missing scoped authority | F12-POL-001 / SECURITY_TERMINAL | KEEP_CURRENT_APP / RETURN_HOME | 不用 cookie-alone/UUID 解鎖；展示安全中止 |
+| `F01-ERR-015` / missing or foreign intent | NOT_FOUND / terminal-safe | RETURN_HOME | 必須 uniform non-disclosure |
+| Legacy unsigned F01 CREATE / lost IndexedDB key | upgrade-first then new logical CREATE, without recovery of old intent | RETURN_HOME（由 Home 明確發起新 CREATE，不新增 Recovery action ID） | 不接受 legacy unsigned create；不宣稱能從 UUID 還原私鑰/intent |
+
+#### F12-RCV-PG001-HASH — Human-approved private hash read recovery
+
+- `API-RESOURCE-NOT-FOUND` applies uniformly to unknown hash, missing/foreign/expired/revoked Share, and invalid/expired original-Intent read grant. Consumer must not expose which check failed, whether private Blueprint existed, or hint a guessed hash. Policy remains F12-POL-006 / NOT_FOUND; `RETURN_HOME` or safe preservation of last-known-good current App.
+- `API-ADMISSION-TEMPORARILY-UNAVAILABLE` applies when read authority cannot be verified because trusted DB/Share/F01-F02 lineage/deployment dependencies are down; policy F12-POL-003 / TRANSIENT_DEPENDENCY with `RETRY/RETRY_LATER/KEEP_CURRENT_APP`; do not retry through stale cache or issue permissive grant.
+- F05 Share restoration after expired/revoked share should present its established user-safe EXPIRED/REVOKED entry outcome, while direct `/b/{hash}`/admission public API maintains uniform 404 and **must not disclose the specific Share status**.
+- Successful private Blueprint delivery still needs fresh independent F03 execution admission; revoked/incompatible execution is never repaired by successful read.
+- Failure to create a Share for lack of `share:create` exact original Intent scope must not create a Share row; UI offers safe return to current App, not an unverified shortcut.
+
+F01 legacy/key-loss 的 UI 必須告訴 User 更新瀏覽器版本或重新建立；無法續用的舊 private Intent 不得透過 global cookie/anonymous UUID 恢復。已 commit 的 F03/App state 在失敗後不得被清空。使用者可在新 CREATE 開始新流程，原始安全上下文只保留已獲准保留的部分；無法證明的部分不得假裝保留。
+
+`API-RESOURCE-NOT-FOUND` / `API-ADMISSION-TEMPORARILY-UNAVAILABLE` 是 PG001 新增候選 shared source IDs；其 machine-readable registry **候選項已加入本 Draft PR**，尚須核對 F12 source/error/next_action、Human Design review 與 Build Freeze；不能把本 PR 當成已部署的錯誤文案。F02/F01 既有 ID 的恢復映射則直接沿用 `recovery-registry.json` 現有紀錄。
+
 # 19. F03 Recovery Mapping
 
 | Source | Class | Severity | Preserve | Next Action |
