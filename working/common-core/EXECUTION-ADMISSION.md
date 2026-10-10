@@ -264,7 +264,7 @@ Temporary admission failure不得 fallback成 allow。Content body cache hit、S
 
 ### 9.1 Option A — public HTTP denial mapping (PG001/T006 L2 review delta)
 
-本節把 `9 已有的 E01–E08 判斷順序具體化為 HTTP contract；不改 durable trust precedence、≤30 秒 admission freshness 或 `5 既有快取規則。所有 denial 都不得包含 `executable=true`，client 不得覆寫任一 server decision。
+本節把 §9 已有的 E01–E08 判斷順序具體化為 HTTP contract；不改 durable trust precedence、≤30 秒 admission freshness 或 §5 既有快取規則。所有 denial 都不得包含 `executable=true`，client 不得覆寫任一 server decision。
 
 | First-matching condition | HTTP | Stable public error code | retryable | Recovery |
 |---|---:|---|---|---|
@@ -279,7 +279,7 @@ Temporary admission failure不得 fallback成 allow。Content body cache hit、S
 | E08 trusted dependency temporary unavailable | 503 | `API-ADMISSION-TEMPORARILY-UNAVAILABLE` | true | retry，不能 fallback allow |
 | allow | 200 | n/a | n/a | fresh admission `expires_at <= issued_at + 30s` |
 
-Denial 統一採 Shared API `6 `{request_id,error:{code,message_key,retryable,retry_after_seconds,details}}`；`details` 只能有 bounded non-sensitive diagnostic key，不能帶 SQL、stack、internal Registry bundle、secrets 或另一 intent 的 existence/lineage。E08 才是 transient retryable；E04-B integrity failure 不得假扮 E08。所有路徑維持 `Cache-Control: private, max-age=0, must-revalidate`，禁止 stale executable allow。
+Denial 統一採 Shared API §6 `{request_id,error:{code,message_key,retryable,retry_after_seconds,details}}`；`details` 只能有 bounded non-sensitive diagnostic key，不能帶 SQL、stack、internal Registry bundle、secrets 或另一 intent 的 existence/lineage。E08 才是 transient retryable；E04-B integrity failure 不得假扮 E08。所有路徑維持 `Cache-Control: private, max-age=0, must-revalidate`，禁止 stale executable allow。
 
 F12 必須為既有 `F02-ERR-015/016/017` 與新增兩個 Shared API code 提供可見的 terminal/compatibility/retry recovery，不能把未支援的 recovery route 當作已實作；本 Review PR 不直接修改 F12 owner。
 
