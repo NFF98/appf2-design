@@ -1328,7 +1328,7 @@ Identity：
 - F07-AC-001 First Value前不需 account。
 - F07-AC-002 first-party random anonymous_id不使用 fingerprint。
 - F07-AC-003 clear site storage後不嘗試重建舊 identity。
-- F07-AC-004 anonymous_id不能授權 owner-only action。
+- F07-AC-004 anonymous_id不能授權 owner-only action；〔BD-025 安全 proof 補強，Review 候選〕anonymous_id 僅 continuity，不授權 F01 private read、F05 Share CREATE、owner action；不得 global-cookie fallback。
 - F07-AC-005 last_seen不因每個 event同步 write。
 
 Evidence Envelope：
