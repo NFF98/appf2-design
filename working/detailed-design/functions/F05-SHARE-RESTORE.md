@@ -341,7 +341,7 @@ Rules：
 
 因此：
 
-> immutable content可長快取；mutable trust decision不能被永久快取成「永遠可執行」。
+> Content identity 仍 immutable，但 Human 已核准私有 Blueprint 讀取須 Share/Intent 權限；不可公用快取，mutable trust 也不能因舊 body 而永久獲准執行。
 
 # 12. Cache Policy
 
@@ -364,7 +364,7 @@ mutable reference
 Phase 1 target：
 
 ~~~text
-share mapping edge TTL <= 60 seconds
+share mapping edge TTL <= 60 seconds for public UI/resolve only; **not usable as positive body-read authorization** (each protected read must check current authoritative ACTIVE/non-expired status or verified revocation-safe equivalent)
 ~~~
 
 Security revocation應能 purge / bypass cache。
@@ -789,11 +789,11 @@ share_id
 Blueprint fetch：
 
 ~~~text
-content_hash
-→ CDN
-→ miss: BlueprintRepository/Postgres
+content_hash + verified live Share or original Intent access grant
+→ server re-checks Share/Intent/hash binding and trust
+→ BlueprintRepository/Postgres private read
 → canonical JSON
-→ immutable cache
+→ private no-store; no shared CDN caching
 ~~~
 
 # 29. No-LLM Restore Guarantee
