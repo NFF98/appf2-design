@@ -296,7 +296,7 @@ API-ADMISSION-TEMPORARILY-UNAVAILABLE
 
 ### 13.1 PG001 / T006 additional Shared API errors (L2 review candidate)
 
-- `API-RESOURCE-NOT-FOUND`: E01 unknown `content_hash`; HTTP 404, `retryable=false`, stable `message_key=recovery.api.resource_not_found`. 不暴露 Blueprint 是否曾存在或他人私有狀態；F12 返回 Home。
+- `API-RESOURCE-NOT-FOUND`: E01 unknown `content_hash` OR protected hash read with unauthorized/missing/revoked/foreign Share/Intent grant (indistinguishable); HTTP 404, `retryable=false`, stable `message_key=recovery.api.resource_not_found`. 不暴露 Blueprint 是否曾存在或他人私有狀態；F12 返回 Home。
 - `API-ADMISSION-TEMPORARILY-UNAVAILABLE`: E08 trusted repository/release/admission dependency failure；HTTP 503, `retryable=true`, stable `message_key=recovery.api.admission_temporarily_unavailable`. 僅可在安全邊界內 retry；不得從 stale/cached `executable=true` 降級放行。
 - 兩者的 F12 恢復投影由 `working/detailed-design/registries/recovery-registry.json` 的同名 draft entries 擁有。它們不是 F01 私有 mutation 授權錯誤，也不可取代 F02 integrity / revoked / incompatible IDs。
 - 此新增列入本 Draft PR 的 Design/Registry 一致性審核；**未經 Human Build Freeze/rebind 前不得冒稱為 locked Build Spec**。
