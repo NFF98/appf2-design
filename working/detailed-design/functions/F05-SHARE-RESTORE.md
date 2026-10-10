@@ -216,6 +216,10 @@ Rules：
 5. copy failure 只影響 copy action，不失效 share。
 6. Native Web Share API 是 convenience，不是 dependency。
 
+### F05-UX-001A — Grant before Create Share / no recipient privilege escalation
+
+Creator Share Overlay transition `CLOSED → CREATING` must first acquire a fresh original-holder F01 `blueprint-access-grant` for its exact `source_intent_id + blueprint_hash`, with scope `share:create`. Only then may it POST the Share mutation with normal F05 idempotency key. An expired grant can be reissued only by valid scoped-cookie-plus-PoP original holder, never by anonymous UUID alone. Missing/lost key, foreign hash, or unauthorized Share recipient must enter `FAILED` and preserve current App (F12), without creating a Share row. Valid Share recipients can restore through their active Share ID but are not permitted to mint their own fresh owner-authorized Shares without original-Intent authority.
+
 # 7. Phase 1 Share Privacy
 
 ## F05-SEC-001
