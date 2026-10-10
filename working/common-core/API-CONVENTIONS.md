@@ -257,6 +257,18 @@ GET /api/v1/blueprints/{content_hash}/execution-admission
 
 它是 PUBLIC_READ，不是 immutable Blueprint body endpoint。
 
+# 12.2 Phase 1 F01 per-intent mutation proof (PG001/T006 L2 review delta)
+
+這是 F01 CREATE/answers/compile 的 **Function-specific exception and explicit wire contract**，不是把全體 Shared API POST 更改為 PoP，也不將 `anonymous_id` 升級為認證。
+
+- 對 `POST /api/v1/intents`，每個新的 logical CREATE 生成單獨非可匯出的 WebCrypto ECDSA P-256 私鑰；`Idempotency-Key` 固定為 `appf2-create-v1.<keyThumbprint>`，該 thumbprint 為公開 SPKI DER 的 SHA-256/base64url。瀏覽器以同一密鑰及同一 logical body 在 24h 重試，重新簽署新 timestamp；重試不能建立第二個 intent。
+- CREATE / answers / compile 使用 `X-Appf2-PoP-Key`（SPKI DER base64url）、`X-Appf2-PoP-Signature`（P1363 64-byte raw ECDSA signature base64url）、`X-Appf2-PoP-Timestamp`（Unix epoch milliseconds decimal）；signature input 是 UTF-8 `JSON.stringify(["APPF2_MUTATION_PoP_V1", method, path, base64url(sha256(rawBodyBytes)), Idempotency-Key, timestampMs])`。method 使用 uppercase HTTP method；path 是 decoded? **禁止 server 依 client 自報 route 計算**，採實際收到的 pathname；不得含 query。timestamp 允差 ±90s；只驗證簽章/時鐘不足以取代 idempotency。
+- API host 驗證 first-party Origin + configured allowed origin，跨站、簽章/headers 缺失或不符均於 durable mutation 前拒絕。`anonymous_id` 不得作權限證明。
+- CREATE 通過 PoP 後，server 發 intent scoped, signed continuity cookie，HttpOnly/Secure/SameSite=Lax 且 `Path=/api/v1/intents/<intent_id>/`，最多 24h。answers/compile 必須同時有有效 scoped cookie 與同把私鑰新簽章，且與 durable intent/anonymous continuity 完全相符；只有 cookie 或只帶任意 anonymous UUID 均不得授權。
+- Legacy 無 PoP 的 client 必須先升級，再建立新的 CREATE；不靜默放行 unsigned CREATE 或用 global cookie 修補 key-loss。若本地 private key 遺失，顯示明確 restart/recreate 提示；既有 intent 不得以 UUID 猜回。這個切換屬相容性變更，須經 Human Design review/rebaseline 才能作正式 Client/Server 一起部署。
+- P-256 nonextractable key 不是抵抗 XSS 的保證；在 ±90s 內攔截的有效 signed request 仍可能重播。F01 24h idempotency/CAS 必須封住 duplicate side effect；Browser 必須保持已存 key/body 的同 logical retry identity。
+- 永遠不得把 PoP signature、本地 private key、cookie、DB password 或原始 User Content 放入 telemetry/GitHub Evidence。要有缺失/錯誤 PoP、wrong intent、cross-origin、replay、key loss、legacy upgrade 以及 foreign intent non-disclosure 的對應測試。
+
 # 13. Canonical Shared API Errors
 
 ~~~text
