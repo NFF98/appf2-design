@@ -122,6 +122,12 @@ Rules：
 8. Function可以用 trusted request context中的 anonymous_id做 continuity equality / idempotency scope（例如 F01 intent mutation只允許同 anonymous_id continuity）；這種 equality gate不是 authentication或 ownership proof。
 9. 對 opaque resource做 continuity mismatch時，Function應使用自身 not-found/non-disclosure contract，不得因 anonymous_id mismatch洩漏另一 anonymous identity的資源是否存在。
 
+### F07-SEC-003 — Anonymous continuity ≠ F01 mutation authority (PG001 L2 review delta)
+
+F07-RQ-001 `anonymous_id` 只識別 browser continuity/correlation，與伺服器接受某個 private Intent mutation 的授權無關。F01 的 per-logical CREATE WebCrypto P-256 proof、意圖 scoped continuity cookie、每次 answers/compile PoP 的 wire/驗證細節，唯一 Function owner 是 `F01-API-ID-001A`；Shared HTTP 例外由 `API-CONVENTIONS.md` `12.2 擁有。F07 identity ensure 不產生認證、不能憑同一 UUID 分享私有 Intent、不能以 global cookie 代替 signed PoP。
+
+證據收集仍遵守最少資料原則：任何 F01 PoP private key、signature、scoped cookie、DB role credentials 都不能出現在 F07 telemetry 或原始產品事件內。已建立的 F07 UUID rotation、server ensure、事件去重邊界保持不變。這是 F01 mutation security 的跨 owner 約束，不加入 F07 bootstrap network round trip。
+
 # 5. Server Ensure / Identity Row
 
 ## F07-RQ-002
