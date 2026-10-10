@@ -720,6 +720,15 @@ App exists but cannot safely run here
 | F05-ERR-011 | SHARE_COPY_FAILED | YES | active share URL |
 | F05-ERR-012 | INTERNAL_INVARIANT | NO | trace context |
 
+### F05 Privacy/Read Authorization Additional Acceptance — PG001 / Human 2026-10-11
+
+- Hash-only `GET /b/{content_hash}` returns uniform 404; no canonical body, ETag leakage, cached body or admission metadata.
+- Active, non-expired exact-hash `X-Appf2-Share-Id` fetch succeeds, but foreign/hash mismatch/expired/revoked Share returns uniform 404 and cannot rehydrate.
+- Revoke while private body cached or Share mapping Edge cache exists: next authorized body read must fail; no public CDN cache, no `stale-if-error`.
+- Request `POST /api/v1/shares` from any party holding only hash or arbitrary UUID returns a denial and must not create a row. Holder must present server verified original F01 Intent `share:create` grant tied to compiled hash and source_intent_id.
+- Legitimately shared recipient does not thereby acquire original owner Share-minting rights; unauthorized/private Blueprint data remains undisclosed.
+- New grant client flow requires formal Design version/cutover and independent Browser/real PostgreSQL API tests, never fake PASS from review prose.
+
 # 26. Security / Privacy
 
 - F05-SEC-001 Share URL不含 Runtime input/result。
