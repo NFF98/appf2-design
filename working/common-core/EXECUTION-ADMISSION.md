@@ -4,16 +4,18 @@
 
 > 狀態：BUILD_FREEZE_READY / STEP2_REVIEWED / Phase 1 — Working Current Truth。
 > Build Freeze / implementation boundary：`working/common-core/DESIGN-TO-DELIVERY.md`。
-> Canonical Role：把 immutable Blueprint content delivery 與 mutable current trust / compatibility decision分開，確保 CDN舊body不能繞過 revoke / incompatibility。
+> Canonical Role：把 immutable Blueprint content、有效的 Share/Intent 讀取權限及 mutable current execution trust 分成三道不同閘門，防止舊快取或洩漏的 hash 繞過 revoke / incompatibility。
 
 # 1. Problem
 
-Blueprint body以 content_hash immutable CDN cache；但 blueprint_content.trust_status可變。
+Blueprint body以 content_hash 指定 immutable 內容，**但必須先驗證讀取權限、禁止公共 CDN body cache**；blueprint_content.trust_status 仍可變。
 
 因此：
 
 ~~~text
-Cached Blueprint Body
+Possessing a Blueprint Hash / Cached Body
+≠
+Current Permission To Read
 ≠
 Current Permission To Execute
 ~~~
