@@ -255,7 +255,30 @@ Fresh Blueprint execution permission由 `working/common-core/EXECUTION-ADMISSION
 GET /api/v1/blueprints/{content_hash}/execution-admission
 ~~~
 
-它是 PUBLIC_READ，不是 immutable Blueprint body endpoint。
+它是讀取 fresh ExecutionAdmission 的 endpoint，**須依 §12.3 先驗有效 Share/Intent read authorization**；不能因舊分類 PUBLIC_READ 就允許 hash-only 讀取。它不是 immutable Blueprint body endpoint。
+
+# 12.2 Phase 1 F01 per-intent mutation proof (PG001/T006 L2 review delta)
+
+這是 F01 CREATE/answers/compile 的 **Function-specific exception and explicit wire contract**，不是把全體 Shared API POST 更改為 PoP，也不將 `anonymous_id` 升級為認證。
+
+- 對 `POST /api/v1/intents`，每個新的 logical CREATE 生成單獨非可匯出的 WebCrypto ECDSA P-256 私鑰；`Idempotency-Key` 固定為 `appf2-create-v1.<keyThumbprint>`，該 thumbprint 為公開 SPKI DER 的 SHA-256/base64url。瀏覽器以同一密鑰及同一 logical body 在 24h 重試，重新簽署新 timestamp；重試不能建立第二個 intent。
+- CREATE / answers / compile 使用 `X-Appf2-PoP-Key`（SPKI DER base64url）、`X-Appf2-PoP-Signature`（P1363 64-byte raw ECDSA signature base64url）、`X-Appf2-PoP-Timestamp`（Unix epoch milliseconds decimal ASCII、無符號、不能有前置零）；signature input 是 UTF-8 `JSON.stringify(["APPF2_MUTATION_PoP_V1", method, path, base64url(sha256(rawBodyBytes)), Idempotency-Key, timestampMs])`。`timestampMs` 在 JSON transcript 中是安全整數 Number，從 header canonical decimal 嚴格解析後再序列化，不是 String；method 使用 uppercase HTTP method；path 在 Browser 與 server 都以 Web URL parser 對請求 URL 取得的 `pathname` 序列化（保留百分比編碼），由 server 依實際請求重新計算、不可採 client 自報 route；不包含 query 或 fragment。timestamp 允差 ±90s；只驗證簽章/時鐘不足以取代 idempotency。
+- API host 驗證 first-party Origin + configured allowed origin，跨站、簽章/headers 缺失或不符均於 durable mutation 前拒絕。`anonymous_id` 不得作權限證明。
+- CREATE 通過 PoP 後，server 發 intent scoped, signed continuity cookie，HttpOnly/Secure/SameSite=Lax 且 `Path=/api/v1/intents/<intent_id>/`，最多 24h。answers/compile 必須同時有有效 scoped cookie 與同把私鑰新簽章，且與 durable intent/anonymous continuity 完全相符；只有 cookie 或只帶任意 anonymous UUID 均不得授權。
+- Legacy 無 PoP 的 client 必須先升級，再建立新的 CREATE；不靜默放行 unsigned CREATE 或用 global cookie 修補 key-loss。若本地 private key 遺失，顯示明確 restart/recreate 提示；既有 intent 不得以 UUID 猜回。這個切換屬相容性變更，須經 Human Design review/rebaseline 才能作正式 Client/Server 一起部署。
+- P-256 nonextractable key 不是抵抗 XSS 的保證；在 ±90s 內攔截的有效 signed request 仍可能重播。F01 24h idempotency/CAS 必須封住 duplicate side effect；Browser 必須保持已存 key/body 的同 logical retry identity。
+- 永遠不得把 PoP signature、本地 private key、cookie、DB password 或原始 User Content 放入 telemetry/GitHub Evidence。要有缺失/錯誤 PoP、wrong intent、cross-origin、replay、key loss、legacy upgrade 以及 foreign intent non-disclosure 的對應測試。
+
+### 12.3 Private content-hash read access / Share creation gate (Human approval 2026-10-11)
+
+Human approval: **knowing `content_hash` alone never authorizes reading the canonical Blueprint**. Existing `GET /b/{content_hash}` and `GET /api/v1/blueprints/{content_hash}/execution-admission` require a server-verified Share or original Intent access path before exposing body or private trust/eligibility metadata.
+
+- Share recipient: `X-Appf2-Share-Id: <share_id>`, server resolves live ACTIVE non-expired Share and exact hash binding **on each read**; HTTP 404 hides unknown, invalid, revoked, expired, foreign or mismatched Share. This is a deliberate scoped public Share capability, not login or hash authorization.
+- Original Intent: first-party `GET /api/v1/intents/{intent_id}/blueprint-access-grant?content_hash=<hash>` uses F01 intent-scoped signed cookie **plus** matching nonextractable P-256 key's fresh GET signature; successful F01→F02 admitting lineage permits a short (≤60s) signed `intent_blueprint_access_grant` with exact hash/intent/key thumbprint and `blueprint:read, share:create` audiences. Signed proof transcript and errors owned by `F01-API-ID-001B`. Browser sends `Authorization: Bearer <grant>` for allowed reads and `POST /api/v1/shares`; issuer/signature/expiry/scope/lineage/current trust must be revalidated by server.
+- Share CREATE endpoint (`F05-API-001`) must require original Intent grant with `share:create` and exact `source_intent_id` / hash binding. No public anonymous-UUID/hash-only share-minting.
+- Every private body response `Cache-Control: private, no-store`, `Vary: Authorization, X-Appf2-Share-Id`, `Referrer-Policy: no-referrer`; no CDN/shared proxy caching. Grant issue response also `private, no-store`. Admission retains locked `Cache-Control: private, max-age=0, must-revalidate`, but after authorization and with correct `Vary`. Content immutability is independent of public cacheability.
+- Unauthorized/missing/expired/foreign credential or hash => uniform `404 / API-RESOURCE-NOT-FOUND`; trusted authority/DB unavailable => `503 / API-ADMISSION-TEMPORARILY-UNAVAILABLE`. Authz checked **before** content/trust disclosure, with no stale grant fallback. The established E02–E08 and F12 semantics apply only after authorized access.
+- This is an explicit breaking API/privacy delta; follow Human-reviewed Product Freeze, client cutover and tests. Do not replace F01 PoP scoped cookie with root/global cookie or treat grant as F03 executable permission.
 
 # 13. Canonical Shared API Errors
 
@@ -265,9 +288,18 @@ API-IDEMPOTENCY-CONFLICT
 API-RATE-LIMITED
 API-REQUEST-TOO-LARGE
 API-UNSUPPORTED-MEDIA-TYPE
+API-RESOURCE-NOT-FOUND
+API-ADMISSION-TEMPORARILY-UNAVAILABLE
 ~~~
 
 這些只處理 transport/shared concern；domain error仍使用 Fxx-ERR-*。
+
+### 13.1 PG001 / T006 additional Shared API errors (L2 review candidate)
+
+- `API-RESOURCE-NOT-FOUND`: E01 unknown `content_hash` OR protected hash read with unauthorized/missing/revoked/foreign Share/Intent grant (indistinguishable); HTTP 404, `retryable=false`, stable `message_key=recovery.api.resource_not_found`. 不暴露 Blueprint 是否曾存在或他人私有狀態；F12 返回 Home。
+- `API-ADMISSION-TEMPORARILY-UNAVAILABLE`: E08 trusted repository/release/admission dependency failure；HTTP 503, `retryable=true`, stable `message_key=recovery.api.admission_temporarily_unavailable`. 僅可在安全邊界內 retry；不得從 stale/cached `executable=true` 降級放行。
+- 兩者的 F12 恢復投影由 `working/detailed-design/registries/recovery-registry.json` 的同名 draft entries 擁有。它們不是 F01 私有 mutation 授權錯誤，也不可取代 F02 integrity / revoked / incompatible IDs。
+- 此新增列入本 Draft PR 的 Design/Registry 一致性審核；**未經 Human Build Freeze/rebind 前不得冒稱為 locked Build Spec**。
 
 # 14. Request Size
 
