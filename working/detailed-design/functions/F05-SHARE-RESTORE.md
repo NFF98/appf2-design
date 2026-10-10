@@ -312,7 +312,7 @@ GET /share/{share_id}
 → resolve share mapping
 → verify share status
 → obtain content_hash
-→ fetch /b/{content_hash}
+→ fetch /b/{content_hash} with X-Appf2-Share-Id: verified active share_id
 → fetch fresh ExecutionAdmission for content_hash
 → verify current trust / compatibility
 → F03 hydrate
@@ -334,7 +334,7 @@ Rules：
 
 1. content_hash path resolves only admitted canonical Blueprint。
 2. response body = canonical Blueprint JSON。
-3. cache immutable Blueprint aggressively。
+3. private authorized Blueprint body不得公用 CDN cache；`Cache-Control: private, no-store`，`Vary: Authorization, X-Appf2-Share-Id`。
 4. same hash永遠不得返回不同 body。
 5. F03在 hydrate前必須取得 `working/common-core/EXECUTION-ADMISSION.md` 定義的 fresh ExecutionAdmission。
 6. trust status本身不是 immutable；cached body不能當 execution permission。
@@ -350,8 +350,8 @@ Rules：
 Blueprint content：
 
 ~~~text
-content-addressed immutable
-→ long CDN cache
+content-addressed immutable **but authorization-gated**
+→ private no-store; no public CDN cache or cross-user body reuse
 ~~~
 
 Share mapping / status：
@@ -485,7 +485,7 @@ GET /b/{content_hash}
 
 Purpose：
 
-> CDN-friendly immutable canonical Blueprint delivery。
+> Immutable canonical Blueprint delivery only after live Share or original Intent read authorization; no public CDN reuse.
 
 Success：
 
@@ -493,7 +493,9 @@ Success：
 200
 Content-Type: application/json
 ETag: content_hash
-immutable cache headers
+Cache-Control: private, no-store
+Vary: Authorization, X-Appf2-Share-Id
+Referrer-Policy: no-referrer
 ~~~
 
 Response body：
@@ -504,11 +506,23 @@ canonical_blueprint
 
 Failure：
 
-- unknown hash → 404
+- unknown hash or missing/invalid Share/Intent access → same indistinguishable 404
 - trust revoked/incompatible → resolver / execution gate blocks use
-- storage temporary failure → 503 / F12 recovery
+- trusted Share/Intent authorization or storage temporary failure → 503 / F12 recovery, fail-closed
 
 Implementation可由 Edge Resolver + BlueprintRepository 提供；不要求額外 app server hop。
+
+### F05-API-003A — Human-authorized privacy boundary for hash delivery (2026-10-11)
+
+`GET /b/{content_hash}` is **not PUBLIC_READ**. Hash possession never establishes identity, ownership or sharing rights. Exact read authorization is in `working/common-core/EXECUTION-ADMISSION.md` `8.1. Valid Share path: supply `X-Appf2-Share-Id` for an ACTIVE, non-expired, live server-validated share whose `blueprint_hash` equals requested path hash. Original Intent path: send a fresh original-holder `Authorization: Bearer <intent_blueprint_access_grant>` signed by server after per-intent PoP, cookie and durable F01→F02 lineage verification. Any foreign/cookie-only/anonymous_id-only/hash-only request denied uniformly 404, DB/authority outage 503; no public CDN body caching.
+
+A public `GET /share/{share_id}` or `GET /api/v1/shares/{share_id}` is allowed to advertise a Share reference only if the Share is live, without exposing private User content or an executable authorization. Share status checks must be **repeated at content read time**, not trusted from stale client data. A revoked Share cannot access previously cached body; future releases should purge legacy public cache.
+
+### F05-API-001A — Creating a Share requires original Intent authority
+
+Existing `POST /api/v1/shares` must no longer create Share from only arbitrary caller `anonymous_id` + `blueprint_hash`. New authoritative body field `source_intent_id` is **required**; same-origin request must provide `Authorization: Bearer <intent_blueprint_access_grant>` with server validated `share:create` audience, exact intent ID, exact requested `blueprint_hash` and durable F01 compiler→F02 admitted lineage. F05 must still apply original ACTIVE trust+compatibility and 24h idempotency transaction checks. Share creation from only known hash, mere public share_id, forged intent/UUID or wrong/expired grant is denied **before** any INSERT. An authorized creator can mint a new grant from the F01 scoped holder-only endpoint later; no dependency on a short grant from the original compile response. This does not add an account login or permit recipient re-sharing via unauthorized owner credentials.
+
+Breaking request behavior requires the prescribed Design Freeze/rebind and client migration. Legacy unsigned public share creation MUST fail closed at cutover, no implicit ownership proof from Browser anonymous UUID. The existing `/share/{share_id}` recipient semantics remain available after legitimate share creation.
 
 # 17. Revocation / Expiry Phase Boundary
 
