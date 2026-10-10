@@ -1,7 +1,7 @@
 {
-  "registry_version": "2.5.0",
+  "registry_version": "2.6.0",
   "phase_1_freeze_audit": {
-    "status": "PASS",
+    "status": "PENDING_HUMAN_REVIEW",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
     "eligibility": "HUMAN_APPROVED_BUILD_FREEZE_REQUIRED",
     "excludes": [
@@ -9,8 +9,8 @@
       "DEFERRED_CONTENT",
       "F19_VOTE_COUNTER_GENERIC_RECORDS"
     ],
-    "audited_on": "2026-10-06",
-    "change_ref": "BF-049-T001-COMPILER-CONTRACT-CLOSURE"
+    "audited_on": null,
+    "change_ref": "BD-025-PR37-SECURITY-ACCEPTANCE-DELTA-DRAFT-NOT-FROZEN"
   },
   "owner": "working/detailed-design/registries/acceptance-test-registry.json",
   "conventions": "working/common-core/ACCEPTANCE-CONVENTIONS.md",
@@ -465,9 +465,9 @@
     {
       "acceptance_id": "F01-AC-013",
       "function_id": "F01",
-      "criterion": "POST /intents network/same-body retry與 expired-IN_PROGRESS takeover不得 duplicate intent；retryable failure重用同一 idempotency logical operation與 intent_id。",
+      "criterion": "POST /intents network/same-body retry與 expired-IN_PROGRESS takeover不得 duplicate intent；retryable failure重用同一 idempotency logical operation與 intent_id；Same logical CREATE 24h retry必須沿用 per-Intent nonextractable P-256 key、衍生 Idempotency-Key 及 logical body；缺少/錯誤/過期/錯 key PoP不得寫入；valid signed retry必須只有一筆 intent。",
       "test_id": "TEST-F01-API-001",
-      "expected_observable": "FAILED_RETRYABLE可 CAS成新 attempt；有效 IN_PROGRESS回409；expired lease只有一個 takeover winner；所有成功/失敗重試仍只存在一個 logical intent/result_ref，late attempt不可覆寫。",
+      "expected_observable": "FAILED_RETRYABLE可 CAS成新 attempt；有效 IN_PROGRESS回409；expired lease只有一個 takeover winner；所有成功/失敗重試仍只存在一個 logical intent/result_ref，late attempt不可覆寫；Same logical CREATE 24h retry必須沿用 per-Intent nonextractable P-256 key、衍生 Idempotency-Key 及 logical body；缺少/錯誤/過期/錯 key PoP不得寫入；valid signed retry必須只有一筆 intent。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
@@ -495,9 +495,9 @@
     {
       "acceptance_id": "F01-AC-016",
       "function_id": "F01",
-      "criterion": "所有 F01 error envelope永遠有 request_id + stable code；intent不存在與 anonymous continuity mismatch使用相同404/F01-ERR-015，不洩漏跨 anonymous identity存在性。",
+      "criterion": "所有 F01 error envelope永遠有 request_id + stable code；intent不存在與 anonymous continuity mismatch使用相同404/F01-ERR-015，不洩漏跨 anonymous identity存在性；原 Intent 的 holder-only blueprint-access-grant 需 scoped cookie + 同把 P-256 private key 新簽 read proof + F01→F02 exact hash lineage；cookie-only、PoP-only、foreign intent/key、expired grant、cross-origin 和 bare hash 一律 fail-closed，不洩漏 private existence。",
       "test_id": "TEST-F01-API-003",
-      "expected_observable": "malformed/missing identity有 stable 400 code；not-found/mismatch均為不可區分的404 F01-ERR-015 envelope；details無 provider stack/ownership leak。",
+      "expected_observable": "malformed/missing identity有 stable 400 code；not-found/mismatch均為不可區分的404 F01-ERR-015 envelope；details無 provider stack/ownership leak；原 Intent 的 holder-only blueprint-access-grant 需 scoped cookie + 同把 P-256 private key 新簽 read proof + F01→F02 exact hash lineage；cookie-only、PoP-only、foreign intent/key、expired grant、cross-origin 和 bare hash 一律 fail-closed，不洩漏 private existence。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
@@ -505,9 +505,9 @@
     {
       "acceptance_id": "F01-AC-017",
       "function_id": "F01",
-      "criterion": "Client 無法送 resolved_intent 繞過 policy。",
+      "criterion": "Client 無法送 resolved_intent 繞過 policy；伺服器不接受 client-supplied anonymous_id/resolved_intent/任意 public hash 作 owner authority；原 Intent 授權 token audience、≤60 秒期限及 original hash 必須逐次驗證，且任何 read grant 不能代表 F03 executable admission。",
       "test_id": "TEST-F01-SEC-007",
-      "expected_observable": "Client 無法送 resolved_intent 繞過 policy。",
+      "expected_observable": "Client 無法送 resolved_intent 繞過 policy；伺服器不接受 client-supplied anonymous_id/resolved_intent/任意 public hash 作 owner authority；原 Intent 授權 token audience、≤60 秒期限及 original hash 必須逐次驗證，且任何 read grant 不能代表 F03 executable admission。",
       "contract_status": "ACTIVE",
       "proof_scope": "BEHAVIOR",
       "required_for_build_freeze": true
@@ -1375,9 +1375,9 @@
     {
       "acceptance_id": "F05-AC-001",
       "function_id": "F05",
-      "criterion": "validated compatible Blueprint可建立 Durable Share。",
+      "criterion": "validated compatible Blueprint可建立 Durable Share；Share CREATE 只有 server-verified original Intent holder 才能操作：source_intent_id 與 body blueprint_hash、F01→F02 durable lineage、scope share:create grant 三者完全相符；僅知 hash 或 Share recipient 不得新建 Share。",
       "test_id": "TEST-F05-001",
-      "expected_observable": "validated compatible Blueprint可建立 Durable Share。",
+      "expected_observable": "validated compatible Blueprint可建立 Durable Share；Share CREATE 只有 server-verified original Intent holder 才能操作：source_intent_id 與 body blueprint_hash、F01→F02 durable lineage、scope share:create grant 三者完全相符；僅知 hash 或 Share recipient 不得新建 Share。",
       "contract_status": "ACTIVE",
       "proof_scope": "BEHAVIOR",
       "required_for_build_freeze": true
@@ -1385,9 +1385,9 @@
     {
       "acceptance_id": "F05-AC-002",
       "function_id": "F05",
-      "criterion": "Candidate / revoked / incompatible Blueprint不可建立 production share。",
+      "criterion": "Candidate / revoked / incompatible Blueprint不可建立 production share；known hash/forged anonymous UUID/foreign intent/missing or expired owner grant 必須在 Share INSERT 前拒絕，不能用 valid Share recipient read privilege 換 owner share:create privilege。",
       "test_id": "TEST-F05-002",
-      "expected_observable": "Candidate / revoked / incompatible Blueprint不可建立 production share。",
+      "expected_observable": "Candidate / revoked / incompatible Blueprint不可建立 production share；known hash/forged anonymous UUID/foreign intent/missing or expired owner grant 必須在 Share INSERT 前拒絕，不能用 valid Share recipient read privilege 換 owner share:create privilege。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
@@ -1445,9 +1445,9 @@
     {
       "acceptance_id": "F05-AC-008",
       "function_id": "F05",
-      "criterion": "valid ACTIVE share解析到原 immutable Blueprint hash。",
+      "criterion": "valid ACTIVE share解析到原 immutable Blueprint hash；GET /b/{content_hash} 與其 execution-admission 的讀取須 server-side 即時驗證 Share ACTIVE、未過期、share_id 與 exact hash 綁定；裸 hash 或 foreign Share 一律 uniform 404。",
       "test_id": "TEST-F05-008",
-      "expected_observable": "valid ACTIVE share解析到原 immutable Blueprint hash。",
+      "expected_observable": "valid ACTIVE share解析到原 immutable Blueprint hash；GET /b/{content_hash} 與其 execution-admission 的讀取須 server-side 即時驗證 Share ACTIVE、未過期、share_id 與 exact hash 綁定；裸 hash 或 foreign Share 一律 uniform 404。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
@@ -1475,9 +1475,9 @@
     {
       "acceptance_id": "F05-AC-011",
       "function_id": "F05",
-      "criterion": "revoked/expired share不 hydrate App。",
+      "criterion": "revoked/expired share不 hydrate App；revoke/expire/mismatch Share 之後，包含已有 Edge mapping 或快取的情形，下次 protected body/admission read 不得成功；不可提供 stale fallback。",
       "test_id": "TEST-F05-011",
-      "expected_observable": "revoked/expired share不 hydrate App。",
+      "expected_observable": "revoked/expired share不 hydrate App；revoke/expire/mismatch Share 之後，包含已有 Edge mapping 或快取的情形，下次 protected body/admission read 不得成功；不可提供 stale fallback。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
@@ -1505,9 +1505,9 @@
     {
       "acceptance_id": "F05-AC-014",
       "function_id": "F05",
-      "criterion": "CDN中存在 Blueprint body不能繞過 revoked trust gate。",
+      "criterion": "CDN中存在 Blueprint body不能繞過 revoked trust gate；Protected Blueprint body 永不供 shared/public CDN 快取：Cache-Control: private, no-store 及 Vary: Authorization, X-Appf2-Share-Id；即使已有歷史快取也不得繞過新 read authority 或 fresh admission。",
       "test_id": "TEST-F05-014",
-      "expected_observable": "CDN中存在 Blueprint body不能繞過 revoked trust gate。",
+      "expected_observable": "CDN中存在 Blueprint body不能繞過 revoked trust gate；Protected Blueprint body 永不供 shared/public CDN 快取：Cache-Control: private, no-store 及 Vary: Authorization, X-Appf2-Share-Id；即使已有歷史快取也不得繞過新 read authority 或 fresh admission。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
@@ -1845,9 +1845,9 @@
     {
       "acceptance_id": "F07-AC-004",
       "function_id": "F07",
-      "criterion": "anonymous_id不能授權 owner-only action。",
+      "criterion": "anonymous_id不能授權 owner-only action；anonymous_id 只能 continuity/correlation；不可授權 F01 private Intent read、F05 Share CREATE 或任一 owner-only action；不可用全域 cookie 替代 per-intent cookie+PoP。",
       "test_id": "TEST-F07-004",
-      "expected_observable": "anonymous_id不能授權 owner-only action。",
+      "expected_observable": "anonymous_id不能授權 owner-only action；anonymous_id 只能 continuity/correlation；不可授權 F01 private Intent read、F05 Share CREATE 或任一 owner-only action；不可用全域 cookie 替代 per-intent cookie+PoP。",
       "contract_status": "ACTIVE",
       "proof_scope": "BEHAVIOR",
       "required_for_build_freeze": true
@@ -2155,9 +2155,9 @@
     {
       "acceptance_id": "F12-AC-004",
       "function_id": "F12",
-      "criterion": "security/integrity failure優先於 convenience recovery。",
+      "criterion": "security/integrity failure優先於 convenience recovery；unknown/foreign/invalid Share/Intent authorization uniform 404 不揭露是否存在，trusted authorization store 不能驗證回 503 且 fail closed；原 App 保留，fresh execution admission 不得用 stale read grant 代替。",
       "test_id": "TEST-F12-004",
-      "expected_observable": "security/integrity failure優先於 convenience recovery。",
+      "expected_observable": "security/integrity failure優先於 convenience recovery；unknown/foreign/invalid Share/Intent authorization uniform 404 不揭露是否存在，trusted authorization store 不能驗證回 503 且 fail closed；原 App 保留，fresh execution admission 不得用 stale read grant 代替。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true
