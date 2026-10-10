@@ -1,16 +1,16 @@
 {
   "registry_version": "2.6.0",
   "phase_1_freeze_audit": {
-    "status": "PENDING_HUMAN_REVIEW",
+    "status": "PASS",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
-    "eligibility": "HUMAN_APPROVED_BUILD_FREEZE_REQUIRED",
+    "eligibility": "HUMAN_APPROVED_BUILD_FREEZE; IMPLEMENTATION_TESTS_NOT_RUN",
     "excludes": [
       "PHASE_2_PLUS",
       "DEFERRED_CONTENT",
       "F19_VOTE_COUNTER_GENERIC_RECORDS"
     ],
-    "audited_on": null,
-    "change_ref": "BD-025-PR37-SECURITY-ACCEPTANCE-DELTA-DRAFT-NOT-FROZEN"
+    "audited_on": "2026-10-11",
+    "change_ref": "BD-025-HUMAN-PR39-AND-BUILD-FREEZE-APPROVED-20261011-SCOPE-CLEAN-VERSION-LOCK"
   },
   "owner": "working/detailed-design/registries/acceptance-test-registry.json",
   "conventions": "working/common-core/ACCEPTANCE-CONVENTIONS.md",
