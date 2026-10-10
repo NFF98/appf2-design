@@ -269,6 +269,17 @@ GET /api/v1/blueprints/{content_hash}/execution-admission
 - P-256 nonextractable key 不是抵抗 XSS 的保證；在 ±90s 內攔截的有效 signed request 仍可能重播。F01 24h idempotency/CAS 必須封住 duplicate side effect；Browser 必須保持已存 key/body 的同 logical retry identity。
 - 永遠不得把 PoP signature、本地 private key、cookie、DB password 或原始 User Content 放入 telemetry/GitHub Evidence。要有缺失/錯誤 PoP、wrong intent、cross-origin、replay、key loss、legacy upgrade 以及 foreign intent non-disclosure 的對應測試。
 
+### 12.3 Private content-hash read access / Share creation gate (Human approval 2026-10-11)
+
+Human approval: **knowing `content_hash` alone never authorizes reading the canonical Blueprint**. Existing `GET /b/{content_hash}` and `GET /api/v1/blueprints/{content_hash}/execution-admission` require a server-verified Share or original Intent access path before exposing body or private trust/eligibility metadata.
+
+- Share recipient: `X-Appf2-Share-Id: <share_id>`, server resolves live ACTIVE non-expired Share and exact hash binding **on each read**; HTTP 404 hides unknown, invalid, revoked, expired, foreign or mismatched Share. This is a deliberate scoped public Share capability, not login or hash authorization.
+- Original Intent: first-party `GET /api/v1/intents/{intent_id}/blueprint-access-grant?content_hash=<hash>` uses F01 intent-scoped signed cookie **plus** matching nonextractable P-256 key's fresh GET signature; successful F01→F02 admitting lineage permits a short (≤60s) signed `intent_blueprint_access_grant` with exact hash/intent/key thumbprint and `blueprint:read, share:create` audiences. Signed proof transcript and errors owned by `F01-API-ID-001B`. Browser sends `Authorization: Bearer <grant>` for allowed reads and `POST /api/v1/shares`; issuer/signature/expiry/scope/lineage/current trust must be revalidated by server.
+- Share CREATE endpoint (`F05-API-001`) must require original Intent grant with `share:create` and exact `source_intent_id` / hash binding. No public anonymous-UUID/hash-only share-minting.
+- Every private body response `Cache-Control: private, no-store`, `Vary: Authorization, X-Appf2-Share-Id`, `Referrer-Policy: no-referrer`; no CDN/shared proxy caching. Grant issue response also `private, no-store`. Admission retains locked `Cache-Control: private, max-age=0, must-revalidate`, but after authorization and with correct `Vary`. Content immutability is independent of public cacheability.
+- Unauthorized/missing/expired/foreign credential or hash => uniform `404 / API-RESOURCE-NOT-FOUND`; trusted authority/DB unavailable => `503 / API-ADMISSION-TEMPORARILY-UNAVAILABLE`. Authz checked **before** content/trust disclosure, with no stale grant fallback. The established E02–E08 and F12 semantics apply only after authorized access.
+- This is an explicit breaking API/privacy delta; follow Human-reviewed Product Freeze, client cutover and tests. Do not replace F01 PoP scoped cookie with root/global cookie or treat grant as F03 executable permission.
+
 # 13. Canonical Shared API Errors
 
 ~~~text
