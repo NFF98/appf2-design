@@ -255,7 +255,7 @@ Fresh Blueprint execution permission由 `working/common-core/EXECUTION-ADMISSION
 GET /api/v1/blueprints/{content_hash}/execution-admission
 ~~~
 
-它是 PUBLIC_READ，不是 immutable Blueprint body endpoint。
+它是讀取 fresh ExecutionAdmission 的 endpoint，**須依 §12.3 先驗有效 Share/Intent read authorization**；不能因舊分類 PUBLIC_READ 就允許 hash-only 讀取。它不是 immutable Blueprint body endpoint。
 
 # 12.2 Phase 1 F01 per-intent mutation proof (PG001/T006 L2 review delta)
 
