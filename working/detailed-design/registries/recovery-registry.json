@@ -1,15 +1,15 @@
 {
   "registry_version": "1.4.0",
   "phase_1_freeze_audit": {
-    "status": "PENDING_HUMAN_APPROVAL",
+    "status": "PASS",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
-    "eligibility": "HUMAN_APPROVED_BUILD_FREEZE_REQUIRED",
+    "eligibility": "HUMAN_APPROVED_BUILD_FREEZE; IMPLEMENTATION_TESTS_NOT_RUN",
     "excludes": [
       "PHASE_2_PLUS",
       "DEFERRED_CONTENT"
     ],
-    "audited_on": null,
-    "change_ref": "PG001-OPTION-A-PR37-REVIEW-NOT-FROZEN"
+    "audited_on": "2026-10-11",
+    "change_ref": "BD-025-HUMAN-PR39-AND-BUILD-FREEZE-APPROVED-20261011-SCOPE-CLEAN-VERSION-LOCK"
   },
   "owner": "working/detailed-design/registries/recovery-registry.json",
   "source_of_truth": "Fxx and Shared API source errors + F12 recovery policy",
