@@ -883,8 +883,8 @@ Share Error / Recovery Rate
 
 Share Creation：
 
-- F05-AC-001 validated compatible Blueprint可建立 Durable Share。
-- F05-AC-002 Candidate / revoked / incompatible Blueprint不可建立 production share。
+- F05-AC-001 validated compatible Blueprint可建立 Durable Share；〔BD-025 安全 proof 補強，Review 候選〕Share CREATE 先驗 original-holder source_intent_id、share:create signed grant、F01→F02 exact hash lineage，known hash/Share recipient 不得 mint。
+- F05-AC-002 Candidate / revoked / incompatible Blueprint不可建立 production share；〔BD-025 安全 proof 補強，Review 候選〕foreign/expired/forged/absent original-holder grant、Client 任意 anonymous UUID 必須在 Share INSERT 前拒絕。
 - F05-AC-003 duplicate submit with same Idempotency-Key不建立 duplicate logical share。
 - F05-AC-004 Share failure不破壞 current App。
 - F05-AC-005 public Share URL不含 Runtime input/result/raw prompt。
@@ -893,13 +893,13 @@ Restore：
 
 - F05-AC-006 Recipient不需 install。
 - F05-AC-007 Recipient First Value前不需 account。
-- F05-AC-008 valid ACTIVE share解析到原 immutable Blueprint hash。
+- F05-AC-008 valid ACTIVE share解析到原 immutable Blueprint hash；〔BD-025 安全 proof 補強，Review 候選〕原 Body 與 fresh admission 的 Share read 必須每次驗 active+not expired+exact hash；hash-only/foreign Share uniform 404。
 - F05-AC-009 Share Restore不呼叫 LLM。
 - F05-AC-010 Recipient建立fresh Runtime Instance，不取得 Creator Runtime state。
-- F05-AC-011 revoked/expired share不 hydrate App。
+- F05-AC-011 revoked/expired share不 hydrate App；〔BD-025 安全 proof 補強，Review 候選〕expired/revoked/mismatch Share 即使 Edge status 舊快取存在，下次 private body/admission 仍 fail closed，不得 stale fallback。
 - F05-AC-012 Runtime/Registry incompatible時不 silently reinterpret Blueprint。
 - F05-AC-013 Blueprint fetch cache miss仍可由 durable source restore。
-- F05-AC-014 CDN中存在 Blueprint body不能繞過 revoked trust gate。
+- F05-AC-014 CDN中存在 Blueprint body不能繞過 revoked trust gate；〔BD-025 安全 proof 補強，Review 候選〕protected body 禁止 public CDN/shared cache；Cache-Control: private, no-store + authorization-sensitive Vary，且 cache 永不取代 Share/Intent permission 與 fresh admission。
 
 UX / Recovery：
 
