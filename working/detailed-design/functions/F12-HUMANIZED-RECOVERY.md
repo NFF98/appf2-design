@@ -559,7 +559,7 @@ F02 internal validation report不直接顯示 Consumer。
 
 ### F12-RCV-PG001 — Option A execution-admission + PoP user recovery (Design review candidate)
 
-此處只指定 Consumer 的恢復行為；Error ID 的權威來源仍是 Shared API/F01/F02，F12 不得重新命名或降級技術錯誤。`EXECUTION-ADMISSION.md` `9.1 是 E01–E08 precedence 和 HTTP 的 source owner。Runtime/F00 不得使用 cached Blueprint body 假裝新 admission 已允許。
+此處只指定 Consumer 的恢復行為；Error ID 的權威來源仍是 Shared API/F01/F02，F12 不得重新命名或降級技術錯誤。`EXECUTION-ADMISSION.md` §9.1 是 E01–E08 precedence 和 HTTP 的 source owner。Runtime/F00 不得使用 cached Blueprint body 假裝新 admission 已允許。
 
 | Exact source ID / admission condition | F12 policy/class | User-visible next action | Preserve / prohibitions |
 |---|---|---|---|
@@ -574,7 +574,7 @@ F02 internal validation report不直接顯示 Consumer。
 
 F01 legacy/key-loss 的 UI 必須告訴 User 更新瀏覽器版本或重新建立；無法續用的舊 private Intent 不得透過 global cookie/anonymous UUID 恢復。已 commit 的 F03/App state 在失敗後不得被清空。使用者可在新 CREATE 開始新流程，原始安全上下文只保留已獲准保留的部分；無法證明的部分不得假裝保留。
 
-`API-RESOURCE-NOT-FOUND` / `API-ADMISSION-TEMPORARILY-UNAVAILABLE` 是 PG001 新增候選 shared source IDs；其 machine-readable registry acceptance、與前端文案一併在本 Draft PR BCE 驗證，任何不合法 ID/next_action 必須先修正，不得默認已通過。F02/F01 既有 ID 的恢復映射則直接沿用 `recovery-registry.json` 現有紀錄。
+`API-RESOURCE-NOT-FOUND` / `API-ADMISSION-TEMPORARILY-UNAVAILABLE` 是 PG001 新增候選 shared source IDs；其 machine-readable registry **候選項已加入本 Draft PR**，尚須核對 F12 source/error/next_action、Human Design review 與 Build Freeze；不能把本 PR 當成已部署的錯誤文案。F02/F01 既有 ID 的恢復映射則直接沿用 `recovery-registry.json` 現有紀錄。
 
 # 19. F03 Recovery Mapping
 
