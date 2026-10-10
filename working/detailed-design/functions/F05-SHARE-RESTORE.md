@@ -399,6 +399,7 @@ Request：
 ~~~json
 {
   "anonymous_id": "uuid",
+  "source_intent_id": "uuid",
   "blueprint_hash": "sha256:...",
   "share_mode": "DURABLE_REFERENCE"
 }
@@ -408,6 +409,7 @@ Header：
 
 ~~~text
 Idempotency-Key: required
+Authorization: Bearer <original-intent-access-grant with share:create audience>
 ~~~
 
 Success：
@@ -433,6 +435,8 @@ Rules：
 4. Blueprint必須通過 preconditions。
 5. API不接受 arbitrary canonical_blueprint body；只接受 admitted blueprint_hash。
 6. Share creation本身不 mutation Blueprint。
+7. `source_intent_id` required；伺服器驗 grant `share:create`、該 Intent/F01→F02 admitting lineage、`blueprint_hash` exact match；client `anonymous_id` 不是 owner 權限。已失效 token/hash-only/foreign intent 不建立 Share。
+8. 此為 Human-approved breaking security change，legacy public minting 不得繼續接受；Build Freeze/rebind 前仍為 Draft Design。
 
 # 15. API 2 — Resolve Share
 
