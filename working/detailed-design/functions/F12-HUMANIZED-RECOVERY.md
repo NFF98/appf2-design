@@ -1033,7 +1033,7 @@ SSOT / Classification：
 - F12-AC-001 source Fxx error code保持唯一 technical identity。
 - F12-AC-002 F12不重新編號 source errors。
 - F12-AC-003 same error context + policy version產生 deterministic RecoveryState。
-- F12-AC-004 security/integrity failure優先於 convenience recovery。
+- F12-AC-004 security/integrity failure優先於 convenience recovery；〔BD-025 安全 proof 補強，Review 候選〕unauthorized private body 404 必須 non-disclosure，trusted auth store failure 503 fail-closed；preserve last-good App，不以 stale grant/body bypass F03。
 
 Context：
 
