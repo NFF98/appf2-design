@@ -37,9 +37,9 @@ fresh ExecutionAdmission for same content_hash
 GET /api/v1/blueprints/{content_hash}/execution-admission
 ~~~
 
-Public read；不要求 account。
+Read requires a valid, server-verified Share or Original Intent authorization (§8.1); no account login is required merely to receive a public Share. Hash alone is NEVER sufficient.
 
-Public request只攜帶 path `content_hash`。Client不得在 body/query/header提供 `trust_status`、`executable`、`runtime_version`、`registry_version`、`registry_digest` 或 Registry object來覆寫 trusted decision。
+Public request path包含 `content_hash`，另外必須提交 §8.1 的有效 Share context 或 Intent access grant。Client不得在 body/query/header提供 `trust_status`、`executable`、`runtime_version`、`registry_version`、`registry_digest` 或 Registry object來覆寫 trusted decision。
 
 Server flow：
 
@@ -179,7 +179,20 @@ GET /b/{content_hash}
 
 只交付 immutable canonical body；它不是 execution authorization endpoint。
 
-因此 CDN可長快取 body，而 admission保持fresh。
+Protected body must NOT use public CDN cache. Return `Cache-Control: private, no-store` with authorization-sensitive Vary; admission maintains its existing §5 freshness/cache semantics.
+
+### 8.1 Human-approved private hash-read authorization — Option A, 2026-10-11
+
+**Binding ruling:** User/Human approved: `GET /b/{content_hash}` only after validating an effective Share or original Intent permission; `content_hash` is content identity, **never bearer authorization**. The same rule applies to `GET /api/v1/blueprints/{content_hash}/execution-admission` to prevent leaking private trust/eligibility metadata. Authorization must precede any response with body or trust details.
+
+1. **Share recipient:** Same-origin request header `X-Appf2-Share-Id: <share_id>`, with server verified ShareStore lookup on **every request**: canonical v4 Share ID, ACTIVE, not expired, exact `blueprint_hash === requested content_hash`, and server-approved trust status. `share_id` is an intentionally distributed public sharing reference and permits reading **only the referenced Blueprint**; it is not an arbitrary hash. Missing, mismatched, expired or revoked Share fails closed. No User may create a new Share for an arbitrary known hash (F05 owner `F05-API-001`).
+2. **Original Intent holder:** The existing F01 scoped cookie `Path=/api/v1/intents/<intent_id>/` is retained (never loosen it to `/`). The first-party browser calls `GET /api/v1/intents/{intent_id}/blueprint-access-grant?content_hash=<hash>` with valid scoped cookie and per-intent P-256 signed read proof (see F01-API-ID-001B). Server checks durable F01→F02 admitting lineage for the exact intent and hash, then may issue server-signed `intent_blueprint_access_grant` with `intent_id, content_hash, key_thumbprint, expires_at<=now+60s, audience={blueprint:read,share:create}`. Keep token browser memory-only, never URL/log/telemetry. For the existing `/b/{hash}` and execution-admission endpoint, send `Authorization: Bearer <intent_blueprint_access_grant>`. Server validates signature, expiry, audience `blueprint:read`, F01/F02 lineage and current permissions on **every read**. Grant is not F03 execution admission.
+3. F01 signed GET read-proof: `X-Appf2-PoP-Key` (SPKI DER base64url), `X-Appf2-PoP-Signature` (P1363 64-byte ECDSA signature base64url), `X-Appf2-PoP-Timestamp` (canonical epoch millisecond decimal). Signed UTF-8 exact JSON array `["APPF2_READ_PoP_V1","GET",actualURL.pathname,content_hash,timestampMs]` with timestamp safe-integer Number, clock ±90s. Server checks verified P-256 key association, cookie/intent/hash, first-party Origin/fetch metadata and exact query (only content_hash). This GET is read access, **no mutation idempotency key** and no second intent.
+4. Denials for hash-only, missing/expired/revoked/mismatch Share, foreign Intent, invalid signature/cookie/grant, or unknown hash all return indistinguishable `404 / API-RESOURCE-NOT-FOUND` (no resource/ownership leak). If a trusted DB/identity/share dependency fails, `503 / API-ADMISSION-TEMPORARILY-UNAVAILABLE`, never cached allow or false 404. The HTTP distinction is dependent on verified authoritative lookup, not attacker-provided status.
+5. Authorized `/b/{hash}` returns immutable canonical JSON and hash-consistent body with `Cache-Control: private, no-store`, `Vary: Authorization, X-Appf2-Share-Id`, `Referrer-Policy: no-referrer`. Neither shared CDN nor third-party/proxy cache may reuse the body. Existing `5 admission result freshness `Cache-Control: private, max-age=0, must-revalidate` persists **after** authorization with corresponding Vary. Access permission and fresh `executable=true` are separate gates; valid Share/body does not override revocation.
+6. **Mandatory negative proofs:** hash-only, foreign/mismatched/expired/revoked Share, Share creation using only known hash/UUID, cookie-only, PoP-only, foreign intent, lost key, forged/expired read grant, CDN cross-user cache, DB read failure, revoked execution while body exists. Positive proofs: live ACTIVE Share→same hash body; original signed Intent→only its own hash; neither can hydrate F03 without fresh independent admission.
+
+**Scope:** This changes legacy public hash read/CDN assumptions; no automatic migration/old-client bypass. F05/Shared API/F01/F12 are required co-owners. This Draft is not a Build Freeze or shipped access-control implementation.
 
 # 9. Failure / Denial Precedence
 
