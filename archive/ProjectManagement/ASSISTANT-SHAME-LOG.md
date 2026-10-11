@@ -14,7 +14,7 @@
 
 | Count | Lost Time / Incident | Total Lost Time |
 |---:|---:|---:|
-| 19 | mixed | **>1140 min / >19.0 hr** |
+| 20 | mixed | **>2580 min / >43.0 hr** |
 
 ---
 
@@ -41,6 +41,7 @@
 | SHAME-017 | 2026-10-01 | BF-026 / BF-027 過早 closure：用 indirect green 取代 direct proof，且未做 next-T001 future-diff dry-run | BF-026 remediation 只擴大 T001 write scope，沒有以真正下一個 T001 fixture diff 執行 CI-mode `validate-test-integrity`，因此漏掉 Test ownership gate 仍會阻擋 7 個既有 Test IDs；BF-027 remediation 則把 HOLD / control-only 的綠色 CI 誤當成 `npm run check:lint` 已 PASS，但實際 `product:ci` 在 HOLD 直接 exit 0、reactivation control-only 也 skip，導致 2 個 lint errors 被錯誤帶過並提前宣告 RESOLVED。這不是新 defect 無限冒出，而是 closure audit 本身不完整。 | 永久規則：任何 blocker 在標記 RESOLVED 前，必須直接執行它聲稱修復的 command / gate，不能用間接 CI 綠燈推論；若 remediation 會影響下一個 implementation，還必須用預期的 next-task diff 做 CI-mode future-diff dry-run，證明 scope / integrity / ownership / lint / test gates 全部可通過。對 shared governance defect，closure 前再做同 class audit，避免只修 symptom。 | 45 min | OPEN / PREMATURE CLOSURE & VERIFICATION FAILURE |
 | SHAME-018 | 2026-10-02 | T002 Preflight 重大治理失守：明知 executable schema 未定義，仍默許 Cursor 自行補 Product truth | BS-P1-004 只定義 ENUM/LIST/RECORD 等 state semantics，沒有 freeze exact JSON keys / machine schema；Preflight 本應立即建立 SPEC_AMBIGUITY blocker，卻反而在 Cursor 指令中允許用「fail-closed 結構」自行採用 `constraints.allowed`、`item_type`、`max_length`、`fields` 等未授權 syntax。這等於由 ChatGPT 把未定 Product/Schema 決策下放給 Cursor，直接違反 `product_decision_allowed=false`、Human 決策權與「shared contract defect 先 comprehensive re-audit」規則。 | 永久規則：只要 executable contract 的 exact machine shape、key、type、enum、binding/type relation 或 serialization 未被 canonical truth 明確定義，Preflight 必須先 HARD STOP + SPEC_AMBIGUITY Finding；不得用「合理預設」「fail-closed」「implementation detail」替 Product truth 補空白。且恢復 Cursor 前必須完成同 class schema ambiguity 全面審核，證明相鄰 contract 無同型缺口。 | 45 min | OPEN / CRITICAL PRODUCT-TRUTH GOVERNANCE FAILURE |
 | SHAME-019 | 2026-10-04 | T004 嚴重審核／時序失職：兩次錯讀「Cursor 再執行前」，且過早宣告 deep audit PASS 與 closure | User 明確授權的是「一路做到下一次 Cursor 再開始執行前才停」，但 ChatGPT 先連續兩次把這個邊界錯讀成可以直接觸發 Cursor，再在 T004 implementation audit 中過早以既有測試與表面 invariant 判定 PASS，導致 PR #188 merge、Evidence normalization、T004 closure 後，重新深審才發現 `admitBlueprint()` 存在 getter/Proxy TOCTOU bypass：先以 genuine sealed pair 通過 provenance，再替換 forged PASSED report + rejected body 進 durable admission。這表示 review depth 與 execution-timing gate 都沒有被可靠遵守。 | 永久規則：① Human 說「到 Cursor 再執行前」＝所有 audit/governance 可連續完成，但**真正發出 execution authority 前必停**；不得自行提前觸發。② Security/admission boundary audit 不得只驗 plain-object happy/negative tests，必須做 hostile object model / accessor / Proxy / TOCTOU / re-entrancy 類 counterexample。③ Task closure 前若核心 invariant 依賴 identity/sealing/caller-owned object，必須檢查「驗證後到 persistence 前」是否仍讀取 mutable/untrusted reference。④ 發現 post-closure blocker 時，立即建立 Finding、撤銷 completion-evidence final binding、重新啟用原 Task，不得把錯誤 closure 當歷史既成事實。 | 45 min | OPEN / CRITICAL AUDIT & EXECUTION-GATE FAILURE |
+| SHAME-020 | 2026-10-10–11 | T006 產品優先順序失守：治理／R1–R3 簽章長鏈浪費 Human 約 24 小時，未先取得高成本方向批准 | User 要求推進 APPf2 產品、實作與 T006 安全測試，ChatGPT 卻讓 R1–R4 審議、憲法證據、工具安裝／Windows 簽章故障排除及反覆行政 Gate 主導工作。R1–R3 本機簽章約花 Human 4 小時（包含於本次 24 小時，**不得另加計**）。雖有隔離 PoC 找出假 PASS 風險及 Human 3/3 簽章證據，但正式產品安全修復未落地、T006 9 項正式測試未完成、T006 仍 BLOCKED。最大失誤：未在預估 Human／執行成本超過 15 分鐘前，向 Human 解釋方向、產品價值、代價及替代選項並先問是否繼續；還交付有 Windows 隱藏密碼輸入缺陷的工具，讓 User 重試。 | **新增 HUMAN 15-MIN DIRECTION APPROVAL HARD GATE**：凡任何新方向、治理程序、簽章／工具設置、重構／審計路線，若合理預估會消耗 Human 或阻礙產品前進超過 15 分鐘，必須在開始前說人話明確交代目的、產品直接收益、預估人力／時間成本、最小方案／替代方案、能否 Phase 4 後補，並取得 Human 明確批准；不得拆成多次 <15 分鐘來規避。若在執行中發現即將超過 15 分鐘，立即停止轉向並取得 Human 決策。**原先單一工具工作 10 分鐘 HARD STOP 仍生效，二者並行取較嚴者。** 保留法定／現行必要簽章與產品安全 Gate，但非阻斷治理強化延後；15 分鐘批准不能替代獨立的 Cursor／Merge／Closure 授權。 | **1440 min / 24 hr (Human reported; includes R1–R3 4 hr)** | OPEN / CRITICAL TIME-BUDGET & PRIORITY FAILURE |
 
 ---
 
@@ -66,9 +67,10 @@ SHAME-016   45 min
 SHAME-017   45 min
 SHAME-018   45 min
 SHAME-019   45 min
+SHAME-020 1440 min (Human estimate; R1–R3 4 hr included)
 -----------------
-TOTAL    >1140 min
-         >19.0 hr
+TOTAL    >2580 min
+         >43.0 hr
 ~~~
 
 ---
@@ -181,10 +183,17 @@ TOTAL    >1140 min
    - 對 admission / trust / sealing / identity 類邊界，plain-object tests 不足；closure audit 必須主動測 getter / Proxy / TOCTOU / object-identity swap / re-entrancy 等 hostile-object counterexample。
    - provenance / seal check 後若仍重新讀 caller-owned object，即視為高風險 TOCTOU candidate，未證明 snapshot-stable 前不得 closure。
 
+20. **Human 15-minute direction approval — hard gate, never silently consume a day**
+   - Every proposed work direction with reasonably estimated **>15 minutes of Human time or product-progress blockage** needs **advance, explicit Human choice and approval**, before starting its long chain. This covers constitutional paperwork, R-stage signatures, Windows tooling, broad audits, pivots and administrative investigation, even if each substep is quick.
+   - Present in everyday Traditional Chinese: (1) product outcome / why, (2) what is NOT product work, (3) estimated Human/elapsed cost and uncertainty, (4) minimum option vs optional deeper option, (5) what can be deferred until after Phase 4. **Ask Human to select direction.** Do not frame a long governance path as a 5-minute small task.
+   - Do not split a >15-minute path into repeated smaller steps to evade approval. If a supposedly small direction becomes >15 minutes in aggregate, **HARD STOP and ask Human again**. The existing **10-minute stuck-tool-chain hard stop** is independent and stricter where applicable.
+   - Keep non-waivable product-security invariants and existing required Human constitutional signatures/CI/approval gates; **defer optional governance hardening**, never misrepresent synthetic PoC or signing evidence as product execution. User approval of a direction is not approval of Cursor execution, protected merge or Task closure.
+   - **Priority accountability:** Report product-code changes, actual executable Product tests and T006 progress separately from governance-document and signature progress. Do not call governance-only green checks a product delivery milestone.
+
 ---
 
 ## Current Status
 
-> **19 incidents / >1140 minutes lost / >19.0 hr.**
+> **20 incidents / >2580 minutes lost / >43.0 hr.**
 
 本表為 Working Project Management 紀錄，不屬 Formal Spec。
