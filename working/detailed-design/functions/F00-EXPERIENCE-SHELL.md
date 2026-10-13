@@ -1355,6 +1355,7 @@ Clarification / Assumption Review：
 - **F00-AC-036** Normal S03 必須讓 User 明確選擇 `修改這個 App → S05A/REFINE` 或 `改成我的版本 → S05B/REMIX`；UI不得依 ownership、Shared來源或其他 metadata替 User猜 intent。
 - **F00-AC-037** 從既有 S05 `查看原版`進 S03 Inspection Mode時，必須保留同一 S05 session / path / draft / preview context，並依 origin提供 `返回修改畫面`或`返回新版預覽`；不得建立第二個 S05 session。
 - **F00-AC-038** Phase 1 Inspiration Capsule 的 `Try / Fork` 必須進 editable prefill → F01 Create；不得套用 Shared App 的 use-as-is restore semantics。
+- **F00-AC-039** 從既有 S05A/REFINE 修改畫面（Composer-origin）使用「查看原版」進入 S03 Inspection Mode，User 可檢視／操作原 App；「返回修改畫面」必須恢復同一個 S05 change session / path / Composer draft，且不得建立第二個 S05 session。此 Composer-only Acceptance 不代表已驗證 F06 Preview-origin 返回，不能替代原 F00-AC-037 的完整語意。
 
 ### F00 Test Mapping Delta
 
@@ -1365,5 +1366,12 @@ F00-AC-035 → TEST-F00-PROG-003 100 percent only after F03 READY
 F00-AC-036 → TEST-F00-036 explicit S03 refine/remix choice
 F00-AC-037 → TEST-F00-037 returnable inspection preserves S05 context
 F00-AC-038 → TEST-F00-038 inspiration capsule stays create flow
+F00-AC-039 → TEST-F00-039 Composer-origin S05 inspection return preserves same session / path / draft without nested S05
 ~~~
 
+
+### Stage A／Stage C 驗收分期歸屬提案（DRAFT；未獲 Human L2 核准）
+
+- Stage A / T006：提議將既有九項驗收中的最後一項 `F00-AC-037 / TEST-F00-037` 換成新增的 `F00-AC-039 / TEST-F00-039` Composer-only 真實證據。其餘八項不變。僅在 Human 批准 L2、完成新 Build Freeze／Rebaseline 與 Task 映射後生效。
+- **原 F00-AC-037 / TEST-F00-037 保留原文、原 ACTIVE 狀態與完整雙 origin 要求**；不得宣稱 PASS。其 Composer + Preview 全要求與 `F06-AC-025 / TEST-F06-025` 一併列為 Stage C F06 的未來獨立驗收項。
+- F06 正式實作仍在 Product Proof Stage C（PFR-08），尚未分配正式 Sprint 編號。此為 Draft 提案，不批准 #374 Merge、T006 VERIFIED/CLOSED、T008 Activation 或 Cursor。
