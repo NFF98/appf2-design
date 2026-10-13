@@ -14,7 +14,7 @@
   },
   "owner": "working/detailed-design/registries/acceptance-test-registry.json",
   "conventions": "working/common-core/ACCEPTANCE-CONVENTIONS.md",
-  "total_acceptance": 307,
+  "total_acceptance": 308,
   "entries": [
     {
       "acceptance_id": "F00-AC-001",
@@ -2880,6 +2880,16 @@
       "expected_observable": "Capsule開啟 editable prefill並進 F01 Create，沒有直接 hydrate existing Blueprint。",
       "contract_status": "ACTIVE",
       "proof_scope": "BEHAVIOR",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F00-AC-039",
+      "function_id": "F00",
+      "criterion": "從既有 S05A/REFINE 修改畫面（Composer-origin）使用「查看原版」進入 S03 Inspection Mode，User 可檢視／操作原 App；返回修改畫面時必須恢復同一 S05 session / path / Composer draft，且不得建立第二個 S05 session。此 Stage A 驗收不涵蓋 F06 Preview-origin。",
+      "test_id": "TEST-F00-039",
+      "expected_observable": "Composer → S03 Inspection → 返回修改畫面後 session ID、path、draft 保持不變，沒有第二個 S05 session；Preview-origin 由 Stage C F06 獨立驗收。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "END_TO_END",
       "required_for_build_freeze": true
     },
     {
