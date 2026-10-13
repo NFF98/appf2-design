@@ -928,6 +928,8 @@ Evidence：
 - F06-AC-024 REFINE / REMIX intent必須由 User明確選擇；ownership、Shared來源或目前頁面不得自動決定 relation_type。
 - F06-AC-025 S05 `查看原版`的 returnable inspection不得建立第二個 F06/S05 change session；返回後必須續用原 session / draft / Preview context。
 
+> **Stage C ownership 候選（DRAFT、未獲 Human L2 核准）：** Preview-origin 的 `S05 查看原版 → S03 Inspection Mode → 返回新版預覽` 完整往返要求，保留原 `F00-AC-037 / TEST-F00-037`（Composer + Preview 雙 origin 原義不變）及 `F06-AC-025 / TEST-F06-025`，兩者於未來 Stage C F06 Task 另行證明。Stage A T006 只提議驗證新增的 Composer-only `F00-AC-039 / TEST-F00-039`，不得宣稱 Preview PASS。正式 Sprint 編號尚未分配，不因此提案啟動 F06。
+
 # 37. Test Mapping Seed
 
 ~~~text
