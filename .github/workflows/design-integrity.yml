@@ -1,0 +1,37 @@
+name: APPf2 Design Integrity
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  design-integrity:
+    name: design-integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate fail-closed checker tests
+        run: node tooling/validate-design-integrity.mjs --selftest
+      - name: Check actual Design Working and Acceptance Registry
+        run: node tooling/validate-design-integrity.mjs --root . --out "$RUNNER_TEMP/appf2-design-integrity.json"
+      - name: Preserve observed design integrity receipt (not a Product PASS)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appf2-design-integrity-receipt
+          path: ${{ runner.temp }}/appf2-design-integrity.json
+          if-no-files-found: warn
