@@ -1,0 +1,23 @@
+{
+  "plan_version": "1.0.0",
+  "title": "我的待辦清單",
+  "modules": [
+    {
+      "kind": "RECORD_LIST",
+      "key": "todos",
+      "requirement_ids": [
+        "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "heading": "今天要完成的事",
+      "record_title_key": "title",
+      "record_done_key": "done",
+      "input_label": "新增待辦",
+      "add_label": "加入任務",
+      "toggle_label": "切換完成",
+      "delete_label": "刪除",
+      "total_label": "任務總數",
+      "completed_label": "已完成",
+      "max_items": 25
+    }
+  ]
+}
