@@ -130,7 +130,7 @@ F04 certified composition profile is a versioned generated artifact from canonic
 | F01-AC-030 | Schema positive/negative cases; malicious extra keys rejected; selected/ref identity; plan parse/typing; deterministic byte-equivalence | Unknown key/secret/custom code accepted |
 | F01-AC-031 | 50 seeded PlanV1 variants per certified family and combination; stable rooted graph/event/action/types/repeat; independent F02 V01–V12 PASS; F03 typed interaction | Orphans, wrong row, hidden failure |
 | F01-AC-032 | One and only one validation recompose, bound retry/timeout, 0 model calls in free tests, intent retained | Third paid candidate or automatic charge |
-| F01-AC-033 | At least 30 short prompts spanning DISPLAY/FORM/ARITHMETIC/RECORD_LIST; same gate Browser→Worker→real model→PG→F02→F03; disclose numerator/denominator by family | Fixture/Hello World counted as full E2E |
+| F01-AC-033 | At least 30 distinct short prompts with scripted-model free browser integration spanning all four modules, plus one explicitly authorized bounded real-model + PG + Browser E2E per certified family before release; disclose numerator/denominator by family and proof tier | Fixture/Hello World counted as real E2E; paid requests triggered automatically |
 | F01-AC-034 | Unsupported record/calendar/remote/durable requests must be honest, no fabricated button or hidden feature dropping | False FULLY_SUPPORTED App |
 | F00-AC-040 | Browser A/B/C: create 3, complete B, remove A, total2 completed1; state/UI result | Mistaken row or wrong count |
 | F03-AC-039 | Runtime repeated row index targeting, empty list, repeated first/last, append-full boundary, zero interaction LLM | Stale/out-of-bounds/first-only mutation |
@@ -144,7 +144,7 @@ Every test must have exact commit SHA, fixture/prompt version, intended provider
 - [ ] Generated F02 candidate for all four certified modules and cross-module composition validated by independent F02 V01–V12 with pinned Registry.
 - [ ] F03 generated RECORD_LIST A/B/C add/toggle/delete/total/completed asserts PASS, including empty/full lists and no model interaction.
 - [ ] F01 retry count exactly aligned with one validation recompose; F00 recovery tells the truth without blaming the user's wording.
-- [ ] 30 short natural-language prompts tracked by family with real success fraction; first bounded production-like paid trial only after free gates PASS.
+- [ ] 30 distinct short natural-language prompts in cost-free scripted-model runs tracked by family; real-model trials separately and explicitly cost-authorized only after free gates PASS, reporting real and simulated success fractions separately.
 - [ ] Design Delta approved and Design integrity PASS; new exact-source Build Spec projection reviewed; never mutate BS-P1-025.
 
 **Release truth**: Spec contract finalized for implementation review ≠ feature implemented ≠ F02 passed ≠ real product E2E PASS ≠ Design approved Build Freeze. BD-026 remains PROPOSED until explicitly reviewed.
