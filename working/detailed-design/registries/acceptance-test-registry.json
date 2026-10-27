@@ -1,5 +1,5 @@
 {
-  "registry_version": "2.6.0",
+  "registry_version": "2.7.0",
   "phase_1_freeze_audit": {
     "status": "PENDING_HUMAN_REVIEW",
     "scope": "PHASE_1_APPLICABLE_TRUTH_ONLY",
@@ -10,11 +10,11 @@
       "F19_VOTE_COUNTER_GENERIC_RECORDS"
     ],
     "audited_on": null,
-    "change_ref": "BD-025-PR37-SECURITY-ACCEPTANCE-DELTA-DRAFT-NOT-FROZEN"
+    "change_ref": "BD-026-NOT-APPROVED-NOT-FROZEN"
   },
   "owner": "working/detailed-design/registries/acceptance-test-registry.json",
   "conventions": "working/common-core/ACCEPTANCE-CONVENTIONS.md",
-  "total_acceptance": 308,
+  "total_acceptance": 316,
   "entries": [
     {
       "acceptance_id": "F00-AC-001",
@@ -3098,6 +3098,86 @@
       "criterion": "read response bounded 且不洩漏 participant_ref、operation history、DB metadata。",
       "test_id": "TEST-F19-018",
       "expected_observable": "read response bounded 且不洩漏 participant_ref、operation history、DB metadata。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "CONTRACT",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F00-AC-040",
+      "function_id": "F00",
+      "criterion": "短自然語言可在真實瀏覽器生成並操作待辦 App（A/B/C、新增/完成/刪除/統計），失敗保留原文。",
+      "test_id": "TEST-F00-CREATE-040",
+      "expected_observable": "短自然語言可在真實瀏覽器生成並操作待辦 App（A/B/C、新增/完成/刪除/統計），失敗保留原文。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "END_TO_END",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F01-AC-030",
+      "function_id": "F01",
+      "criterion": "Typed Plan schema 驗證、deterministic lowerer 以 F04 selected refs 生成 F02 candidate，不自造 code/Capability。",
+      "test_id": "TEST-F01-COMP-001",
+      "expected_observable": "Typed Plan schema 驗證、deterministic lowerer 以 F04 selected refs 生成 F02 candidate，不自造 code/Capability。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "CONTRACT",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F01-AC-031",
+      "function_id": "F01",
+      "criterion": "合法 rooted nodes、events/actions、typed LIST/RECORD、repeat aliases 由可重複 compiler 組裝，非法 Plan fail-closed。",
+      "test_id": "TEST-F01-COMP-002",
+      "expected_observable": "合法 rooted nodes、events/actions、typed LIST/RECORD、repeat aliases 由可重複 compiler 組裝，非法 Plan fail-closed。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "BEHAVIOR",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F01-AC-032",
+      "function_id": "F01",
+      "criterion": "單次 F02 驅動重組上限一次，token/cost 可稽核，未通過免費 gate 不自動跑付費 live AI。",
+      "test_id": "TEST-F01-COMP-003",
+      "expected_observable": "單次 F02 驅動重組上限一次，token/cost 可稽核，未通過免費 gate 不自動跑付費 live AI。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "CONTRACT",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F01-AC-033",
+      "function_id": "F01",
+      "criterion": "普通短句的 read-only、form、list CRUD+stats 有真實 Browser→AI→PG→F02→F03 操作結果證據。",
+      "test_id": "TEST-F01-COMP-004",
+      "expected_observable": "普通短句的 read-only、form、list CRUD+stats 有真實 Browser→AI→PG→F02→F03 操作結果證據。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "END_TO_END",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F01-AC-034",
+      "function_id": "F01",
+      "criterion": "未具 certified wiring 的 required feature 不作假 App，明示 gap 或符合語意的降級。",
+      "test_id": "TEST-F01-COMP-005",
+      "expected_observable": "未具 certified wiring 的 required feature 不作假 App，明示 gap 或符合語意的降級。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "BEHAVIOR",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F03-AC-039",
+      "function_id": "F03",
+      "criterion": "由真實生成與 admitted Blueprint 建立 A/B/C，僅修改指定列，刪除/完成/計數正確，local 互動不呼叫 LLM。",
+      "test_id": "TEST-F03-GEN-039",
+      "expected_observable": "由真實生成與 admitted Blueprint 建立 A/B/C，僅修改指定列，刪除/完成/計數正確，local 互動不呼叫 LLM。",
+      "contract_status": "ACTIVE",
+      "proof_scope": "END_TO_END",
+      "required_for_build_freeze": true
+    },
+    {
+      "acceptance_id": "F04-AC-020",
+      "function_id": "F04",
+      "criterion": "F01/F02/F03 消耗 pinned F04 canonical typed contracts，不維護第二套 schema，不偽造 unsupported wiring PASS。",
+      "test_id": "TEST-F04-COMP-020",
+      "expected_observable": "F01/F02/F03 消耗 pinned F04 canonical typed contracts，不維護第二套 schema，不偽造 unsupported wiring PASS。",
       "contract_status": "ACTIVE",
       "proof_scope": "CONTRACT",
       "required_for_build_freeze": true

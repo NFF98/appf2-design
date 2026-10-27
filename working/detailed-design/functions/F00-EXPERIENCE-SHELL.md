@@ -1376,3 +1376,12 @@ F00-AC-039 → TEST-F00-039 Composer-origin S05 inspection return preserves same
 - Stage A / T006：提議將既有九項驗收中的最後一項 `F00-AC-037 / TEST-F00-037` 換成新增的 `F00-AC-039 / TEST-F00-039` Composer-only 真實證據。其餘八項不變。僅在 Human 批准 L2、完成新 Build Freeze／Rebaseline 與 Task 映射後生效。
 - **原 F00-AC-037 / TEST-F00-037 保留原文、原 ACTIVE 狀態與完整雙 origin 要求**；不得宣稱 PASS。其 Composer + Preview 全要求與 `F06-AC-025 / TEST-F06-025` 一併列為 Stage C F06 的未來獨立驗收項。
 - F06 正式實作仍在 Product Proof Stage C（PFR-08），尚未分配正式 Sprint 編號。此為 Draft 提案，不批准 #374 Merge、T006 VERIFIED/CLOSED、T008 Activation 或 Cursor。
+
+---
+## BD-026 PROPOSED — F00-AC-040 用普通一句話建立可操作 App
+
+產品定義：一般人只描述想要的功能，不必懂 Prompt Engineering、Blueprint、TypeScript、state schema 或元件 ID。已有 certified coverage 的需求應從 S01 到 S03 真正產生可操作 App；否則清楚保留原文並說明限制。Creation 42% / F01-ERR-011 不是成功。
+
+F00-AC-040 / TEST-F00-CREATE-040（提案）：真實 Browser 用一句話要求新增／完成／刪除／完成數待辦 App，透過正式 F01/F02/F03 交付；A/B/C 新增、只完成 B、刪除 A、數字正確，原文/recovery 持續可編輯。其他已支持 family 也必須有相同 short-intent proof。不得暗示未支持的分享或跨裝置保存。
+
+此提案不改 F00-AC-037／039、F06 Preview/Composer origin 的現役語意。NOT APPROVED／NOT FROZEN。
