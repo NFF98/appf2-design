@@ -1940,3 +1940,35 @@ F01-AC-029 → TEST-F01-PROG-005 recompose monotonicity + validated only after F
 
 > **APPROVED WORKING CURRENT TRUTH — STEP2_RECONCILED / BUILD_FREEZE_READY**
 
+---
+## BD-026 PROPOSED — Sprint 3.5 自然語言生成可操作 App 的組裝可靠性（未經 Human Approve / 未 Freeze）
+
+完整機器規格： [BD-026 F01 技術契約](BD-026-COMPOSITION-PLAN-TECHNICAL-CONTRACT.md)、[Plan JSON Schema](../registries/composition-plan-v1.schema.json)、[F04 Certificate JSON Schema](../registries/composition-certificate-v1.schema.json)。草案不得當作已批准的正式 Build Spec。
+
+證據：2026-10-27 真實瀏覽器待辦 App 測試，Prompt A 已 READY，但 Prompt B 產生的 Candidate 被 F02 V02、V06、V07 拒絕：event action ID、root/orphan node、repeat、LIST/RECORD 型別。手工合法 fixture/Hello World PASS 不等於一般使用者的 App 成功。
+
+### F01-RQ-011 — Typed Composition Plan + deterministic lowering（設計候選）
+1. 保留 L1/L2/L3/L4、F04 單一能力真相、F02 独立完整驗證、F03 immutable admitted Blueprint 的原規格；禁止 arbitrary code、前端模型密鑰與假 PASS。
+2. LLM 只可在已 Resolve Intent 與 F04 selected enabled Capabilities 範圍內規劃 App 組合與呈現；不能要求一般使用者提供 node ID、JSON schema、技術 Prompt。
+3. 新的版本化 CompositionPlanV1 表達 requirement-to-feature trace、selected capability refs、typed state、interaction/action intents、root/parent/child/repeat semantic roles、copy/layout options。Schema 必須完整定義並先驗證；不得把任意 JSON 當作合法計畫。
+4. F01 deterministic lowerer 從 Plan 加上同一 pinned F04 machine contract 產生 F02 Blueprint Candidate：Node IDs 與 rooted tree、合法 children、State/Rule/Event/Action/Binding、LIST/RECORD、repeat item/index aliases、bounded resources。不得另外硬編一份 capability schema，也不得繞過 F02。
+5. 若 Plan 不具支援的組合路徑或安全的型別 mapping，回報 capability/composition gap；不能假裝 FULLY_SUPPORTED、不能把 CRUD 畫成無作用按鈕。不得在 F02 reject 之後偷偷 mutate 已提交 Candidate；新的 Plan 修正一律重 lower 並再次 F02 全驗。
+6. 組裝模組必須是可組合語意能力，而非待辦清單專用一張固定模板。第一批 certified families：read-only layout、typed form+action、LIST<RECORD> CRUD + derived statistics。
+7. Normal F03 interactions 預設 0 LLM；state persistence 僅承諾原 F03/Phase 1 已支持的範圍。版本變更需經相容性驗證，不得改舊 Blueprint 意義。
+
+### F01-RQ-012 — 真實 Outcome 與成本的證據門檻（設計候選）
+1. 對短自然語言逐層證明 F01 READY → F04 supported coverage → F02 VALIDATED → F03 READY → Browser 實際改變 state/result；API 200、fixture、Hello World 或單元測試不得替代。
+2. 至少三類代表性 composer family：read-only display、typed form、待辦 LIST CRUD+derived count；含多節點、empty list、row index、toggle/delete、typed constraints、repeat scopes、zero denominator cases。
+3. 待辦行為：新增 A/B/C → 只完成 B → 刪除 A → 畫面只剩 B/C，總數2、已完成1、未完成1；沒有任何其他任務被誤改。
+4. 免費 deterministic/property/negative/contract/browser tests 必須先過；真實付費 OpenAI+PG+Browser 只做明確核准的 bounded one-shot。不可因 Push、fallback 或失敗自動連續收費。
+5. Validation-driven recompose 單次 compile **最多 1 次**，依 F01 §16–17 原有 SSOT；不允許程式另設 2 次或放大成本。Provider retry 與 validation recompose 必須各自明確可追蹤。
+6. Build Freeze 前必須閉合 CompositionPlanV1 的 machine JSON Schema、Prompt B 版本/adapter migration、F04 projections、supported family certification、失敗恢復/成本上限與 Acceptance→Test mapping。缺任何一項保持 NOT FREEZE READY。
+
+### BD-026 候選 Acceptance（只在 Human-approved Freeze 後生效）
+- F01-AC-030 / TEST-F01-COMP-001：Plan 先型別驗證，deterministic lowering 用精確 F04 refs；無自造 Capability、JS 或任意執行碼。
+- F01-AC-031 / TEST-F01-COMP-002：多元件 rooted graph/event/action/LIST-RECORD/repeat scope 可靠組裝；非法 Plan fail closed、不繞 F02。
+- F01-AC-032 / TEST-F01-COMP-003：單次 compile rejection-driven recompose ≤1；免費 gates 失敗時不得自動付費，模型成本和 token 有界。
+- F01-AC-033 / TEST-F01-COMP-004：read-only／typed form／LIST CRUD 三類普通短句具真正 Browser→AI→PG→F02→F03→操作證據。
+- F01-AC-034 / TEST-F01-COMP-005：缺乏 certified composition 的 feature 不得假裝可用，原 Intent 保留並明示 gap/degradation。
+
+狀態：BD-026 DRAFT／NOT HUMAN APPROVED／NOT FROZEN。不得改寫現役 Main F01 contract 或 BS-P1-025。

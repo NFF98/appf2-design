@@ -1852,3 +1852,12 @@ Closure invariant：
 > 只有 open + current + same instance epoch + within hard deadline + integrity-valid 的 token才有資格 commit。
 
 Hard Timeout使用 monotonic deadline與 guard points拒絕晚到 commit；不宣稱 main-thread timer可強制中斷卡死的 trusted code。Atomic transaction確保 last committed state從未被本次未完成 operation改變；integrity成立時由 F12安全露出該 state，否則以 F03-ERR-018 fail closed。
+
+---
+## BD-026 PROPOSED — F03-AC-039 Generated Blueprint 的逐列操作驗收
+
+F03 的 LIST/RECORD/SCOPE、repeat clone、FIFO events、atomic SET_STATE、derived rule 與安全隔離原契約不變。除了手工合法 Blueprint unit 測試，還必須測 F01 真正生成且 F02 admitted 的 Blueprint。
+
+F03-AC-039 / TEST-F03-GEN-039（提案）：同一 generated LIST<RECORD> Blueprint 新增 A/B/C，完成 B 後其他列不變；刪除 A 後 B/C 保留，完成統計正確；index/scope 不可硬編 0，empty list 不除以 0，local 互動不再呼叫 AI；reload persistence 僅測原 spec 已承諾的行為。
+
+NOT APPROVED／NOT FROZEN。
