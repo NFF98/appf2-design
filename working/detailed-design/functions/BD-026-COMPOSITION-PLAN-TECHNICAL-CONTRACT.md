@@ -36,11 +36,11 @@ For each module, a certified requirements map pinned to the F04 Registry release
 - DISPLAY: layout.container, content.text.
 - FORM(TEXT): layout.container, input.text; FORM(NUMBER): layout.container, input.number; FORM(TOGGLE): layout.container, input.toggle; FORM reset: action.button.
 - ARITHMETIC: layout.container, input.number, data.stat; exact F02 allowed arithmetic OP and two typed numeric states.
-- RECORD_LIST: layout.container, input.text, action.button, content.text, content.list, data.stat; F02 operators LIST_APPEND, LIST_REPLACE_AT, LIST_REMOVE_AT, RECORD_SET, LIST_FILTER_EQ, COUNT, NOT, EQ, NEQ, TRIM, IF (only actually-used allowlisted operators may be emitted).
+- RECORD_LIST: layout.container, input.text, action.button, content.text, content.list, data.stat; F02 operators LIST_APPEND, LIST_REPLACE_AT, LIST_REMOVE_AT, RECORD_SET, LIST_FILTER_EQ, COUNT, NOT, EQ, NEQ, TRIM, IF, AND, LT (only actually-used allowlisted operators may be emitted).
 
 Before Prompt B, F04 must resolve coverage AND transitive *wiring/structural* requirements derived deterministically from trusted semantic feature requirements (NOT guessed from a provider capability list). A draft plan can only use the resulting pinned, explicit selected set. If a module would need a capability not in the pinned set, F01 must re-run F04 coverage once on a verified additional semantic requirement, or return a composition-unsupported diagnostic; it MUST NOT silently select capabilities in the lowerer. A selected capability MUST be ENABLED, ACTIVE, compatible, have verified runtime handler, and match exact ID/version; all generated machine projections and ledger digests must agree. Missing renderer/handler/unsupported source-kind/unknown event = fail-closed. `FULLY_SUPPORTED` in F04 is **coverage**, not product E2E success.
 
-F04's proposed new *machine-readable* composition certification projection consists of stable module kind, required capability roles and exact refs, source validator_digest, allowed field descriptors, event names, action kinds, operators, repeat constraints, maximum resource budget and tested fixture hashes. Generator verifies that every listed contract role truly exists in the same canonical F04 source and that field types/permissions are assignable; artifacts are versioned with F04 release identity. No new executable capability, function pointer, handler path or new registry of competing behavior is authorized.
+F04's proposed *machine-readable* composition certification projection is defined by [CompositionCertificateV1 JSON Schema](../registries/composition-certificate-v1.schema.json). It maps module kinds to exact role references, operator allowlists, verified F04 release digests, typed validator contracts and test fixture hashes. F04 generator verifies every listed role against actual generated validator/runtime artifacts, includes exact immutable registry digests and fails on mismatch. Semantic role recipes are F04-owned metadata co-located with canonical source, not a second handwritten validator, an executable capability, JS callback or user-editable tool. A plan's required refs must all be in the pinned F04 selected closure.
 
 ## 4. Deterministic lowering algorithm and conflict handling
 
@@ -65,15 +65,17 @@ Plan/registry versions are pinned per logical compile, not rebound on retry. The
 With module m000, field keys `title` and `done` (names configurable only as PlanV1 record_title_key/record_done_key), lowerer-generated state:
 - `s_m000_rows`: MUTABLE LIST, initial [], constraints.item = RECORD(fields.{title,done}, STRING(max_length=120), BOOLEAN); constraints.max_length = max_items.
 - `s_m000_draft`: MUTABLE STRING, initial "", constraints.max_length=120.
-- `s_m000_completed` is **not** mutable; use an F02 rule or derived value `COUNT(LIST_FILTER_EQ(STATE rows,LITERAL doneKey,LITERAL true))`; total=`COUNT(STATE rows)`.
+- `s_m000_can_add`: internal MUTABLE BOOLEAN initial false; never user-editable or a result. `s_m000_completed` is **not** mutable; use an F02 rule or derived value `COUNT(LIST_FILTER_EQ(STATE rows,LITERAL doneKey,LITERAL true))`; total=`COUNT(STATE rows)`.
 
 Root's module container children: heading text, input.text, add action.button, data.stat(total), data.stat(completed), content.list. For input.text: `props.label=LITERAL input_label`, `props.max_length=LITERAL 120`, `bindings.bind=STATE draft`, `events.change=action_m000_draft_change`. That Action's one SET_STATE step writes `EVENT("value")` to draft. For the add button `events.press=action_m000_add` (F04-defined press); Action steps:
-1. SET_STATE target rows, value `LIST_APPEND(STATE rows,RECORD_SET(LITERAL {titleKey:"",doneKey:false},LITERAL titleKey,STATE draft))`, guarded by `NEQ(TRIM(STATE draft), LITERAL "")` and by remaining list capacity.
-2. SET_STATE target draft value LITERAL "", only when append guard succeeded. Failed guard or capacity limit MUST NOT clear the typed user input; user-visible recovery handles full list. Validation must ensure this is representable in the existing atomic F03 step semantics before certification.
+1. SET_STATE target `s_m000_can_add` (internal MUTABLE BOOLEAN initial false) = `AND(NEQ(TRIM(STATE draft),LITERAL ""),LT(COUNT(STATE rows),LITERAL max_items))`. This snapshots the acceptance predicate in the **working transaction**.
+2. SET_STATE target rows = `LIST_APPEND(STATE rows,RECORD_SET(LITERAL {titleKey:"",doneKey:false},LITERAL titleKey,STATE draft))`, with `when=STATE can_add`.
+3. SET_STATE target draft = LITERAL "", with `when=STATE can_add`.
+4. RESET_STATE target `s_m000_can_add` unconditionally (initial false). Four action steps, all supported by F02/F03. Empty or full list does not clear the draft; appending the last legal row DOES clear the draft. F03 StoreTransaction's later steps see prior working writes, so **re-checking list capacity after append would be wrong**. Snapshot can_add first. Failed operation aborts the whole transaction.
 For list node: `repeat={items:STATE rows,item_alias:"item",index_alias:"index",max_items:max_items}`, children:[row_container]. Row container children:[title text from SCOPE item.titleKey, completion button, delete button]. Toggle action SET_STATE rows = `LIST_REPLACE_AT(STATE rows,SCOPE index,RECORD_SET(SCOPE item,LITERAL doneKey,NOT(SCOPE item.doneKey)))`. Delete action SET_STATE rows = `LIST_REMOVE_AT(STATE rows,SCOPE index)`. Both events.press bind to unique action IDs. No filtered/sorted `repeat.items` in the editable case. These actions may only bind under the exact unfiltered list to avoid positional index corruption.
 F02 result outputs may report total and completed as non-sensitive NUMBER; UI stats use `data.stat` with source `RULE` or OP as typed. Empty list completed=0, total=0, no division. External persistent records, multiuser identity, deadline/day clock semantics and background saving are **not part of this profile**.
 
-**Required safety repair to close before declaring certifiable**: if current F03 execution order cannot atomically guard append + clear under the same state snapshot, lowerer MUST use a source-supported action-step sequence whose verified runtime commit preserves input; if no such sequence exists, mark the RECORD_LIST family NOT_CERTIFIED rather than emit a fake Add action. Likewise never infer row identity from a filtered list. F02 admission plus actual A/B/C F03 test is the certification proof, not an assumption.
+**Runtime basis**: current F03 StoreTransaction processes action steps sequentially on working state; the four-step boolean snapshot above avoids final-capacity bugs using existing operators. Certification nevertheless REQUIRES independent F02 V01–V12 admission and F03 real runtime tests (first row, middle row, last slot, full list, empty input). Never infer row identity from filtered or sorted list.
 
 ## 6. Other module lowering semantics
 
@@ -82,7 +84,22 @@ F02 result outputs may report total and completed as non-sensitive NUMBER; UI st
 - ARITHMETIC: module container → HEADING + two input.number nodes + data.stat. Both typed fields write their own NUMBER state on change. Stat binds to typed `OP(operation, STATE left, STATE right)`. No divide-by-zero or hidden external call. Numeric operation must remain finite within F02/F03 runtime semantics; overflow means explicit safe failure, no NaN or fabricated result.
 - Multiple modules: order preserved; one single root container. No accidental variable sharing between modules; no computed extra features. Up to 12 modules subject to F02 resource bounds and selected F04 closure.
 
-## 7. Failures, user recovery, security and economics
+## 7. Exact error disposition (no new public error codes)
+
+| Internal subreason | Existing public mapping | Handling |
+|---|---|---|
+| PLAN_SCHEMA_INVALID | F01-ERR-007 | bounded provider invalid-output retry; never blame user |
+| PLAN_UNTRUSTED_REFERENCE | F01-ERR-007 | rejected model output, no forged requirement/capability |
+| PLAN_SEMANTIC_MISMATCH | F01-ERR-007 if hallucinated; F01-ERR-008 if genuinely unsupported | do not silently drop required feature |
+| COMPOSITION_UNSUPPORTED | F01-ERR-008 | supported capability or pattern is missing; show gap |
+| LOWERING_TYPE_INVALID | F01-ERR-014 | internal assembler bug; no paid automatic retry |
+| LOWERING_GRAPH_INVALID | F01-ERR-014 | internal assembler bug; preserve intent |
+| F02_REJECTED | F01-ERR-011 | full F02 validation; existing rejection classification, ≤1 recompose |
+| RUNTIME_BEHAVIOR_FAILED | F03 error + product E2E FAIL | never claim product-ready from F02-only pass |
+
+Diagnostics may include path, module kind, trusted capability ref, pinned digest and attempt count, never raw intent, DO_NOT_PERSIST value, secret or candidate payload. The public error envelope retains request_id and stable code; no fake new F02 codes.
+
+## 8. Failures, user recovery, security and economics
 
 Independent error stages with safe code + machine path (no secrets/raw prompt):
 - `PLAN_SCHEMA_INVALID`: malformed extra fields, invalid enum/limits; fail before F02/DB.
@@ -100,13 +117,13 @@ Implement these as F01 server-owned *subreasons* in a versioned error detail obj
 
 **Security**: user-provided text never controls F04 selection/version without trusted resolver; no arbitrary code, network handler, SQL, DOM event callback or executable ValueSource allowed. Only local allowlisted actions. F02 permission/resource enforcement unchanged. F03 normal interactions do not call any model or send provider keys to browser. No raw DO_NOT_PERSIST data in persisted plan, Blueprint, logs or report.
 
-## 8. Compatibility, versioning and migration
+## 9. Compatibility, versioning and migration
 
 The new plan is a distinct internal artifact `CompositionPlanV1` at plan_version `1.0.0`, and changes the Prompt B output mode. It is NOT an F02 Blueprint schema bump; Blueprint remains 1.0.0. Do not feed old Blueprint-shaped provider JSON into Plan parser. Introduce new PROMPT_B_VERSION for new mode and tagged operation context; old validated Blueprints stay immutable/admitted on their pinned F04 release. New Staging pathway first, one PR #419; no silent Production/older-client activation, no main Build Spec edits. Plan storage is not an external API nor a replacement for original Intent; if compiler_run evidence persists internal plan metadata, it must be versioned, bounded and scrubbed.
 
 F04 certified composition profile is a versioned generated artifact from canonical Registry definitions with exact immutable digest; when it changes executable meaning, bump appropriate semantic version/ledger identity per F04 §§8–10; no in-place same-version drift. Build Spec BS-P1-025 remains untouched; only after material Design Delta Human approval and exact source-commit pin can BS-P1-026 be projected/locked.
 
-## 9. Test mapping — machine-checkable acceptance
+## 10. Test mapping — machine-checkable acceptance
 
 | ID | Test evidence / assertions | Fail condition |
 |---|---|---|
@@ -121,7 +138,7 @@ F04 certified composition profile is a versioned generated artifact from canonic
  
 Every test must have exact commit SHA, fixture/prompt version, intended provider cost mode, F02 content hash, observed state-before/after, failure code and independent pass/fail evidence. Product success must not be reported from individual unit/API test counts.
 
-## 10. Non-negotiable completion checklist
+## 11. Non-negotiable completion checklist
 
 - [ ] This schema, semantic checks, capability role closure and deterministic lowering algorithm implemented in TypeScript and tested *without paid model*.
 - [ ] Generated F02 candidate for all four certified modules and cross-module composition validated by independent F02 V01–V12 with pinned Registry.
@@ -131,3 +148,10 @@ Every test must have exact commit SHA, fixture/prompt version, intended provider
 - [ ] Design Delta approved and Design integrity PASS; new exact-source Build Spec projection reviewed; never mutate BS-P1-025.
 
 **Release truth**: Spec contract finalized for implementation review ≠ feature implemented ≠ F02 passed ≠ real product E2E PASS ≠ Design approved Build Freeze. BD-026 remains PROPOSED until explicitly reviewed.
+
+## Appendix A — Normative F04 certificate generation
+
+The F04 generator MUST emit exactly one pattern per kind DISPLAY/FORM/ARITHMETIC/RECORD_LIST; duplicate kind/role is forbidden by semantic validation beyond JSON Schema. Its canonical profile source is an F04-owned semantic role-recipe table, merged at build time against existing F04 ValidatorContract and RuntimeRegistry; it MUST NOT duplicate field schemas or replace F04. Roles required by pattern (exact current capability IDs) are DISPLAY root=layout.container, text=content.text; FORM root=layout.container, text_input=input.text, number_input=input.number, toggle_input=input.toggle, reset_button=action.button; ARITHMETIC root=layout.container, number_input=input.number, stat=data.stat; RECORD_LIST root=layout.container, text_input=input.text, button=action.button, text=content.text, list=content.list, stat=data.stat. Versions are pinned by F04, not hard-coded as 1.0.0. A FORM module only needs roles for fields actually present, not every possible field kind. Each role execution_contract_digest MUST equal F04's canonical digest for its exact capability ref. All role refs must be ENABLED/ACTIVE with verified bundled runtime handlers.
+
+`operators` MUST be a subset of the actual F02/F03 allowlist used by that recipe; `fixture_digests` represent versioned golden/negative test vectors that gate certification. `limits` only restrict existing F02/F04 resource ceilings. `profile_digest` = sha256: lowercase hex SHA-256 of canonical JSON of the entire certificate **excluding profile_digest**, including exact F04 release tuple. F04 digest canonicalization follows its existing key-sorted compact UTF-8 rule, no alternate serializer. Same exact source + pinned release MUST generate byte-identical certificate. A digest mismatch, missing handler/validator, invalid role or uncertified interaction MUST fail-closed before paid provider invocation; never allow the model to forge certificate metadata. F04 coverage must derive role dependency closure from trusted semantic requirements, not provider-selected capabilities. No production release may rely on this proposal before explicit new Registry/Baseline versioning.
+

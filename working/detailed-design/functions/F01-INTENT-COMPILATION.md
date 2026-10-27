@@ -1943,6 +1943,8 @@ F01-AC-029 → TEST-F01-PROG-005 recompose monotonicity + validated only after F
 ---
 ## BD-026 PROPOSED — Sprint 3.5 自然語言生成可操作 App 的組裝可靠性（未經 Human Approve / 未 Freeze）
 
+完整機器規格： [BD-026 F01 技術契約](BD-026-COMPOSITION-PLAN-TECHNICAL-CONTRACT.md)、[Plan JSON Schema](../registries/composition-plan-v1.schema.json)、[F04 Certificate JSON Schema](../registries/composition-certificate-v1.schema.json)。草案不得當作已批准的正式 Build Spec。
+
 證據：2026-10-27 真實瀏覽器待辦 App 測試，Prompt A 已 READY，但 Prompt B 產生的 Candidate 被 F02 V02、V06、V07 拒絕：event action ID、root/orphan node、repeat、LIST/RECORD 型別。手工合法 fixture/Hello World PASS 不等於一般使用者的 App 成功。
 
 ### F01-RQ-011 — Typed Composition Plan + deterministic lowering（設計候選）

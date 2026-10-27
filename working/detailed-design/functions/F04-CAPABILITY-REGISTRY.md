@@ -1751,6 +1751,8 @@ Phase 1 不建立 Registry Service。
 ---
 ## BD-026 PROPOSED — F04-AC-020 Composer 同源機器化組合契約
 
+完整機器規格：[F04 Composition Certificate JSON Schema](../registries/composition-certificate-v1.schema.json) 與 [BD-026 F01 技術契約](BD-026-COMPOSITION-PLAN-TECHNICAL-CONTRACT.md) §3–5；不新增第二套 validator 或重新發布現有 Registry 版本。
+
 F04 既有 Capability Card / single canonical source / Compiler-Validator-Runtime projection / version ledger / digest / availability 仍為唯一 machine truth。F01 deterministic lowerer 只能使用**同一 pinned 版本**的 typed props、bindings、events、actions、composition/repeat metadata；不另維護人工 second schema。初期 certified semantic composition 包含 layout/read-only、typed form+action、bounded LIST<RECORD> CRUD + derived count。F04 覆蓋率只是能力供應判斷，不能取代 App 實際驗收。
 
 F04-AC-020 / TEST-F04-COMP-020（提案）：F01 lowerer、F02 Validator、F03 Runtime 精確消耗同一 F04 ID/version/digest；缺 pattern 或 unsupported wiring 不 fake usable App；任何 machine semantics 改變須遵守 exact Capability version bump + ledger。
