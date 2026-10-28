@@ -192,3 +192,30 @@ Implemented in Build PR #419 (`57725a5`):
 - Existing immutable public artifacts remain unchanged; previously verified counter and task-note cards are not silently replaced. New QA policy applies to newly created CodeArtifacts only.
 
 This closes one concrete false-PASS mechanism, **not** every way a generative model can omit or simulate requirements. Statistical reliability across unknown ideas is still unmeasured; do not label every new generated app "fully verified" based on two categories. Persist a cryptographically linked QA plan+result receipt per immutable artifact, add explicit private human review for subjective/non-automatable requests, and expand functional regression across business logic, state persistence and multi-step navigation. Staging deployment and regression status must be reported separately from old governance/Human approval gates.
+
+
+## 14. Sprint 3.5 — Coding Agent architecture migration (2026-10-28)
+
+**Human directive:** Evolve APPf2 from single-file JavaScript generation into a general full-stack Coding Agent. Preserve existing, immutable Blueprint v2 cards; this migration remains inside Sprint 3.5. Never report all five completed merely because their contracts exist.
+
+### Five core workstreams and measurable proof
+
+| Core | Production target | First deliverable | Real completion condition |
+|---|---|---|---|
+| 1. Multi-file workspace | Framework-agnostic project tree with dependencies and assets | Canonical safe project bundle, path/hash validation, trusted CI multi-file build | Novel AI-written multi-file program builds and runs in isolated cloud workspace |
+| 2. Coding Agent | Model uses Responses API tools: read/write files, run builds, inspect diagnostics, repair | Typed tool calls and bounded step driver | Real GPT-6.1 Sol Responses tool-call loop repairs an actual workspace |
+| 3. Cloud sandbox | One untrusted project per private isolated container | Adapter interface and allowed-tool policy | Cloudflare Sandbox deployed with verifiable isolation, command and egress limits |
+| 4. Durable jobs | Resume after disconnect and retry without double charging | Serialized checkpoint and idempotency state | Real Cloudflare Workflow resumes same job across interruption |
+| 5. Quality and admission | Requirement-to-evidence mapping, build and browser E2E, provenance and receipt | Hash-bound QA receipt and reject-on-failure contract | Real generated full-stack project independently tested and approved before ACTIVE |
+
+**Security boundary:** The model never receives APPf2 DB, Cloudflare or AI keys. Commands from model output are executed only inside a sandbox broker; never in the host Worker, GitHub runner or production machine. The broker owns CPU/memory/wall-time/disk/process/egress/secret limits and durable identity separation. Sandbox egress, metadata endpoints and dependency installs must be explicitly policy-controlled. Every tool call has a stable idempotent ID and a bounded result.
+
+**Cost/complexity:** Do not use the old 128-KB single-file ceiling as a universal limit. Replace fixed small-App restrictions with configurable per-job storage, token, command and spend budgets, progress checkpoints and explicit extra-budget consent. Unlimited creative categories are not unlimited paid resources.
+
+**Model protocol:** GPT-6.1 Sol tool calling uses OpenAI Responses API, not merely swapping the model string in the legacy Chat Completions JSON request. Require a validated function-call schema, function_call_output response and response continuation ID. Keep per-provider configuration and prohibit unsolicited provider transfers. References: https://developers.openai.com/api/docs/guides/function-calling ; https://developers.cloudflare.com/sandbox/ ; https://developers.cloudflare.com/workflows/.
+
+**Migration:** Existing WEB_STATIC_V1 and /code/:id cards remain unchanged. New multi-file source is a private candidate, never a published Blueprint until its compiled output, manifest, permissions, provenance and independent tests pass admission. Production DB, current F02/F03 and public sharing remain unmodified until there is real evidence. Use staged, explicitly authorized private capabilities rather than broad default network access.
+
+**Sprint 3.5 execution sequence:** commit Design PR #45 first; Build PR #419 implements project-tree contract, checkpoint and tool-call contract plus trusted multi-file build regression; then cloud sandbox broker, Responses agent, Workflow persistence, verifiable immutable artifact and unfamiliar full-stack live browser E2E. Keep legacy gates from stalling product work, but do not remove execution isolation or consent guards.
+
+**Evidence honesty:** DESIGN_ACCEPTED is not MULTIFILE_CONTRACT_TESTED; local trusted multi-file fixture is not cloud untrusted build; deployed Cloudflare Sandbox alone is not GPT tool-call E2E; and a hash without browser QA is never FULL_REAL_E2E.
