@@ -178,3 +178,17 @@ Remaining obligations: QA report/plan hashes must be persisted and pinned to the
 - Requirements with `automatable=false` are not automatically published. The code now distinguishes QA_PLAN schema failure vs needs-human-review and returns sanitized failed-criterion evidence for browser QA.
 
 **Scope/limitations:** this proves two unrelated functional categories in staging and publication gating, not statistical reliability over all novel ideas, full safety, production readiness, or coverage of subjective aesthetics/external integration. Future deliverables include persistent per-artifact plan and outcome evidence, a creator-private preview/explicit human approval path for subjective requirements, more UI action primitives, cost telemetry and a larger diverse regression corpus. Full-real-E2E for all future outputs is not implied by this run.
+
+
+## 13. Observable-transition QA (no decorative or hidden-content PASS) — 2026-10-28
+
+After two unrelated real public-creation successes (staging Run #40661201647), a model-independent quality regression revealed a generic false-positive class: assertions of expected text after a click could pass even if the words were already present before the click, or visible-text checks could be fooled by hidden DOM content.
+
+Implemented in Build PR #419 (`57725a5`):
+- A new independent `text_appears` assertion snapshots *visible* text before performing actions and requires that the expected text is absent before but visible after. It cannot be used without a user action.
+- Existing `text_includes` in the Worker now checks visible `innerText`, not hidden `textContent`; the offline Chromium runner uses the same semantics.
+- Model acceptance planning explicitly prefers observable transitions for add-item, score change and reveal-result requirements.
+- A no-AI negative regression checks that a deliberately broken app showing "the expected result" statically is rejected, while a functioning state-changing app passes.
+- Existing immutable public artifacts remain unchanged; previously verified counter and task-note cards are not silently replaced. New QA policy applies to newly created CodeArtifacts only.
+
+This closes one concrete false-PASS mechanism, **not** every way a generative model can omit or simulate requirements. Statistical reliability across unknown ideas is still unmeasured; do not label every new generated app "fully verified" based on two categories. Persist a cryptographically linked QA plan+result receipt per immutable artifact, add explicit private human review for subjective/non-automatable requests, and expand functional regression across business logic, state persistence and multi-step navigation. Staging deployment and regression status must be reported separately from old governance/Human approval gates.
