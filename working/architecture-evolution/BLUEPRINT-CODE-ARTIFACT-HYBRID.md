@@ -1,42 +1,45 @@
-# APPf2 Blueprint + Code Builder — Hybrid Architecture, Design Delta H-001
+# APPf2 — AI Code Builder → Blueprint v2 → Verified App Card (Design Delta H-001)
 Date: 2026-10-28
 Status: **Working design proposal, product-owner requested**. Not a frozen Phase 1 baseline, not deployed functionality, no Production permission.
 Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / incremental implementation); full hybrid production launch needs separate evidence.
 
 ## 1. Product outcome
 
-**One request → many kinds of working Apps**, without hardcoding a template/handler per game style, and **the same durable Blueprint/F05 App card for every App**. Two implementations may coexist:
-- `NATIVE_BLUEPRINT` (legacy immutable F02-v1 + F03 deterministic capability graph; unchanged).
-- `CODE_ARTIFACT` (new validated, immutable code bundle referenced by an immutable Blueprint envelope; executed in a **separate untrusted-code sandbox**, never in APPf2 Shell/Worker or elevated DB session).
+**One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
 
-**One card; not two products.** A user can publish, share, reopen, save and fork either kind without regeneration. Opening any published App is zero **AI generation** invocations. Client runtime hosting cost remains possible.
+**Blueprint v2 is an immutable envelope and reference to the built App, not a restricted UI/component instruction format.** It records version, immutable artifact hashes, permission/runtime profile, creator ownership, sharing rules and **separate per-user data-state references**. Do not embed a user's private mutable data in a shareable bundle.
+
+**Legacy compatibility only:** existing `NATIVE_BLUEPRINT` F02-v1/F03 Apps must continue working, but **are not a user-facing second creative engine** or a basis for routing new requests by App type. The new default path produces `CODE_ARTIFACT` Blueprints. Existing F05/My Apps/gallery stays a single unified product.
+
+Opening any published App invokes zero **AI generation** calls; hosting/storage/approved external API services may still have costs.
 
 Prohibited shortcut: a model's JSON/TS string, merely a ContentHash, a passed unit test, or an attached ZIP is **not** an executable admitted Artifact or a public share.
 
 ## 2. Architecture (F01/F02/F03/F05/F06/F16)
 
 ```text
-Natural request
-  → F01 intent analysis & bounded planning
-  → route Native Blueprint | Code Builder (decision based on required features)
-  → Code Builder: generate isolated workspace (React/TS, HTML/CSS/JS, optional Canvas)
-      → compile/test in disposable **isolated Build Sandbox** (no appf2 secrets/DB)
-      → immutable built output & reproducible manifest
-      → F02 v2 artifact admission (hashes, provenance, policy, tests)
-  → unified **BlueprintEnvelope v2**
-      ├─ NATIVE_BLUEPRINT: v1 canonical Blueprint reference
-      └─ CODE_ARTIFACT: pinned admitted bundle reference and execution policy
-  → immutable Blueprint identity / DB registry / creator ownership
-  → F05 share ACTIVE reference / My Apps card → exact hash/manifest authorization
-  → F03 Hosted Sandbox Runtime: opaque-origin isolated frame, no host storage,
-     zero secret/bindings, controlled message-based state bridge
-  → F06/F16 creates a **new artifact and new immutable Blueprint**,
-     with a verified parent-child lineage, preview/accept/reject/revert
+Natural request (e.g. 十八啦多人骰子遊戲)
+  → F01 understanding / consent & bounded AI budget
+  → ONE general AI Code Builder creates project source and assets
+  → prepare DRAFT Blueprint v2 metadata / execution requirements
+  → isolated Build Sandbox compiles project + runs security and browser tests
+      ├─ fail: preserve intent/source, bounded repair ≤2, no READY card
+      └─ success: immutable built files, hashed manifest and test evidence
+  → F02 v2 checks artifact bytes, provenance, runtime permission and tests
+  → SEAL the final Blueprint v2 with exact admitted hashes and version
+      (the draft is not yet a valid runnable/shareable Blueprint)
+  → F05/My Apps creates an authorized App card and immutable share reference
+  → F03 sandbox runs the approved program and restores only recipient state
+  → F06/F16 edits produce a NEW artifact and NEW Blueprint version
+      (original remains intact; compare and user chooses whether to accept)
+
+Legacy v1 F02/F03 dispatch is strictly a backward-compatibility route for
+preexisting native Blueprints, NOT app-category classification.
 ```
 
 ## 3. Versioned records and unambiguous hashes
 
-**Do not silently widen existing v1 Blueprint schema.** Legacy `schema_version = 1.0.0` and `content_hash` remain bit-for-bit identical. v2 is a different format; all v1 shared Apps continue to pass old F02/F03.
+**Do not silently widen existing v1 Blueprint schema.** Legacy `schema_version = 1.0.0` and `content_hash` remain bit-for-bit identical. v2 is the single default format for newly AI-generated Apps; the existing v1 reader remains only to reopen previously created Apps.
 
 ```json
 {
@@ -62,6 +65,18 @@ This is the **minimum envelope example**, not a claim that current F02 accepts i
 - `source_bundle_hash` optional metadata, separately stored/restricted for F06/F16. **Never download source by public F05 read unless the creator explicitly enables source sharing.**
 - DB stores immutable records and allowlisted references; bytes stored in private R2 (or equivalent immutable object store), not in PostgreSQL mutable JSON. F05 lookup checks live share status and artifact/Blueprint hash **on each protected read**, then grants short-lived access.
 - No client-supplied external artifact URL; no executable code embedded directly in share links.
+
+## 3.1 Most important engineering decision — do not constrain AI with Blueprint
+
+The order the user sees is **AI Code Builder → Blueprint v2 → automatic verification → reusable App card**. In implementation, a **draft** Blueprint can exist before compilation, but the *final shareable Blueprint is sealed ONLY AFTER* the built artifact passes tests and hash admission. This prevents a failed or unbuilt model response from becoming a runnable card.
+
+Code Builder may create different layouts, game rules and application logic using normal programming languages and frameworks. Blueprint v2 is not an allowlist of app categories or widgets. It is the stable packaging, ownership, versioning, permission and sharing contract for the finished code.
+
+Supported execution profiles still matter: initially static client-side web code in a restricted sandbox. A multiplayer server, camera, third-party payment or unrestricted internet access requires a separately approved runtime capability/profile, **not a new special-case generator**. Unsupported technical requirements must be explained to the user before fees or publication.
+
+**Universal-card invariant:** if a generated project has not passed the exact build/test/admission process, it is **not** a reusable published App. Once admitted, open/save/share/reuse operates on the exact version and does not pay for generation again. Editable source can be stored privately for later correction, while published static code and personal user data remain distinct.
+
+---
 
 ## 4. Build Sandbox trust boundary
 
@@ -96,17 +111,18 @@ This is the **minimum envelope example**, not a claim that current F02 accepts i
 |---|---|
 | H1 | v2 envelope + manifest schema validator accepts good pinned artifacts, rejects unsupported profile/paths/hash/unknown keys |
 | H2 | same immutable built output can be referenced by a card twice with no builder invocation |
-| H3 | standalone iframe sandbox cannot access parent DOM/localStorage/cookies, network denied; controlled message bridge only |
+| H3a | opaque-origin iframe sandbox cannot access parent DOM/localStorage/cookies, outgoing network denied (early standalone browser proof) |
+| H3b | authenticated, versioned, quota-limited bridge with typed persistent instance state passes adversarial/browser proof (not covered by H3a) |
 | H4 | real staging build-sandbox compiles **an arbitrary source project**; hashes persisted & revalidated; old v1 App unchanged |
 | H5 | real F05 anonymous second browser opens a v2 published card, mutates own state, reloads, no new AI, no creator data |
 | H6 | crash/runaway/malicious source isolated with bounded failure and no platform compromise |
 | H7 | create a simple game and a visually different interactive app via **the same general pipeline**; no game-specific code switches |
 
-**Milestone honesty:** Initial implementation may complete H1/H3 in isolation; that is **NOT** H4/H5/H6/H7 or the finished Code Builder. Nobody may report “all apps supported” without the corresponding proof.
+**Milestone honesty:** Initial implementation may complete H1/H3a in isolation; that is **NOT** H3b/H4/H5/H6/H7 or the finished Code Builder. Nobody may report “all apps supported” without the corresponding proof.
 
 ## 8. Compatibility & rollout decision
 
-- Existing F01/F02/F03/F05 v1 passes unchanged. Blueprint v2 is additive; never migrate old hashes in place.
+- Existing F01/F02/F03/F05 v1 passes unchanged as legacy compatibility. **All new generation attempts use the general AI Code Builder; routing depends only on technical execution requirements/approved permission profiles, never App category.** Blueprint v2 is additive; never migrate old hashes in place.
 - First Code Builder output profile is static, client-only WEB_STATIC_V1; backend APIs, multiplayer network servers, payments, camera, native mobile or arbitrary installed packages are additional permissioned product capabilities, not automatically enabled by Code Builder.
 - No 16P/HOLD/quasi-governance blocker in the product critical path; maintain non-negotiable code execution isolation and consent checks.
 - **Design first, Build second**: this Working design is committed in NFF98/appf2-design before touching Build files. A source link and exact version of this document must travel with the Build PR, not pretend that the original immutable Phase 1 freeze has changed.
