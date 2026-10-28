@@ -4,7 +4,7 @@
 
 > 狀態：Working Architecture Baseline。本文只回答四件事：**appf2 有哪些系統、每個系統負責什麼結果、核心流程怎麼跑、1／3／6 個月怎麼長。** Function 詳細 Product Design 由 `working/detailed-design/APP-DETAILED-DESIGN-OVERVIEW.md` 與 `working/detailed-design/functions/` 承接。
 
-> **2026-10-28 proposed architecture evolution (not a retroactive Phase 1 freeze change):** User-approved direction is **Blueprint as immutable shareable App envelope** + **Code Artifact Builder as a second execution family**. The existing “no new program per Micro-App” paragraph remains true for F02/F03 v1 only, not the proposed hybrid. See [Blueprint + Code Builder Hybrid Architecture](../architecture-evolution/BLUEPRINT-CODE-ARTIFACT-HYBRID.md) for the new target, security boundaries, compatibility rules and acceptance gates; do not claim it is implemented until Build evidence exists.
+> **2026-10-28 proposed architecture evolution (not a retroactive Phase 1 freeze change):** User-approved direction is **one general AI Code Builder as the default creation path**, followed by **Blueprint v2 as immutable shareable App envelope**, then automatic build/security/browser validation and a reusable card. The old native Blueprint executor is only for opening existing v1 Apps, not a second generator or a game-vs-form routing decision. The existing “no new program per Micro-App” paragraph remains true for F02/F03 v1 only, not the proposed hybrid. See [Blueprint + Code Builder Hybrid Architecture](../architecture-evolution/BLUEPRINT-CODE-ARTIFACT-HYBRID.md) for the new target, security boundaries, compatibility rules and acceptance gates; do not claim it is implemented until Build evidence exists.
 
 # 1. Architecture Thesis
 
