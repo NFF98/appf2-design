@@ -21,13 +21,21 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 | --- | --- |
 | **1. 多檔案／前端／後端／資料庫** | 同一類型無關 AI Agent 生成至少兩種不同互動 App；其中一個須有真的後端與資料庫 CRUD／重讀。後端必須走明確授權、隔離的執行與資料權限；沒有受控 Profile 就標 **BLOCKED**，不可把平台工作資料庫或靜態示範當作 App 自有後端。 |
 | **2. 長工作保存／接續** | Job、原始需求、程式快照、hash、已花費與工具收據可保存；中斷／重新進站接同一 Job，不重新生成或重複計費。完成的 immutable App 版本可由卡片重開。 |
-| **3. 真 Sandbox** | 真實雲端隔離執行 AI 產生的專案，完成 build／test，記錄 exit、console、資源、診斷、產物 digest；不能以本地 Docker fixture 或 Wrangler dry-run 充數。 |
+| **3. 真 Sandbox** | 本期免費路線採**公開 Build Repo 既有標準 GitHub Actions Linux runner 的隔離 Docker**，對實際 AI 生成專案 build／test 並留 exit、console、限權、資源、來源與產物 digest；獨立 Chromium QA 不得與生成程式共享權限。可信 fixture PASS、Wrangler dry-run 或未證實 AI 來源都不可充數。 |
 | **4. 獨立 Browser QA + 自動修復** | 從原始需求先凍結可驗收條件，實際 Chromium 操作應用、驗證狀態／邏輯／錯誤；失敗留下證據→修復→重建→重測。任一必備條件 FAIL／UNTESTED，不得發布已驗證卡片。 |
 | **5. 受控重試／策略轉換** | 對重複失敗保存完整上下文、分析根因並改修復方案；成本或步數不足則暫停並可從原進度接續；未知付費結果不盲重試。不承諾無限制算力，也不允許未核准的跨模型／供應商轉送。 |
 
+### 0.2a 免費方案決議（2026-10-31 Human 最新成本限制）
+
+- **禁止新增費用／方案升級**：不部署 Cloudflare Containers、不依賴 Workers Paid Sandbox 或付費 Browser Run。原有 Cloudflare Worker／PostgreSQL 僅在**現有免費配額或已核准預算內**使用，不新增任何訂閱。新付費 AI API 操作同樣需核對現有可用額度與逐次明確同意，不能把現有 Key 當成免費。
+- **隔離執行實作替換，非產品要求刪減**：原 H-001 的「isolated Build Sandbox」由公開 Build Repo 標準 GitHub-hosted Linux runner 上的 network-denied Docker 執行，通過來源 digest／分離權限／費用控制後再由獨立 Chromium QA 驗收。這只改技術路徑，不刪多檔案、需求後端/DB、Blueprint v2、保存/分享/零再生成、失敗修復等五核交付 Gate。
+- **安全限制**：尚未具備可將「真實 AI 模型輸出」從既有 Worker/PG Job 安全交給 Docker Runner 並把 QA receipt 綁回 hash 的接線；GitHub Actions 的可信測試樣本不得算成新作品 E2E。不得將任意 AI 程式直接放 GitHub runner 的特權進程執行、不得附帶資料庫/AI/GitHub secrets 或授權其任意網路／外部 API。完整後端 DB 執行隔離未完成即 BLOCKED。
+- **免費已存在能力**：已公開的既有 App 可以 0 生成 AI 呼叫直接重開；這不證明新 Agent 完成。若功能需額外付費才可完成，停止並報阻斷，不自動選擇付費服務。
+- **證據／輪次／詳細 HOW**：只在 Build 原固定計畫 `SP35-FIVE-CORE-PRODUCT-CLOSEOUT` 更新；本 Design H-001 仍保留唯一產品範圍，不創建第二份 SSOT，不啟動 Sprint 4。
+
 ### 0.3 完成／非範圍邊界
 
-- **必備產品 Gate**：真實 Staging Browser→Worker→真模型→DB→私有 Sandbox→獨立 Browser QA→v2 immutable artifact/admission→App 卡片→同版本重新開啟／分享／新瀏覽器操作（**重開 0 生成模型呼叫**）。新 v2 作品須在建立者明確發布同意後才可公開；保密資料不進公開包、生成程式不得直接接觸 APPf2 金鑰。
+- **必備產品 Gate**：真實 Staging Browser→Worker→真模型→DB→隔離 Sandbox（免費路線 CI Docker）→獨立 Browser QA→v2 immutable artifact/admission→App 卡片→同版本重新開啟／分享／新瀏覽器操作（**重開 0 生成模型呼叫**）。新 v2 作品須在建立者明確發布同意後才可公開；保密資料不進公開包、生成程式不得直接接觸 APPf2 金鑰。
 - **負面 Gate**：任一未通過 QA／來源雜湊不符／越權／重送成本／惡意生成程式，都不能發放可公開操作卡片。保留 Phase 1 v1 舊 App 和其既有分享、修正功能，不能為趕新功能破壞它們。
 - **不啟動**：Sprint 4；Phase 2 F08/F10 的帳號所有權與進階重用；Phase 3+ 付費外部能力／Commerce；Phase 4+ Evolution；16P 舊流程。**生成 App 的受控後端／DB 已列在本 Sprint 必交付**，但其安全執行契約缺口須先補齊再驗收，不得直接擴權。
 - **完成證據**：同一 GitHub HEAD 的真實 Staging URL、request/Job ID、AI 收據、PG write/read、Sandbox exit/manifest、Browser 操作與 QA 每項結果、卡片分享重開及 0 再生成紀錄。任一項未測／不符即 **SP35 PRODUCT NOT_DONE**，CI PASS 不能代替。
