@@ -3,58 +3,36 @@ Date: 2026-10-28
 Status: **Working design proposal, product-owner requested**. Not a frozen Phase 1 baseline, not deployed functionality, no Production permission.
 Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / incremental implementation); full hybrid production launch needs separate evidence.
 
-## 0. Sprint 3.5 範圍鎖定 — 2026-10-31（本檔優先解讀規則）
+## 0. Sprint 3.5 產品交付範圍（2026-10-31 Human 最新指示）
 
-> **性質：既有 Design PR #45 的產品範圍更正草案；尚未合併、非已批准 Build Freeze。**
-> **唯一 Design owner：本檔 Working H-001；Phase / Function 語意仍由各 canonical Working owner 擁有。**
-> 本節界定「Sprint 3.5 要修好的 Stage A」；下方藍圖描述的是**長期產品方向／分階段契約**，不是自動啟用的 Sprint 3.5 backlog。與本節衝突的「立即發布、永久保存、完整後端、完整版本家族、跨模型自由切換」字眼，**不得當成本 Sprint 的完成條件**。Design PR 未合併前不假稱已更動 main SSOT。
+> **唯一執行計畫名稱：Sprint 3.5 五核產品閉環收尾計畫**（`SP35-FIVE-CORE-PRODUCT-CLOSEOUT`）。
+> 計畫／每輪證據：`NFF98/appf2-build/docs/sprint-3.5/SP35-FIVE-CORE-PRODUCT-CLOSEOUT.md`，僅管 HOW、次數與 E2E 證據；**不建立第二份 Product Design SSOT**。本檔仍是 H-001 唯一 Design owner，Phase 1 F05/F06/F16、Phase 2 F08/F10 的原始責任不變。
+> 本節是 Design PR #45 中等待審核的產品範圍修正；尚未合併／Build Freeze／正式部署，不宣稱現有程式已可用。
 
-### 0.1 最高產品目標與 Stage A 邊界
+### 0.1 本次必須交付的完整使用者流程
 
-- **長期方向不變**：「自然語言 → 單一、類型無關 AI Code Builder → Blueprint v2 包裝／版本／權限 → 受控建置和獨立驗收 → 可操作 App」。後續安全分享、資產保存、版本家族與重用按原 Phase Gate 分批啟用；不開第二套生成引擎。
-- **Sprint 3.5 只交付 Stage A 產品修復**：網站輸入一句一般自然語言，真正 AI 在同一 Agent 產生**多檔案的受控靜態 Web 專案**；原始專案與步驟存 PostgreSQL；真實隔離 Sandbox 編譯；獨立 Chromium 依原始要求操作並驗收；失敗時以原始碼／失敗證據在授權預算內修復；成功才在**目前會話的私人預覽**真實操作。不可用單檔範本或 fixture 冒充。
-- **Blueprint v2 在 Stage A 的最小職責**：已建置候選的檔案／雜湊／manifest／隔離權限／來源與 QA 證據一致性。候選不是 F05 的正式公開 App；F02 v2 完整生產 Admission／永久 R2 發布未納入 Stage A 完成定義。
-- **禁止未經證據轉移範圍**：Sprint 3.5 不因 Blueprint v2 的長期架構而自動新增跨裝置帳號、永久 App 收藏庫、版本家族管理、公開 v2 App 商城／畫廊、語意搜尋／智能重用、付費能力或外部 Runtime。既有 v1 F01–F06／F16 語意與正在使用的 App 不得被破壞。
-- **未解決範圍衝突要明示，不假完成**：原五項願景曾提「前後端／DB App」；目前批准／候選的安全執行 profile 首期僅靜態 Web（NODE 只有受限測試，PYTHON 未就緒）。**真正可對外運作的生成後端／DB 仍是缺口**，不得以 APPf2 平台自身的 PostgreSQL、靜態 Vite Demo 或產生了 backend 原始碼代替。之後啟用需補正式 Execution/Permission/DB 隔離契約及 Human scope 決策；本節不臆定其為 Sprint 4、Phase 2 或已完成。
+**使用者只輸入自然語言 → 單一 AI Code Builder 自主編寫多檔案程式（必要時包含受控後端／資料庫）→ Blueprint v2 固定程式、版本身分、權限、資料參照與分享身分 → 隔離 Sandbox 真正建置、獨立 Browser QA 操作與失敗修復 → 通過後出現可操作 App 卡片 → 保存、重新開啟、建立者同意後分享、別人使用同一版本；以上後續開啟均不重新呼叫生成 AI。**
 
-### 0.2 五項 Sprint 3.5 產品修復（本期可驗收的最小切面）
+「分享、重新開啟」是 Phase 1 F05 的**基本使用能力**；本次須把該效果接到新 v2 作品。它**不是** Phase 2 的帳號所有權、永久個人收藏庫、跨裝置私有資產同步、App 家族版本管理、F10 語意搜尋／智能重用，也不是 Phase 4 App Evolution。新的 App 修改可保存新 immutable 版本且不能覆寫舊 hash；本 Sprint 只要求版本**識別／可追溯／原版本可讀**，不建立帳號級 History 中心。未指定的永久保管承諾不得推定。
 
-| 原五項核心 | Sprint 3.5 Stage A 必做 | 明確不等於 |
-| --- | --- | --- |
-| 1 多檔案／自由 Coding | 同一 Agent 處理兩種不同自然語言要求，生成不同的真實多檔案 VITE_WEB 專案、實際建置與互動，不做遊戲專用引擎 | 已可託管任意後端／任意 DB／任意套件 |
-| 2 工作持續化 | 專案原始碼、雜湊、Step、工具／AI 收據存於既有 Job DB；中斷後讀回**同一 Job／同一原始碼**再續；不重複支付已確認的模型請求 | 永久個人 App Library、跨裝置帳號、歷史版本收藏 |
-| 3 真 Sandbox | Cloudflare 私有隔離環境實際執行**模型生成**的建置與測試，記錄命令、時間、結果與失敗診斷；憑證不可進容器 | CI 本地 Docker fixture 或 Wrangler dry-run |
-| 4 獨立驗收與修復 | 從使用者原文先產生凍結 QA 條件，真實 Chromium 操作候選，未通過交模型修復、再次執行完整驗收；原文必備功能未過就不報 READY | Hash 正確、能顯示畫面、模型自稱 PASS |
-| 5 受控續作與策略調整 | 保留失敗證據與檔案，無改善時改分析／修復方案；每次 paid step/預算經核准，可暫停且從同一 Job 續作；對不確定費用結果不得重送 | 自動轉移所有模型供應商、無上限消費或無限重試 |
+### 0.2 五項核心產品改造，全部以真實網站驗收
 
-### 0.3 原有 Phase 與 Sprint 的**正確界線**（不得混用）
+| 核心 | Sprint 3.5 的完成條件 |
+| --- | --- |
+| **1. 多檔案／前端／後端／資料庫** | 同一類型無關 AI Agent 生成至少兩種不同互動 App；其中一個須有真的後端與資料庫 CRUD／重讀。後端必須走明確授權、隔離的執行與資料權限；沒有受控 Profile 就標 **BLOCKED**，不可把平台工作資料庫或靜態示範當作 App 自有後端。 |
+| **2. 長工作保存／接續** | Job、原始需求、程式快照、hash、已花費與工具收據可保存；中斷／重新進站接同一 Job，不重新生成或重複計費。完成的 immutable App 版本可由卡片重開。 |
+| **3. 真 Sandbox** | 真實雲端隔離執行 AI 產生的專案，完成 build／test，記錄 exit、console、資源、診斷、產物 digest；不能以本地 Docker fixture 或 Wrangler dry-run 充數。 |
+| **4. 獨立 Browser QA + 自動修復** | 從原始需求先凍結可驗收條件，實際 Chromium 操作應用、驗證狀態／邏輯／錯誤；失敗留下證據→修復→重建→重測。任一必備條件 FAIL／UNTESTED，不得發布已驗證卡片。 |
+| **5. 受控重試／策略轉換** | 對重複失敗保存完整上下文、分析根因並改修復方案；成本或步數不足則暫停並可從原進度接續；未知付費結果不盲重試。不承諾無限制算力，也不允許未核准的跨模型／供應商轉送。 |
 
-| 能力 | Canonical 設計／Phase | Sprint 3.5 對應決策 |
-| --- | --- | --- |
-| **基本 Share／Restore**：受控 immutable Blueprint 分享連結、接收者直接用（0 次重新生成） | **Phase 1 F05**，屬原有 Core Loop | 保留原 v1 功能、不破壞；**不要求在本次新增 v2 公開分享系統**，舊 Phase 1 未通過證據仍如實列未結 |
-| **基本 Refine／Remix 與修正回退**：產生 immutable child、原版不被覆蓋、當前 session 比較／回退 | **Phase 1 F06／F16** | 不重寫成 v2 版本管理中心；未完成原 Phase 1 驗收另列，不冒充 Sprint 3.5 已完成 |
-| **保存 Agent 開發進度**：DB 快照、Checkpoint、重連續作 | **Sprint 3.5 核心 2 的技術必要條件** | 必做；不承諾 App 永久可讀、帳號資產 ownership |
-| **帳號級 Save、History、Ownership、跨裝置、Creator 發布管理／App Version 家族** | **Phase 2**，見 BUSINESS-PLAN Phase 2、F08；啟用需證據及批准 | **排除本期**；不得用 Phase 1 的 anonymous cookie 假裝永久 ownership |
-| **Semantic Blueprint Reuse／Retrieval** | **Phase 2 F10（DEFERRED）** | **排除本期**；只讀回同一 Job 不是 F10 重用引擎 |
-| **可靠的版本相容性、擴大執行／外部 API／成本路由** | **Phase 3+ 證據門檻**，見 BUSINESS-PLAN、F11/F17 | **排除本期**；任意後端／DB 和跨供應者自動切換不得宣稱已支援 |
-| **AI 驅動 App Evolution／知識推薦** | **Phase 4+ F18（DEFERRED）** | **排除本期** |
+### 0.3 完成／非範圍邊界
 
-「Sprint 4」與「Phase 4」不是同一個概念；**本期不啟動 Sprint 4**。任何未來 Phase 內容都不因這份架構願景或現有 prototype 而提早啟用。
-
-### 0.4 完成判斷、BLOCK 與停止規則
-
-**Stage A 最小真實 E2E：**
-1. 在真實隔離 Staging 網站，Browser 同源呼叫 Worker，**真實 AI** 接收原始自然語言與凍結驗收條件，寫出多檔案；查出原始 Job／project hash／版本已入 PostgreSQL。
-2. **Cloudflare Sandbox** 為該 AI 產生的原始碼建置／測試，輸出可檢驗 digest、失敗診斷；**真實 Browser QA** 對原始條件逐項驗證；使用者能在網頁預覽按下控制並看到正確結果。
-3. 第二個**不同類別**的需求重複同一引擎；失敗案例應維持 FAILED／UNVERIFIED，不提供假的 READY。
-4. 關掉／重開頁面可讀回**同一 Agent Job** 與源碼／工作進度；不需重生，已完成的 paid call 不重送。QA 失敗只在核准費用內以保存的診斷修復。
-5. 以上每條要在**同一 Commit** 留下 Staging URL、脫敏 request/job id、DB hash、AI／Cloudflare 收據、Chromium 互動畫面、QA 分項 PASS/FAIL/UNTESTED。**任一必要項 NOT_RUN = Stage A NOT_VERIFIED**。
-
-**已知阻斷，不得推測成已解決：** Cloudflare subscription 唯讀查詢 HTTP 403（權限／方案未知，非部署成功）；當前多檔案私有服務部署與真實 AI + Sandbox + Browser QA 整鏈未有驗證；當前 Agent QA 後仍 `app_published:false`（本期允許 private usable preview，不得偷變公有產品）；正式 main／Release HOLD；舊治理 Gate 失敗與 Stage A 產品第一失敗 hop 分開記錄。
-
-**修復順序**：先 Staging 最早失敗 hop → 模型／DB → Sandbox → Browser QA → 產品內實際操作／中斷續作；僅修已證實的失敗點、最多兩輪集中修復。不得以修更多旁支功能取代產品操作證據。Staging 的付費 AI／Container 與正式 Production 發布各須獨立授權；此 Design 修改本身**不授權費用、部署、Merge 或 Production 上線**。
-
-**產品成功的報告口徑：**「Stage A multi-file REAL E2E PASS / FAIL / NOT_RUN」與「原 Phase 1 Release 1 全功能 PASS / 未結」分開；不得把兩者、五項工程進度、Phase 2+ 長期方向加總成百分比。
+- **必備產品 Gate**：真實 Staging Browser→Worker→真模型→DB→私有 Sandbox→獨立 Browser QA→v2 immutable artifact/admission→App 卡片→同版本重新開啟／分享／新瀏覽器操作（**重開 0 生成模型呼叫**）。新 v2 作品須在建立者明確發布同意後才可公開；保密資料不進公開包、生成程式不得直接接觸 APPf2 金鑰。
+- **負面 Gate**：任一未通過 QA／來源雜湊不符／越權／重送成本／惡意生成程式，都不能發放可公開操作卡片。保留 Phase 1 v1 舊 App 和其既有分享、修正功能，不能為趕新功能破壞它們。
+- **不啟動**：Sprint 4；Phase 2 F08/F10 的帳號所有權與進階重用；Phase 3+ 付費外部能力／Commerce；Phase 4+ Evolution；16P 舊流程。**生成 App 的受控後端／DB 已列在本 Sprint 必交付**，但其安全執行契約缺口須先補齊再驗收，不得直接擴權。
+- **完成證據**：同一 GitHub HEAD 的真實 Staging URL、request/Job ID、AI 收據、PG write/read、Sandbox exit/manifest、Browser 操作與 QA 每項結果、卡片分享重開及 0 再生成紀錄。任一項未測／不符即 **SP35 PRODUCT NOT_DONE**，CI PASS 不能代替。
+- **執行節奏**：固定 `SP35-FIVE-CORE-PRODUCT-CLOSEOUT`，四個交付關卡（真實阻斷盤點、雲端五核心修復、v2 卡片／分享接線、全鏈驗收）；**產品集中修復最多兩輪**，其餘為查證與驗收；未證實改善就停、列阻斷而非開第三輪。具體計畫在 Build，不複製到 Design。
+- **授權界線**：Plan 不自動授權付費 AI、Cloudflare Container、正式合併或 Production 部署；由原本批准／使用者明確授權及最小必要安全護欄控制。Design PR #45 / Build PR #419 原址延續，不另開產品 PR。
 
 ---
 
@@ -249,12 +227,8 @@ Implemented in Build PR #419 (`57725a5`):
 This closes one concrete false-PASS mechanism, **not** every way a generative model can omit or simulate requirements. Statistical reliability across unknown ideas is still unmeasured; do not label every new generated app "fully verified" based on two categories. Persist a cryptographically linked QA plan+result receipt per immutable artifact, add explicit private human review for subjective/non-automatable requests, and expand functional regression across business logic, state persistence and multi-step navigation. Staging deployment and regression status must be reported separately from old governance/Human approval gates.
 
 
-## 14. Sprint 3.5 — 歷史五項改造方向與新範圍對照（2026-10-31）
+## 14. Sprint 3.5 五核心改造歷史提案（已由 §0 範圍取代）
 
-2026-10-28 原提案希望從單檔 JavaScript 演進為多檔案、AI Coding Agent、Cloud Sandbox、DB 工作續作、獨立 QA。這五項**方向仍保留**，但原文曾把「完整全端／永久 App 發布／所有模型策略」一併當成當期完成條件，超出當前 Stage A 與正式 Phase 啟用邊界。
+2026-10-28 的多檔案、Agent、Sandbox、持續化、QA 方向已統一收斂於本檔 §0 及既有長期架構 §1–13；不要把過去不同階段的試驗規格、私人候選 Demo 或 Phase 2+ 資產功能當成目前 Sprint 3.5 的完成定義。
 
-**目前 Sprint 3.5 唯一實作及驗收範圍，以本檔 §0.1–0.4 為準。** Full-stack 自訂後端／DB Profile、v2 正式公開發布、App 資產庫、跨設備 ownership、智能重用及自動供應者路由都是**尚未交付且未被本節核准啟用的需求缺口／未來工作**，不能假裝完成，也不能任意指定成 Sprint 4。
-
-保留既有 Blueprint v1、既有單檔 `/code/:id`、F05 Phase 1 基本分享及安全邊界。私有候選只有經原始需求真實 QA 通過才可標示 Stage A 可操作，不因此得到公開分享、收費或正式發版權限。
-
-**執行限制**：先由原 Design PR #45 修正範圍；Build 僅沿用 PR #419、不得新增 PR／Sprint 4；兩輪修復硬停；每輪列明實際源碼 SHA、第一故障 hop、前後證據及產品 Stage A 狀態；不冒稱 GitHub CI fixture PASS 為 live REAL E2E。
+唯一交接識別：`SP35-FIVE-CORE-PRODUCT-CLOSEOUT`。真正的輪次、Blocker、執行證據只由 Build 計畫維護；Product Design 仍以本檔 H-001 與各 Fxx canonical Working owner 為準。
