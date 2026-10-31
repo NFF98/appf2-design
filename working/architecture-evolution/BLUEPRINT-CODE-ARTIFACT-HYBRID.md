@@ -3,6 +3,61 @@ Date: 2026-10-28
 Status: **Working design proposal, product-owner requested**. Not a frozen Phase 1 baseline, not deployed functionality, no Production permission.
 Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / incremental implementation); full hybrid production launch needs separate evidence.
 
+## 0. Sprint 3.5 範圍鎖定 — 2026-10-31（本檔優先解讀規則）
+
+> **性質：既有 Design PR #45 的產品範圍更正草案；尚未合併、非已批准 Build Freeze。**
+> **唯一 Design owner：本檔 Working H-001；Phase / Function 語意仍由各 canonical Working owner 擁有。**
+> 本節界定「Sprint 3.5 要修好的 Stage A」；下方藍圖描述的是**長期產品方向／分階段契約**，不是自動啟用的 Sprint 3.5 backlog。與本節衝突的「立即發布、永久保存、完整後端、完整版本家族、跨模型自由切換」字眼，**不得當成本 Sprint 的完成條件**。Design PR 未合併前不假稱已更動 main SSOT。
+
+### 0.1 最高產品目標與 Stage A 邊界
+
+- **長期方向不變**：「自然語言 → 單一、類型無關 AI Code Builder → Blueprint v2 包裝／版本／權限 → 受控建置和獨立驗收 → 可操作 App」。後續安全分享、資產保存、版本家族與重用按原 Phase Gate 分批啟用；不開第二套生成引擎。
+- **Sprint 3.5 只交付 Stage A 產品修復**：網站輸入一句一般自然語言，真正 AI 在同一 Agent 產生**多檔案的受控靜態 Web 專案**；原始專案與步驟存 PostgreSQL；真實隔離 Sandbox 編譯；獨立 Chromium 依原始要求操作並驗收；失敗時以原始碼／失敗證據在授權預算內修復；成功才在**目前會話的私人預覽**真實操作。不可用單檔範本或 fixture 冒充。
+- **Blueprint v2 在 Stage A 的最小職責**：已建置候選的檔案／雜湊／manifest／隔離權限／來源與 QA 證據一致性。候選不是 F05 的正式公開 App；F02 v2 完整生產 Admission／永久 R2 發布未納入 Stage A 完成定義。
+- **禁止未經證據轉移範圍**：Sprint 3.5 不因 Blueprint v2 的長期架構而自動新增跨裝置帳號、永久 App 收藏庫、版本家族管理、公開 v2 App 商城／畫廊、語意搜尋／智能重用、付費能力或外部 Runtime。既有 v1 F01–F06／F16 語意與正在使用的 App 不得被破壞。
+- **未解決範圍衝突要明示，不假完成**：原五項願景曾提「前後端／DB App」；目前批准／候選的安全執行 profile 首期僅靜態 Web（NODE 只有受限測試，PYTHON 未就緒）。**真正可對外運作的生成後端／DB 仍是缺口**，不得以 APPf2 平台自身的 PostgreSQL、靜態 Vite Demo 或產生了 backend 原始碼代替。之後啟用需補正式 Execution/Permission/DB 隔離契約及 Human scope 決策；本節不臆定其為 Sprint 4、Phase 2 或已完成。
+
+### 0.2 五項 Sprint 3.5 產品修復（本期可驗收的最小切面）
+
+| 原五項核心 | Sprint 3.5 Stage A 必做 | 明確不等於 |
+| --- | --- | --- |
+| 1 多檔案／自由 Coding | 同一 Agent 處理兩種不同自然語言要求，生成不同的真實多檔案 VITE_WEB 專案、實際建置與互動，不做遊戲專用引擎 | 已可託管任意後端／任意 DB／任意套件 |
+| 2 工作持續化 | 專案原始碼、雜湊、Step、工具／AI 收據存於既有 Job DB；中斷後讀回**同一 Job／同一原始碼**再續；不重複支付已確認的模型請求 | 永久個人 App Library、跨裝置帳號、歷史版本收藏 |
+| 3 真 Sandbox | Cloudflare 私有隔離環境實際執行**模型生成**的建置與測試，記錄命令、時間、結果與失敗診斷；憑證不可進容器 | CI 本地 Docker fixture 或 Wrangler dry-run |
+| 4 獨立驗收與修復 | 從使用者原文先產生凍結 QA 條件，真實 Chromium 操作候選，未通過交模型修復、再次執行完整驗收；原文必備功能未過就不報 READY | Hash 正確、能顯示畫面、模型自稱 PASS |
+| 5 受控續作與策略調整 | 保留失敗證據與檔案，無改善時改分析／修復方案；每次 paid step/預算經核准，可暫停且從同一 Job 續作；對不確定費用結果不得重送 | 自動轉移所有模型供應商、無上限消費或無限重試 |
+
+### 0.3 原有 Phase 與 Sprint 的**正確界線**（不得混用）
+
+| 能力 | Canonical 設計／Phase | Sprint 3.5 對應決策 |
+| --- | --- | --- |
+| **基本 Share／Restore**：受控 immutable Blueprint 分享連結、接收者直接用（0 次重新生成） | **Phase 1 F05**，屬原有 Core Loop | 保留原 v1 功能、不破壞；**不要求在本次新增 v2 公開分享系統**，舊 Phase 1 未通過證據仍如實列未結 |
+| **基本 Refine／Remix 與修正回退**：產生 immutable child、原版不被覆蓋、當前 session 比較／回退 | **Phase 1 F06／F16** | 不重寫成 v2 版本管理中心；未完成原 Phase 1 驗收另列，不冒充 Sprint 3.5 已完成 |
+| **保存 Agent 開發進度**：DB 快照、Checkpoint、重連續作 | **Sprint 3.5 核心 2 的技術必要條件** | 必做；不承諾 App 永久可讀、帳號資產 ownership |
+| **帳號級 Save、History、Ownership、跨裝置、Creator 發布管理／App Version 家族** | **Phase 2**，見 BUSINESS-PLAN Phase 2、F08；啟用需證據及批准 | **排除本期**；不得用 Phase 1 的 anonymous cookie 假裝永久 ownership |
+| **Semantic Blueprint Reuse／Retrieval** | **Phase 2 F10（DEFERRED）** | **排除本期**；只讀回同一 Job 不是 F10 重用引擎 |
+| **可靠的版本相容性、擴大執行／外部 API／成本路由** | **Phase 3+ 證據門檻**，見 BUSINESS-PLAN、F11/F17 | **排除本期**；任意後端／DB 和跨供應者自動切換不得宣稱已支援 |
+| **AI 驅動 App Evolution／知識推薦** | **Phase 4+ F18（DEFERRED）** | **排除本期** |
+
+「Sprint 4」與「Phase 4」不是同一個概念；**本期不啟動 Sprint 4**。任何未來 Phase 內容都不因這份架構願景或現有 prototype 而提早啟用。
+
+### 0.4 完成判斷、BLOCK 與停止規則
+
+**Stage A 最小真實 E2E：**
+1. 在真實隔離 Staging 網站，Browser 同源呼叫 Worker，**真實 AI** 接收原始自然語言與凍結驗收條件，寫出多檔案；查出原始 Job／project hash／版本已入 PostgreSQL。
+2. **Cloudflare Sandbox** 為該 AI 產生的原始碼建置／測試，輸出可檢驗 digest、失敗診斷；**真實 Browser QA** 對原始條件逐項驗證；使用者能在網頁預覽按下控制並看到正確結果。
+3. 第二個**不同類別**的需求重複同一引擎；失敗案例應維持 FAILED／UNVERIFIED，不提供假的 READY。
+4. 關掉／重開頁面可讀回**同一 Agent Job** 與源碼／工作進度；不需重生，已完成的 paid call 不重送。QA 失敗只在核准費用內以保存的診斷修復。
+5. 以上每條要在**同一 Commit** 留下 Staging URL、脫敏 request/job id、DB hash、AI／Cloudflare 收據、Chromium 互動畫面、QA 分項 PASS/FAIL/UNTESTED。**任一必要項 NOT_RUN = Stage A NOT_VERIFIED**。
+
+**已知阻斷，不得推測成已解決：** Cloudflare subscription 唯讀查詢 HTTP 403（權限／方案未知，非部署成功）；當前多檔案私有服務部署與真實 AI + Sandbox + Browser QA 整鏈未有驗證；當前 Agent QA 後仍 `app_published:false`（本期允許 private usable preview，不得偷變公有產品）；正式 main／Release HOLD；舊治理 Gate 失敗與 Stage A 產品第一失敗 hop 分開記錄。
+
+**修復順序**：先 Staging 最早失敗 hop → 模型／DB → Sandbox → Browser QA → 產品內實際操作／中斷續作；僅修已證實的失敗點、最多兩輪集中修復。不得以修更多旁支功能取代產品操作證據。Staging 的付費 AI／Container 與正式 Production 發布各須獨立授權；此 Design 修改本身**不授權費用、部署、Merge 或 Production 上線**。
+
+**產品成功的報告口徑：**「Stage A multi-file REAL E2E PASS / FAIL / NOT_RUN」與「原 Phase 1 Release 1 全功能 PASS / 未結」分開；不得把兩者、五項工程進度、Phase 2+ 長期方向加總成百分比。
+
+---
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
@@ -194,28 +249,12 @@ Implemented in Build PR #419 (`57725a5`):
 This closes one concrete false-PASS mechanism, **not** every way a generative model can omit or simulate requirements. Statistical reliability across unknown ideas is still unmeasured; do not label every new generated app "fully verified" based on two categories. Persist a cryptographically linked QA plan+result receipt per immutable artifact, add explicit private human review for subjective/non-automatable requests, and expand functional regression across business logic, state persistence and multi-step navigation. Staging deployment and regression status must be reported separately from old governance/Human approval gates.
 
 
-## 14. Sprint 3.5 — Coding Agent architecture migration (2026-10-28)
+## 14. Sprint 3.5 — 歷史五項改造方向與新範圍對照（2026-10-31）
 
-**Human directive:** Evolve APPf2 from single-file JavaScript generation into a general full-stack Coding Agent. Preserve existing, immutable Blueprint v2 cards; this migration remains inside Sprint 3.5. Never report all five completed merely because their contracts exist.
+2026-10-28 原提案希望從單檔 JavaScript 演進為多檔案、AI Coding Agent、Cloud Sandbox、DB 工作續作、獨立 QA。這五項**方向仍保留**，但原文曾把「完整全端／永久 App 發布／所有模型策略」一併當成當期完成條件，超出當前 Stage A 與正式 Phase 啟用邊界。
 
-### Five core workstreams and measurable proof
+**目前 Sprint 3.5 唯一實作及驗收範圍，以本檔 §0.1–0.4 為準。** Full-stack 自訂後端／DB Profile、v2 正式公開發布、App 資產庫、跨設備 ownership、智能重用及自動供應者路由都是**尚未交付且未被本節核准啟用的需求缺口／未來工作**，不能假裝完成，也不能任意指定成 Sprint 4。
 
-| Core | Production target | First deliverable | Real completion condition |
-|---|---|---|---|
-| 1. Multi-file workspace | Framework-agnostic project tree with dependencies and assets | Canonical safe project bundle, path/hash validation, trusted CI multi-file build | Novel AI-written multi-file program builds and runs in isolated cloud workspace |
-| 2. Coding Agent | Model uses Responses API tools: read/write files, run builds, inspect diagnostics, repair | Typed tool calls and bounded step driver | Real GPT-6.1 Sol Responses tool-call loop repairs an actual workspace |
-| 3. Cloud sandbox | One untrusted project per private isolated container | Adapter interface and allowed-tool policy | Cloudflare Sandbox deployed with verifiable isolation, command and egress limits |
-| 4. Durable jobs | Resume after disconnect and retry without double charging | Serialized checkpoint and idempotency state | Real Cloudflare Workflow resumes same job across interruption |
-| 5. Quality and admission | Requirement-to-evidence mapping, build and browser E2E, provenance and receipt | Hash-bound QA receipt and reject-on-failure contract | Real generated full-stack project independently tested and approved before ACTIVE |
+保留既有 Blueprint v1、既有單檔 `/code/:id`、F05 Phase 1 基本分享及安全邊界。私有候選只有經原始需求真實 QA 通過才可標示 Stage A 可操作，不因此得到公開分享、收費或正式發版權限。
 
-**Security boundary:** The model never receives APPf2 DB, Cloudflare or AI keys. Commands from model output are executed only inside a sandbox broker; never in the host Worker, GitHub runner or production machine. The broker owns CPU/memory/wall-time/disk/process/egress/secret limits and durable identity separation. Sandbox egress, metadata endpoints and dependency installs must be explicitly policy-controlled. Every tool call has a stable idempotent ID and a bounded result.
-
-**Cost/complexity:** Do not use the old 128-KB single-file ceiling as a universal limit. Replace fixed small-App restrictions with configurable per-job storage, token, command and spend budgets, progress checkpoints and explicit extra-budget consent. Unlimited creative categories are not unlimited paid resources.
-
-**Model protocol:** GPT-6.1 Sol tool calling uses OpenAI Responses API, not merely swapping the model string in the legacy Chat Completions JSON request. Require a validated function-call schema, function_call_output response and response continuation ID. Keep per-provider configuration and prohibit unsolicited provider transfers. References: https://developers.openai.com/api/docs/guides/function-calling ; https://developers.cloudflare.com/sandbox/ ; https://developers.cloudflare.com/workflows/.
-
-**Migration:** Existing WEB_STATIC_V1 and /code/:id cards remain unchanged. New multi-file source is a private candidate, never a published Blueprint until its compiled output, manifest, permissions, provenance and independent tests pass admission. Production DB, current F02/F03 and public sharing remain unmodified until there is real evidence. Use staged, explicitly authorized private capabilities rather than broad default network access.
-
-**Sprint 3.5 execution sequence:** commit Design PR #45 first; Build PR #419 implements project-tree contract, checkpoint and tool-call contract plus trusted multi-file build regression; then cloud sandbox broker, Responses agent, Workflow persistence, verifiable immutable artifact and unfamiliar full-stack live browser E2E. Keep legacy gates from stalling product work, but do not remove execution isolation or consent guards.
-
-**Evidence honesty:** DESIGN_ACCEPTED is not MULTIFILE_CONTRACT_TESTED; local trusted multi-file fixture is not cloud untrusted build; deployed Cloudflare Sandbox alone is not GPT tool-call E2E; and a hash without browser QA is never FULL_REAL_E2E.
+**執行限制**：先由原 Design PR #45 修正範圍；Build 僅沿用 PR #419、不得新增 PR／Sprint 4；兩輪修復硬停；每輪列明實際源碼 SHA、第一故障 hop、前後證據及產品 Stage A 狀態；不冒稱 GitHub CI fixture PASS 為 live REAL E2E。
