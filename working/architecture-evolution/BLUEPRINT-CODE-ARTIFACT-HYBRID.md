@@ -1798,6 +1798,15 @@ G5已完整3/9；G6原owner UI Job `3d494f27-6fdc-4037-b607-831e0f881620` 已取
 
 此屬外部執行環境阻斷，不改產品分母/不計G6成功。已準備的其他未開始獨立樣本可改由原GitHub Chromium one-shot工作流走**真網站原生新owner**，一次一個，不重生G6、不並行模型、不超原7Job/308¢（G5/G6各占44¢，餘5Job/220¢）。它仍跑同一自由AI引擎與完整原凍結QA/ACTIVE/獨立新Chromium原App/reload/reuse；兩DB須真PG。原規格允許的CI owner fallback不構成新引擎或安全繞過。若原browser最終不可恢復，必須真實報G6 blocked、不能以其他作品/平台測試補成9/9。
 
+
+### 0.23 G7凍結測試前置條件失配：保留FAIL，不發布、不加分（2026-11-02 JST）
+
+G7 `3f46af99-25f9-487d-bac7-e0ecfec5e0fc` CODE一次20¢ ceiling（1337/4797tokens）後原QA #41332322885 **6/7/reset FAIL**；原44¢內自動REPAIR v1一次16¢ ceiling（3874/4346tokens，#41332585069 SUCCEEDED）保留新來源 `sha256:7ca49ab48608e948f8dc790d6a777cd71162b4befb1bf58c91a34ac6913c1a16`；第二份QA #41332829113仍6/7，網站原owner workflow #41331845180最終FAIL，沒有ACTIVE share，不計產品分數、不再付費修復本件。
+
+根因審核：§0.19此reset測試定義「只翻第1張→重新開始→配對數0」使用text_appears；但配對數初始0，翻一張尚未配對仍0，沒有§0.6要求的0→非0→0可觀察過渡。原碼兩版reset均將open/matched/pairs/attempts清零並render，**不能把此QA FAIL斷言為AI配對邏輯已被證明壞掉**。這是本次手工凍結QA漏掉前置狀態的問題；已支付的一輪修復上限16¢照實記錄，不冒稱免費、不把修復後仍6/7說成功。
+
+**處置**：原prompt/plan/兩份receipt/兩版source/model journal全部保留；不修改原已凍結QA讓本件過、不手填PASS、不SQL補發布/冒用原owner。此樣本標BLOCKED_INVALID_QA_PRECONDITION，不再消費。其餘未開始原樣本逐一執行，預檢狀態回復test必須先有原需求導出的可見狀態改變，不能再用不變的指標浪費修復。未完成樣本永遠列未完成，真產品仍3/9。原既定G8/G9的reset有實際亮→暗/紅→藍→紅過渡，其他原文/QA不改。成本上限與原7Job/308¢先保持；任何後續調整需先SPEC明列完整保守帳本，不可冒用invoice未知為0或增加美元授權。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
