@@ -156,6 +156,17 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 **所有未來 G3/G4 website proof 必須落實**：在按正式分享前捕獲該原生 Chrome 的網路 POST `/publish-code-app` 回應 status／無秘密的錯誤碼、可見 UI error；點擊時另驗證 button enabled 與原 QA receipt 完整 hash；分享必須明確 await `ACTIVE` 後才離開原 owner Chromium。若發生暫時性 5xx，最多一次**原有 owner context、原 project、相同 idempotency** 重新點發布（無新模型、無新 Job），且須保留第一回合 HTTP 診斷；401/403/409/4xx 或不確定 DB 發布結果 FAIL_CLOSED，不能復原／偽造 P-256；**離開 browser／遺失原 owner key 後禁止再拿別人身分補發**。執行新一件獨立創意需求仍應用同一通用 Code Builder，不建「井字棋專用引擎」。不增加 Production，僅 PR #45/#419，仍 Sprint 3.5。
 
+
+### 0.13 2026-11-01 第三個 PASS 仍缺：**不同創意「雙人拿石頭」** 第二候選，僅一次新 Job
+
+原 G3 井字棋 GPT-6 工程工作已經通過 Docker/Chromium 7/7，但原 Browser owner 正式分享沒有成功，已結束的 GitHub ephemeral browser P-256 私鑰不可復原，故原 Job `31d6a1f4-...` **NOT_PUBLISHED / NOT_COUNTED**，保留只讀模型日誌及私有 source，禁止再次付費生成相同遊戲。Human 對費用明確回覆「可以多一點不要停」，此處將額外預留**另一件不同自然語言需求、單個獨立 Job ≤44c**，不延伸為無限筆授權；即 G3+新候選最多 **88c cumulative Job ceiling**（不是 invoice），其他歷史 model calls/未決風險另行計列。
+
+第二個候選原始自然語言：「請幫我做一個全新可操作的『雙人拿石頭』遊戲，從 9 顆開始，甲乙交替，每回合只能選『拿1顆』或『拿2顆』，不得拿超出剩餘數，拿到最後一顆的玩家獲勝。畫面顯示『雙人拿石頭』、初始『剩餘：9』『輪到：甲』；按『拿1顆』後顯示『剩餘：8』及『輪到：乙』；依序拿 1、2、2、2、1、1 顆後顯示『勝者：乙』；按『拿1顆』再按『重新開始』需顯示『剩餘：9』。獲勝後任何拿取按鈕不得再改變畫面，重新開始後能重新玩。使用至少三個彼此 import 的 src/ TypeScript 模組與 CSS，禁止 mock、固定勝利、外網與模板。」這是**不同**的遊戲邏輯和原始需求，不是重生成井字棋。
+
+凍結 7 項 source-quote 原驗收：（1）標題；（2）初始剩餘9；（3）初始甲；（4）按拿1顆剩餘8；（5）按拿1顆輪到乙；（6）1/2/2/2/1/1 → 乙勝；（7）拿1顆→重新開始→剩餘9。真新創作者 Chrome 需完整一次簽名 Job → GPT-6 自寫多檔 → network-denied Docker + 7/7 原始 QA → 原 creator 明確授權分享 API 有**可見 200/ACTIVE** → 陌生瀏覽器執行甲乙輪替/乙勝/禁再拿/重開/reload；少任一步保持 2/9，不拿舊井字棋充數。
+
+正式分享失敗時，必須在關閉 creator browser 之前記錄 HTTP status、可安全曝光的錯誤 code 及 UI 可見 error；5xx 才可在相同 owner/key、相同 idempotency 下免費重試一次，4xx/未知保存證據停止，沒有第二筆同樣模型 POST。只做 Design PR #45 / Build PR #419，禁止 merge、Production、Sprint 4。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
