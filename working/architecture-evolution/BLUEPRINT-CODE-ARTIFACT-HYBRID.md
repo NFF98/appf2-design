@@ -157,6 +157,14 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 **所有未來 G3/G4 website proof 必須落實**：在按正式分享前捕獲該原生 Chrome 的網路 POST `/publish-code-app` 回應 status／無秘密的錯誤碼、可見 UI error；點擊時另驗證 button enabled 與原 QA receipt 完整 hash；分享必須明確 await `ACTIVE` 後才離開原 owner Chromium。若發生暫時性 5xx，最多一次**原有 owner context、原 project、相同 idempotency** 重新點發布（無新模型、無新 Job），且須保留第一回合 HTTP 診斷；401/403/409/4xx 或不確定 DB 發布結果 FAIL_CLOSED，不能復原／偽造 P-256；**離開 browser／遺失原 owner key 後禁止再拿別人身分補發**。執行新一件獨立創意需求仍應用同一通用 Code Builder，不建「井字棋專用引擎」。不增加 Production，僅 PR #45/#419，仍 Sprint 3.5。
 
 
+### 0.14 2026-11-01 HTTP 413 真根因與免費自動回歸（Design/SPEC first）
+
+原 native creator website G4 `7045a009-6bfc-4889-8f1b-df03ba93c406` 原生發布回應已完整錄到 **HTTP 413 `AGENT_JOB_TOO_LARGE`**，見原 website Run [#41313398452](https://github.com/NFF98/appf2-build/actions/runs/41313398452)。兩個不同 GPT-6 原創遊戲已通過各自 7/7 frozen Chromium QA，但 **沒有任何新公開卡片／新訪客 E2E**，產品分數仍 **2/9**。GitHub Build 目前 `src/edge/agent-jobs.ts` 對 `/api/v1/agent-jobs/:id/publish-code-app` 使用一般端點 **1,400 raw request bytes**，雖然 `validPublishOwnerAppBody` 允許 UTF-8 中文原始 prompt 最長 800 chars，加上 owner UUID、project hash、title JSON，合法授權分享自然超過 1,400 bytes。這是 route ingress size gate 的確定原因，不是 AI/model 或 frozen QA 失敗。
+
+**最小修復規格**：僅 `FREE_SHARE_ITEM` （完整精確路徑）POST 的 raw `Content-Length` 與 `arrayBuffer` 統一使用 **4,096 bytes**（足夠 800 字中文 + JSON 欄位），原通用 1,400、QA 24,000、free import 200,000 bytes 不變；不可擴大任意 Agent 路由。仍強制 exact request fields、original owner nonextractable P-256 signature、idempotency、same Origin、canonical frozen QA 7/7、preview/source hash、creator public share consent 和 DB ACTIVE。4,097 bytes 必須仍 413；3,000-byte 合法中文 payload 應先通過 size gate，之後沒有有效 P-256 時 404 而非 413，不能由測試跳過驗證建立 public share。禁止 SQL/管理者偽造 owner 補發已過期的 G3/G4，原 AI models 絕不重送。
+
+**完成門檻**：新 API size-boundary 正／負測試，CI types/lint/route tests SUCCESS；原 Sprint 3.5 staging（**never production**）完成部署，GET health/readiness 正常；免費網路測試以長中文 publish payload、錯簽章精準證明 staging 不是 413 且不是 2xx/DB 副作用，4,097 bytes 原則上仍拒絕；以前的 7/7 QA 不能當作 3/9。由下一個 human-authorized **全新** signed-owner website GPT-6 Job → fresh source → frozen QA → 200 ACTIVE sharing → independent new visitor full click/reload **全鏈** 成功才 +1。Work 可繼續監督 CI 與故障修復、在同一個 PR/#45 SPEC，最多兩輪修復和一次一個收費 Job；不得允許沒有預算的新模型呼叫、無限自動重試或虛報 9/9。GitHub Actions 可自主執行**免費** gates，但 Work 不是永久常駐背景 daemon。
+
 ### 0.13 2026-11-01 第三個 PASS 仍缺：**不同創意「雙人拿石頭」** 第二候選，僅一次新 Job
 
 原 G3 井字棋 GPT-6 工程工作已經通過 Docker/Chromium 7/7，但原 Browser owner 正式分享沒有成功，已結束的 GitHub ephemeral browser P-256 私鑰不可復原，故原 Job `31d6a1f4-...` **NOT_PUBLISHED / NOT_COUNTED**，保留只讀模型日誌及私有 source，禁止再次付費生成相同遊戲。Human 對費用明確回覆「可以多一點不要停」，此處將額外預留**另一件不同自然語言需求、單個獨立 Job ≤44c**，不延伸為無限筆授權；即 G3+新候選最多 **88c cumulative Job ceiling**（不是 invoice），其他歷史 model calls/未決風險另行計列。
