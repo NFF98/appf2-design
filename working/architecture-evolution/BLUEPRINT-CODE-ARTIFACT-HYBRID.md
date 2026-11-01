@@ -1773,6 +1773,13 @@ Human最新指令為「批准繼續做完全部」。執行延續原目標2/9→
 ```
 
 
+
+### 0.20 兩輪後的執行策略：持續owner瀏覽器＋獨立免費訪客證據（不改產品程式）
+
+兩個已證實根因均為同一句合法長中文在精確入口遭1400 bytes拒絕。第二輪程式修正完成後，不再反覆新建ephemeral CI owner來測主旅程；改以**持續保留的原生cloud Chromium頁面**建立者走同網站UI/P-256/44¢同意/凍結QA/原Job/實際state與保存。只經UI操作、不匯出/代造私鑰，保持頁面與profile供同Job安全接續。Worker→GPT-6 Github私有Runner→network-denied Docker→獨立Chrome QA全維持。卡片只從原owner UI另行同意發布。
+
+發布後以原既有Workflow之**獨立免費**訪客job在新的Chromium process，按§0.15/0.19 frozen guest operations操作真正公開版本、reload、holdout輸入與0 model/Job POST。DB還須第三個新Chromium process驗viewer隔離，根代理只讀PG核ACTIVE/hash、原model/source/QA receipt與真records。訪客只接受既有share UUID，不調原owner或生成API；分享不是隱式生成、不准用CI成功替代PG或原生UI證據。這是驗收與恢復策略轉換，不是第三輪產品修碼，非新引擎，也不增加既有308¢額度。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
