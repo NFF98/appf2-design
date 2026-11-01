@@ -74,6 +74,8 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 **成本算術／前置檢查**：目前受控 GPT-6.1 Sol 原始模型 phase reservation `CODE=20 cents`、`REPAIR=16 cents`、`QA=8 cents`；手工提前凍結 QA 不發 QA model POST，歷史 Job checkpoint `28 cents` 是含虛擬 QA 8c 的較高保留記帳，並非實扣。新 GPT 的單 Job admission 仍要求 `max_cost_cents>=44` 才能進入 paid Code Builder。由此可知**9 個全新有修復餘額的 GPT-6 Job 不能在 100c 的現行 reservation contract 下獲保證**；除非先透過新 Design 批准更便宜模型／更精確、不可超支的計費控制並驗證品質，不能保證 9/9。嚴禁降低 GPT-6 模型或 QA 品質而不明示、拒絕在過度預留時偷偷開下一 Job。新的每次支付必須由原 owner P-256 授權，完成時把 exact GitHub/PG/Chromium evidence、receipt tokens、模型成本上限和真正發票未知狀態寫回唯一 Build SSOT。
 
+**真失敗後的通用修復上下文成本規則（2026-11-01 G1 實際 DB CRUD 5/6 FAIL）**：在真 Browser QA 已驗證邏輯／資料變更斷言 FAIL（而非 CSS/版面/編譯錯）時，REPAIR 模型應保留與狀態、事件、資料交換相關的完整 TypeScript 原始來源樹及原凍結 QA，**可在送模型的診斷上下文中省略龐大 CSS 和可信不變 scaffold**，以控制 token 費用；**原 PostgreSQL source snapshots/immutable hashes 一個字不能刪**。模型仍須回傳可驗證的完整新來源樹；如無法保證程式/樣式一致則 fail-closed。不能在 24k 字 guard 上失敗卻只對前台回通用 503，應回固定無秘密代碼 `SP35_REPAIR_CONTEXT_EXCEEDS_APPROVED_BUDGET`，不繞過成本護欄、不把失敗變假 PASS。原 Job P-256 私鑰失效後不得冒充原 owner/重開新費用來假裝接續。此規則與 US$1 新批准同時適用，先免費證實再決定下一筆費用。
+
 **執行方式**：先真網頁免費 smoke（現有 Agent 首頁入口、Worker、持久 Job、公開卡），再逐個使用最小安全費用的真模型 Job，僅在全部來源/QA/卡片/存活證據通過後計數；批次中每次真付費前重算 `$1-left`，超限不得調模型，改為免費錯誤根因修復與既有 artifact 重用驗證。任何雲端非必要費用／Production／新 PR／Sprint 4 不在本次授權內。**「不能停」指工程向既定產品目標持續推進，不構成無限制模型信用額度或無證據 PASS。**
 
 ---
