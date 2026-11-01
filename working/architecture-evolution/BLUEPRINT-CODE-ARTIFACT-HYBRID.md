@@ -152,6 +152,10 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 **工程執行限制：**只改 Design PR #45、Build PR #419；本 SPEC commit 先於 Build script；同一 Sprint 3.5，禁止 Sprint 4、Production、merge；不允許推送另一筆模型消費用的 commit marker 以製造假進度。真成本／Job／run／分享 hash 確定之後，才在原 Build SSOT 追加第 3 個 outcome。
 
+**G3 2026-11-01 付費唯一一次完整證據與失敗處置（SPEC 修正先行）**：Build Run [#41311674915](https://github.com/NFF98/appf2-build/actions/runs/41311674915) 最終 FAIL，**僅正式分享階段**：獨立 Job `31d6a1f4-df41-4c41-8f92-5800a937c7c7` 一次 GPT-6.1 CODE [#41311851870](https://github.com/NFF98/appf2-build/actions/runs/41311851870) SUCCEEDED（CODE ceiling 20c；provider invoice NOT_VERIFIED）；建立 6 檔 TypeScript/CSS 新井字棋，QA 凍結 7/7；免費 Docker/Chromium [#41312106622](https://github.com/NFF98/appf2-build/actions/runs/41312106622) SUCCESS，DB 7/7 evidence_hash，原私人 preview 已保存。最後建立者於原生 Chrome 按正式發布，但 `開啟／分享已發布 App` 連結等待 45 秒逾時，**未建立 public app、未執行陌生人 E2E，不得算 3/9**。Publish API HTTP status／錯誤碼未被該次 Playwright 捕獲，**根因尚未確認**；不可把 CI 7/7 宣稱完整產品 PASS，不可假設模型生成失敗或擅自再次付費。原非抽取式 P-256 owner 只存在 ephemeral GitHub Runner browser，不得以 SQL 改 owner、冒用簽章、發布內部 source、或重試同一模型以偽裝「修復」。
+
+**所有未來 G3/G4 website proof 必須落實**：在按正式分享前捕獲該原生 Chrome 的網路 POST `/publish-code-app` 回應 status／無秘密的錯誤碼、可見 UI error；點擊時另驗證 button enabled 與原 QA receipt 完整 hash；分享必須明確 await `ACTIVE` 後才離開原 owner Chromium。若發生暫時性 5xx，最多一次**原有 owner context、原 project、相同 idempotency** 重新點發布（無新模型、無新 Job），且須保留第一回合 HTTP 診斷；401/403/409/4xx 或不確定 DB 發布結果 FAIL_CLOSED，不能復原／偽造 P-256；**離開 browser／遺失原 owner key 後禁止再拿別人身分補發**。執行新一件獨立創意需求仍應用同一通用 Code Builder，不建「井字棋專用引擎」。不增加 Production，僅 PR #45/#419，仍 Sprint 3.5。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
