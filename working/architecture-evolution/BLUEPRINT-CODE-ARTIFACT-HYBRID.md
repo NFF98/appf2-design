@@ -2478,6 +2478,300 @@ Human批准「繼續做完全部」，本執行者§0.17自設七個Job次數上
 ]
 ```
 
+### 0.25 G8兩次失敗保留；先原需求審查後新遊戲補缺，不提高美元（2026-11-02 JST）
+
+G8原Job55ae5d78-e986-401a-91bb-70949f46c7da，CODE/REPAIR20+16¢，QA41333867328及41334297332都6/7 win FAIL，網站全鏈41333481856 FAILURE、未發布。原碼及修復碼玩法都預印「就能解謎成功」，全頁text_appears因此沒有absent過渡。保留所有原碼/凍結QA/真FAIL，不能改原收據宣稱遊戲邏輯壞了或已PASS。停止第三輪盲修。後續新需求前置審查確認互動造成可見過渡；新增需求明確要求結果文案僅於達成時顯示，這是先於模型的UX/驗收契約，不是改既有G8。
+
+原3tool/3game/3PG交付目標不變；G6/G7/G8全部未計分且保留。為第三遊戲缺口，以下新增不同自然需求先凍結，只能原g9/g10/g11/g12/g13執行完成後、原帳本重查conservative liability+44<=308¢，且前一模型已終結，才能考慮一次。總308¢/每Job44¢完全不變；若不足不得自行加價，免費工作先完成再提明確差額。假設後續五件各20¢完整成功關閉：20+44+44+44+5×20=252¢，新44→296<=308；任何實際失敗/repair均重新計算，不能用假設當已花帳。paid_jobs/failed_or_blocked/complete_new_products始終分列，目標9/9不代表歷次生成100%成功。
+
+```json
+{
+  "id": "g14-escape",
+  "title": "小屋逃脫",
+  "category": "game",
+  "original_prompt": "製作「小屋逃脫」。標題顯示「小屋逃脫」。提供名稱固定「拾取鑰匙」「打開木門」「走向出口」「重新開始」的按鈕。初始顯示「鑰匙：未持有」與「木門：關閉」。未拾鑰匙先按打開木門顯示「需要鑰匙」，門保持關閉。按拾取鑰匙顯示「鑰匙：已持有」。按拾取鑰匙再按打開木門顯示「木門：已開」。未開門不能完成。依序按拾取鑰匙、打開木門、走向出口顯示「逃脫成功」。完成後前三個按鈕不能再改變狀態。按拾取鑰匙再按重新開始顯示「鑰匙：未持有」，木門關閉、錯誤與成功訊息清除，可再完整遊玩；刷新也能重新遊玩。所有狀態、錯誤與成功文字只在對應實際狀態顯示，玩法說明不可預先印出結果文案。請由AI自由撰寫至少三個互相import的src/ TypeScript模組及CSS，不得用模板、mock、固定成功畫面、外部網路、外部套件或localStorage。按鈕與文字依以下名稱，手機也可完整操作。",
+  "criteria": [
+    {
+      "id": "title",
+      "source_quote": "標題顯示「小屋逃脫」",
+      "description": "title",
+      "automatable": true,
+      "steps": [],
+      "assertions": [
+        {
+          "kind": "text_includes",
+          "text": "小屋逃脫"
+        }
+      ]
+    },
+    {
+      "id": "initial",
+      "source_quote": "初始顯示「鑰匙：未持有」",
+      "description": "initial",
+      "automatable": true,
+      "steps": [],
+      "assertions": [
+        {
+          "kind": "text_includes",
+          "text": "鑰匙：未持有"
+        }
+      ]
+    },
+    {
+      "id": "needs_key",
+      "source_quote": "未拾鑰匙先按打開木門顯示「需要鑰匙」",
+      "description": "needs_key",
+      "automatable": true,
+      "steps": [
+        {
+          "action": "click",
+          "role": "button",
+          "name": "打開木門"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "text_appears",
+          "text": "需要鑰匙"
+        }
+      ]
+    },
+    {
+      "id": "key",
+      "source_quote": "按拾取鑰匙顯示「鑰匙：已持有」",
+      "description": "key",
+      "automatable": true,
+      "steps": [
+        {
+          "action": "click",
+          "role": "button",
+          "name": "拾取鑰匙"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "text_appears",
+          "text": "鑰匙：已持有"
+        }
+      ]
+    },
+    {
+      "id": "door",
+      "source_quote": "按拾取鑰匙再按打開木門顯示「木門：已開」",
+      "description": "door",
+      "automatable": true,
+      "steps": [
+        {
+          "action": "click",
+          "role": "button",
+          "name": "拾取鑰匙"
+        },
+        {
+          "action": "click",
+          "role": "button",
+          "name": "打開木門"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "text_appears",
+          "text": "木門：已開"
+        }
+      ]
+    },
+    {
+      "id": "win",
+      "source_quote": "依序按拾取鑰匙、打開木門、走向出口顯示「逃脫成功」",
+      "description": "win",
+      "automatable": true,
+      "steps": [
+        {
+          "action": "click",
+          "role": "button",
+          "name": "拾取鑰匙"
+        },
+        {
+          "action": "click",
+          "role": "button",
+          "name": "打開木門"
+        },
+        {
+          "action": "click",
+          "role": "button",
+          "name": "走向出口"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "text_appears",
+          "text": "逃脫成功"
+        }
+      ]
+    },
+    {
+      "id": "reset",
+      "source_quote": "按拾取鑰匙再按重新開始顯示「鑰匙：未持有」",
+      "description": "reset",
+      "automatable": true,
+      "steps": [
+        {
+          "action": "click",
+          "role": "button",
+          "name": "拾取鑰匙"
+        },
+        {
+          "action": "click",
+          "role": "button",
+          "name": "重新開始"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "text_appears",
+          "text": "鑰匙：未持有"
+        }
+      ]
+    }
+  ],
+  "guest_operations": [
+    {
+      "action": "expect",
+      "args": [
+        "鑰匙：未持有"
+      ]
+    },
+    {
+      "action": "click",
+      "args": [
+        "走向出口"
+      ]
+    },
+    {
+      "action": "absent",
+      "args": [
+        "逃脫成功"
+      ]
+    },
+    {
+      "action": "click",
+      "args": [
+        "打開木門"
+      ]
+    },
+    {
+      "action": "expect",
+      "args": [
+        "需要鑰匙"
+      ]
+    },
+    {
+      "action": "expect",
+      "args": [
+        "木門：關閉"
+      ]
+    },
+    {
+      "action": "click",
+      "args": [
+        "拾取鑰匙"
+      ]
+    },
+    {
+      "action": "expect",
+      "args": [
+        "鑰匙：已持有"
+      ]
+    },
+    {
+      "action": "click",
+      "args": [
+        "打開木門"
+      ]
+    },
+    {
+      "action": "expect",
+      "args": [
+        "木門：已開"
+      ]
+    },
+    {
+      "action": "click",
+      "args": [
+        "走向出口"
+      ]
+    },
+    {
+      "action": "expect",
+      "args": [
+        "逃脫成功"
+      ]
+    },
+    {
+      "action": "blocked",
+      "args": [
+        [
+          "拾取鑰匙",
+          "打開木門",
+          "走向出口"
+        ]
+      ]
+    },
+    {
+      "action": "click",
+      "args": [
+        "重新開始"
+      ]
+    },
+    {
+      "action": "expect",
+      "args": [
+        "鑰匙：未持有"
+      ]
+    },
+    {
+      "action": "expect",
+      "args": [
+        "木門：關閉"
+      ]
+    },
+    {
+      "action": "absent",
+      "args": [
+        "逃脫成功"
+      ]
+    },
+    {
+      "action": "reload",
+      "args": []
+    },
+    {
+      "action": "click",
+      "args": [
+        "拾取鑰匙"
+      ]
+    },
+    {
+      "action": "click",
+      "args": [
+        "打開木門"
+      ]
+    },
+    {
+      "action": "click",
+      "args": [
+        "走向出口"
+      ]
+    },
+    {
+      "action": "expect",
+      "args": [
+        "逃脫成功"
+      ]
+    }
+  ]
+}
+```
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
