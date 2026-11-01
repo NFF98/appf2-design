@@ -134,7 +134,7 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 **只承認真產品 2/9，非通用產品 100%。** 已確認「計數器工具」與「PostgreSQL 客戶備忘錄」兩個不同新 Job 的完整網站交付，剩餘 7 個不同新需求，仍需按 §0.5 嚴格 3 類×3 次補足；至少互動遊戲類、不同工具/DB 類新樣本和原始需求自修可靠性、首次可操作時間／P50/P95 未全面 PASS。重驗為 Chromium `reload`，不可冒充「關閉 Chromium 進程再重開同一原建立者持久 Job」的額外要求；先前 §0.7 獨立 cold-reopen 工程證據仍單獨存在。
 
-**費用界線**：本第二樣本只有原已核准 CODE，不重新付費生成；本次 free retest 額外模型 POST=0。前兩筆歷史各 20c、第一新網站 Job 44c、第二 Job 44c，累計保守上限 `US$1.28`，是分筆最大授權/預留非實際發票；provider actual `NOT_VERIFIED`。剩下 7 個新模型 Job 未得到本節自動授權，必須逐次確認可用額度與成本控制，避免重複收費。Build 結果與下一個阻斷只寫回原 `SP35-FIVE-CORE-PRODUCT-CLOSEOUT.md`。兩 PR 均不合併，Staging only，禁止 Production 與 Sprint 4。
+**費用界線**：本第二樣本只有原已核准 CODE，不重新付費生成；本次 free retest 額外模型 POST=0。**本批指定四個 Job**（兩筆 20c 歷史 + 第一次新網站 44c + 第二次新網站 44c）以各自授權額加總為 `US$1.28`，不是整個 2026-11-01 所有 Job 的總費用。**Supabase 唯讀事後交叉核實**：2026-11-01 UTC 全日 PostgreSQL `appf2_agent_model_call` 共 **7 個不同 Job、10 筆 SUCCEEDED 模型呼叫、逐筆 `max_charge_cents` 合計 188c**；其中**本批四 Job**分別為 20c + 20c + 36c(CODE+REPAIR) + 20c(CODE)，即 **96c 實際已執行呼叫的單次風險上限**，另三個較早 Job 是 20c + 36c + 36c = **92c**。`US$1.28` 是指定四 Job 的**工作授權 ceiling**而非真實 provider billing；`US$1.88` 是**全日模型呼叫逐筆 ceiling**亦非實扣。provider actual `NOT_VERIFIED`，更不能將這兩種 ceiling 相減當作可支用餘額。剩下 7 個新模型 Job 未得到本節自動授權，必須逐次確認可用額度與成本控制，避免重複收費。Build 結果與下一個阻斷只寫回原 `SP35-FIVE-CORE-PRODUCT-CLOSEOUT.md`。兩 PR 均不合併，Staging only，禁止 Production 與 Sprint 4。
 
 ## 1. Product outcome
 
