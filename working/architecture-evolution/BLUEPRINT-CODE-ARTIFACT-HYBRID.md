@@ -1791,6 +1791,13 @@ G5 Job `8880979c-d09d-44ef-aaa7-bd114a31a967` 真GPT CODE成功（1889/5042 toke
 
 **先免費做因果與安全實驗**：在network-denied Chromium fixture中，原始submit listener無adapter應保持不生效；同一碼有adapter才因真按鍵計算成功，invalid欄位仍拒絕、重設有效、已有click-preventDefault不雙執行；惡意form action POST（含target=_top/_blank等）從不送網路、parent DOM/storage仍拒絕、sandbox/CSP原deny原則不變。同原G5公開artifact在真網站重新驗完整guest流程含100/3/5 holdout、refresh/reuse、model/Job POST0；只有真全通過才3/9。若實驗不成立即保留FAIL並分析，不以加allow-forms或改QA放行。發布前的QA需加入相同sandbox事件語意正/負回歸，後續新App仍須公開UI同一完整嚴格驗收。此策略不增加模型費用；舊ACTIVE不當合格樣板宣傳，原Job與完整code保存可恢復。
 
+
+### 0.22 建立者瀏覽器環境離線之保存與合法接續（2026-11-02 JST）
+
+G5已完整3/9；G6原owner UI Job `3d494f27-6fdc-4037-b607-831e0f881620` 已取得paid CODE **SUCCEEDED**（1383/4002 tokens、20¢上限，model Runner #41331408357 SUCCESS），但cloud browser環境被宣告unavailable，原頁面無法再操作，Job目前CREATED/rev0，答案已在原model journal保存；不得再付CODE或假裝原owner仍能簽章。保留原profile/tab1及Job/frozen QA/request/response原文，不SQL改owner/不拿新key補簽，不自動發布。恢復原browser後按原Job接續，consume saved SUCCEEDED response，**0新provider POST**，再完成source/QA/明確publish/新visitor。
+
+此屬外部執行環境阻斷，不改產品分母/不計G6成功。已準備的其他未開始獨立樣本可改由原GitHub Chromium one-shot工作流走**真網站原生新owner**，一次一個，不重生G6、不並行模型、不超原7Job/308¢（G5/G6各占44¢，餘5Job/220¢）。它仍跑同一自由AI引擎與完整原凍結QA/ACTIVE/獨立新Chromium原App/reload/reuse；兩DB須真PG。原規格允許的CI owner fallback不構成新引擎或安全繞過。若原browser最終不可恢復，必須真實報G6 blocked、不能以其他作品/平台測試補成9/9。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
