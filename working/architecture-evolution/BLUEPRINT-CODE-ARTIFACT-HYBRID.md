@@ -198,6 +198,17 @@ Human最新指令為「批准繼續做完全部」。執行延續原目標2/9→
 
 每件先凍結自然需求與7項獨立QA，原生網站P-256同意→真GPT-6來源→免費Docker/獨立Chrome→原owner ACTIVE公開→**全新Chromium process**操作/reload/reuse；後續6件依原3工具/3遊戲/3真PG資料App總分母補足：G5餐費工具後，再1工具、3互動遊戲、2真PG CRUD App。各Job至多兩輪集中修復，未知費用不重送；費用/名額不足則保留來源、分析換策略，超308¢必須再獲明確批准。只原#419/#45，無Production/merge/Sprint4。
 
+
+### 0.18 完整800字需求的全鏈入口審核：第二輪／最後集中修復（2026-11-02 JST）
+
+第一輪精確CREATE修復已真Staging #41326481475全SUCCESS，部署前1950 bytes錯PoP為413，部署後404。原生G5新Job `b439ed54-4a9a-4f2d-8a32-14c06df42d53` 已保存44¢ budget和原始7條QA，revision0；model_call與model_runner_request皆0。下一步 `free-ai-stage` 同樣攜帶完整original_prompt但仍落入1400，導致編碼根本未派發。保留此原Job/QA，不能說模型失敗或重新收費。
+
+**完整精確路由清單**：CREATE、publish-code-app、free-ai-stage、free-ai-repair-evidence、qa-generate均合法接收最長800 chars原需求；這些精確POST路由 raw Content-Length/arrayBuffer統一4096。已是24000的qa-plan/qa-review/qa-run/qa-repair不變；200000 import/repair不變；其餘不攜帶原文的Agent路由仍1400。不能靠任意前綴、任意URL或提高全域限制解決。每條長中文錯PoP必須404、4097必須413，從不產生Job/model/DB副作用；一般agent-progress>1400仍413。免費Staging逐條查證後才走真模型，原owner、PoP、same-Origin、已凍結QA、hash、budget、idempotency完全保留。
+
+**正式發布HTTP語意審核**：現有精確owner `publish-code-app` 成功本來回 **201 Created**，不是200；成功定義為200/201中的合約成功碼、可讀新分享連結、DB真ACTIVE/public_opt_in和相同immutable hash、另一個全新Chromium真操作。不能把201正確建立誤報失敗、不能把只收到2xx當完成。既有G5測試只認200是驗收腳本缺陷，修為接受200/201並留實際status與PG證據；模型品質/7條QA完全不變。免費測試須包含201接受/413拒絕的狀態判斷。
+
+最後集中修復後若仍有新阻斷，保留原Job/source/evidence，先根因分析與換執行策略，不盲目第三輪。沒有模型journal的拒絕不得算付費嘗試或重送已收費模型；原ephemeral owner若失效不可偽造復原，原空Job保留並明確記錄無生成。接續的唯一成功paid G5仍受原44¢和七Job308¢總額控制。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
