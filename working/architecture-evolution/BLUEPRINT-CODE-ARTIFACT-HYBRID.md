@@ -88,6 +88,14 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 **證據與歷史**：新的 QA Runner 必須用免費 Chromium 覆蓋 0→1→0 正例、完全無效果負例、異步操作正例、沒有 E 的負例。保留先前原 App 5/6 immutable receipt 不變，新的演算法只在新 Runner、重跑原相同版本及同一 frozen QA 得到真收據後才能改判。**沒有原 owner 私鑰不准以特權模式代簽或發佈原 Job**。成本沿用 US$1 整批上限，首選 0 新 AI 測試；SPEC 先於 Build，仍只 Design PR #45、Build PR #419。
 
+### 0.7 2026-11-01 關閉整個瀏覽器後恢復身分／真資料與無重付（Sprint 3.5 延續）
+
+**原五項需求第 3「速度／不因關頁失成果」與第 4「保存重用」不能只用同頁 reload 或單一 Playwright context 假充長期保存。** 必須對目前已發布、已通過公開權限的 Blueprint v2 App 做真 Staging 網站 E2E：乾淨的 persistent Chromium profile A 啟動、開公開 App、經沙盒中的 `appf2Records` → signed Worker → 真 PostgreSQL 新增資料、記錄 record_id 與 creator 身分；**完全關閉 Chromium 進程**，同一 profile 重啟後以原有不可匯出 P-256 key 繼續讀取同筆資料、可 UPDATE，第二次完全關閉再啟動後仍能讀到更新值、可 DELETE。另用獨立乾淨 profile B 斷言不可 list/read A 私人資料，B 新增的資料也不能出現在 A。最後清理測試列；沒有 PG 端真讀寫或身分持久化，必須 FAIL。
+
+**費用與證據**：驗證只能操作既有已公開 App／免費瀏覽器、不得重新生成 App、呼叫付費模型、觸發 paid workflow、Cloudflare Containers 或繞過 signed owner 權限。明確計量：A/B browser profiles、cold reopen 2 次、CRUD 與拒絕跨 viewer、全程新模型 POST 0，真 GitHub run/commit/PG 行為 logs。這是**平台既有公開 App 資料橋的恢復 E2E**，不是 AI 編寫完整資料庫 App 的九次新生成 PASS；獨立公布「真關 Chrome 持久化 PASS」與「新 GPT-6 全閉環 NOT_VERIFIED」。任何密鑰永不 log、不得把私鑰外傳或以管理員代簽。
+
+保留 [Build SSOT](https://github.com/NFF98/appf2-build/blob/product/sprint-3.5-complex-intent-recovery-20261026/docs/sprint-3.5/SP35-FIVE-CORE-PRODUCT-CLOSEOUT.md) 原主檔、僅 #419，測試免費且全批 US$1 硬上限不變；如失敗集中修復共用持久身份/橋接原始碼，禁止藉此報 5/5 或 9/9。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
