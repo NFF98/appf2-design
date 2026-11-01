@@ -96,6 +96,16 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 保留 [Build SSOT](https://github.com/NFF98/appf2-build/blob/product/sprint-3.5-complex-intent-recovery-20261026/docs/sprint-3.5/SP35-FIVE-CORE-PRODUCT-CLOSEOUT.md) 原主檔、僅 #419，測試免費且全批 US$1 硬上限不變；如失敗集中修復共用持久身份/橋接原始碼，禁止藉此報 5/5 或 9/9。
 
+### 0.8 Human 突破：2026-11-01 第 1 個完整「真人網站輸入→全新 GPT-6 App→QA→分享」E2E
+
+優先以**原生網站輸入**而不是直接打 Agent API 驗收第一個完整新 App：真 Chromium 在 Staging 首頁使用新版 Agent textarea 輸入「計數工具：起始0、按一次+1、連按兩次到2、重新歸零」，以原需求先凍結 QA，再在網站勾選各項 Human 已授權的模型／免費 Docker／Chromium QA（以及自動修復限額）並按一鍵主 CTA。由同一個**原 owner 瀏覽器產生並保存新 P-256 Job**、真正 GPT-6.1 Sol 生成 source、免費 network-denied Docker 編譯、獨立 Chromium QA 全 PASS、私人可操作預覽；回到網站經原 owner 明確勾選公開授權才發布，另起乾淨 Chromium context 讀公開 App 並實際按鈕，reload 後再操作。量測真網站 Job 建立至首次交互、QA、分享/訪客可操作時間。
+
+**PASS 的唯一計數規則**：只有全程完成，才可稱 `new_generated_complete_site_e2e=1/9`（simple tool）；只生成程式、使用舊卡片、測試器綠燈或純後端 Job 不算。公開與異瀏覽器使用不能用畫面相似度冒充，須真 UI 操作。失敗保留原 Job/source/QA/模型收據、無假 PASS。
+
+**費用安全**：全批 Human 授權 **US$1.00**；先前兩筆模型 CODE 20c+20c 各已 journal SUCCEEDED，仍非實際發票。**新 Job 授權最多44c**，所以在模型 call 上限層最保守 40+44=84c<100c；只有確認沒有新增第三個已佔成本 call、且此單次 Job 原子記帳、GitHub 精確一次觸發與 Staging readiness PASS 才可開出這筆。不能自動重送已收費 CODE；修復須守原 Job 44c 累積上限；不可藉「繼續」超過 US$1 或無故改模型。這是 9 次中的第 1 次，不表示剩下 8 次已可在相同成本完成；後續需要再證明可擴充的低成本方案。
+
+維持 Design PR #45 原 H-001、Build PR #419 原 SSOT；**本節必須先提交 SPEC，才實作與驗收 Build**。不合併、不 Production、不 Sprint 4。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
