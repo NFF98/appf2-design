@@ -63,6 +63,19 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 **執行順序（最多兩輪集中修復，不開新 Sprint/PR）**：`SPEC/G0` 凍結本 Gate 表與測試樣本／費用護欄 → **Round A** 通用模型多檔來源、受控 DB bridge、持久 Job 和可見執行時間戳 → 真 Staging + 三類受控測試 → **Round B** 只修首個真 FAIL：策略執行／卡片分享／速度最大瓶頸，按 Gate 留證 → 最後 `G0..G5` 一次全鏈重跑。每項 **PASS / PARTIAL / BLOCKED / NOT_RUN** 必填原 Job + HEAD + GitHub run + PG/Chrome 證據；不能用「完成度約60%」代替實際 PASS 比例。既有舊 16P Gate/HOLD 不能凌駕 Human 指定產品優先，但**不得**修改不可變 BS-P1-025 或冒建已啟用 BS-P1-026；`build-spec/CURRENT.json` 的舊 HOLD 不因這個工作草案自動變更。須於 Design PR #45 本 H-001 更新並先提交，**再**在既有 Build PR #419 原 `SP35-FIVE-CORE-PRODUCT-CLOSEOUT.md` 留映射、實作與驗收；不另開 Spec/Build PR。
 
 
+
+### 0.5 Human 2026-11-01 最新硬預算／九次真網站驗收（本節後發指令覆蓋舊 6.84 美元估算）
+
+**Human 指令：整批 US$1.00（100 cents）硬上限，不是每 Job 1 美元，也不是允許以 US$6.84 跑 9 次。** 原有一次付費 G1 Job 的歷史收據要與新費用分帳，也要在本輪綜合上限審核中保守納入。任何未知的模型供應商發票額不得猜為 0；預留上限／checkpoint cost 不能混充實扣帳單。跨 Job 有原子化全批可扣額度 ledger，只有新付款之前已確認 `sum(max_pending_possible_provider_charge_cents)+new_max<=100` 才可排程；未知付款記錄視為已占滿上限，絕不重送。不得因使用者要求「不要停」而超出明確 US$1 授權。
+
+**9 次嚴格驗收仍是 3 類 × 3 次獨立真網站 session，原需求必須每次自然語言進站並關聯原 Job**：簡單工具／互動遊戲／有 viewer-private PostgreSQL CRUD 的資料 App；每類每次從 Chrome 互動到真正 build QA、恢復、分享/拒絕權限、零再次生成及階段真時戳。**建立、來源、驗收、持久化、正式分享、重開是產品 5/5 的共同 Gate，任何不足不可「9/9 PASS」。**
+
+**不可偷換分母**：已付費並有真生成證據的舊一個遊戲原 Job 可以在「已存在有效證據」欄計數；不可以算作本輪新的 3 次生成。**同一 App 重開 2 次是重用 E2E，不是 2 個新的自然語言生成 Job**。可使用免費重開 session 觀測速度、權限和零再生成，但須同時公布 `new_generated_jobs`、`reused_existing_jobs`、`nine_end_to_end_new_creations` 三個獨立分子與分母，不可把 3 次生成 + 6 次重開直接寫成「9 次新生成全 PASS」。
+
+**成本算術／前置檢查**：目前受控 GPT-6.1 Sol 原始模型 phase reservation `CODE=20 cents`、`REPAIR=16 cents`、`QA=8 cents`；手工提前凍結 QA 不發 QA model POST，歷史 Job checkpoint `28 cents` 是含虛擬 QA 8c 的較高保留記帳，並非實扣。新 GPT 的單 Job admission 仍要求 `max_cost_cents>=44` 才能進入 paid Code Builder。由此可知**9 個全新有修復餘額的 GPT-6 Job 不能在 100c 的現行 reservation contract 下獲保證**；除非先透過新 Design 批准更便宜模型／更精確、不可超支的計費控制並驗證品質，不能保證 9/9。嚴禁降低 GPT-6 模型或 QA 品質而不明示、拒絕在過度預留時偷偷開下一 Job。新的每次支付必須由原 owner P-256 授權，完成時把 exact GitHub/PG/Chromium evidence、receipt tokens、模型成本上限和真正發票未知狀態寫回唯一 Build SSOT。
+
+**執行方式**：先真網頁免費 smoke（現有 Agent 首頁入口、Worker、持久 Job、公開卡），再逐個使用最小安全費用的真模型 Job，僅在全部來源/QA/卡片/存活證據通過後計數；批次中每次真付費前重算 `$1-left`，超限不得調模型，改為免費錯誤根因修復與既有 artifact 重用驗證。任何雲端非必要費用／Production／新 PR／Sprint 4 不在本次授權內。**「不能停」指工程向既定產品目標持續推進，不構成無限制模型信用額度或無證據 PASS。**
+
 ---
 
 ## 1. Product outcome
