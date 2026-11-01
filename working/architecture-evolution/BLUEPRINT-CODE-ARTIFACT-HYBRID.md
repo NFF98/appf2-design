@@ -175,6 +175,15 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 正式分享失敗時，必須在關閉 creator browser 之前記錄 HTTP status、可安全曝光的錯誤 code 及 UI 可見 error；5xx 才可在相同 owner/key、相同 idempotency 下免費重試一次，4xx/未知保存證據停止，沒有第二筆同樣模型 POST。只做 Design PR #45 / Build PR #419，禁止 merge、Production、Sprint 4。
 
+
+### 0.15 Work 接管後下一個獨立候選：餐費分攤工具（PREPARED / PAUSED_BUDGET）
+
+2026-11-01：免費 Staging #41316476210 最終 SUCCESS；同程式修正後最新 Foundation #41316637632 SUCCESS，原 #41316476230 為 cancelled，不改報 PASS。舊骰子負面稽核仍有已知規則/頁面失敗，屬保留的負面證據；不表示九個新產品完成。真產品仍 2/9。
+
+下一候選必須是**全新餐費分攤工具**，不可重生已付費井字棋/拿石頭。輸入餐費、用餐人數、服務費百分比，按「計算」顯示總額與每人金額；1000/4/10 → 總額1100.00、每人275.00；600/3/0 → 每人200.00；人數0顯示錯誤且不可產生 Infinity；重設清空結果。至少三個互相 import 的 src TypeScript 模組與 CSS。模型生成前凍結七項原需求 QA：標題、1000/4/10 的總額、同案例每人金額、600/3/0、零人拒絕、重設、重設後重新計算。陌生 browser 必須完成相同實際輸入/點擊、錯誤/重設、重新整理後再算；0 guest AI/Job POST，公開 ACTIVE 與 immutable hash仍必須核對。
+
+本候選**尚無新增費用授權**，不是可執行付費指令。先完成免費 script syntax/plan/source-quote 檢查並保存。請求未來額度僅單一新 Job 44¢（CODE 20/REPAIR 16/QA 8保留上限），不可與已消耗的 G3/G4 88¢批准混用；最多兩輪集中修復且不得超出單 Job cap。2026-11-01 UTC ledger：12筆 SUCCEEDED ceiling共228¢；10/31四筆未決共32¢，供應商實扣 NOT_VERIFIED，均不可重送。必須取得此筆明確批准後才允許原生 creator P-256 paid consent；不自動跑批次、不合併、不 Production，仍原 PR #419/#45。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
