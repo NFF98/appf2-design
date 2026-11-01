@@ -139,6 +139,9 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 ### 0.12 2026-11-01 第三個獨立自然語言作品：雙人井字棋（互動遊戲 G3）— SPEC FIRST，**未執行模型、不得預報 3/9**
 
+
+**同日 Human 新授權補充（SPEC first）：**使用者明確回覆「同意繼續，可以多一點不要停！」，承接前一則已明列第三款新 Job 的 **US$0.44（44 cents）單次上限**，只批准此第三款雙人井字棋新 Job **一次**。允許付費推進 G3 真 E2E，先行 read-only Supabase journal reconciliation；所有付費模型呼叫必須沿用原網站 P-256 creator consent、單 Job ≤44c atomic admission，不能視為對其他六款或超出 44c 的無上限授權；非確認 provider invoice 仍標 NOT_VERIFIED，其他歷史未決 model calls 保留不再發送。若 QA FAIL 保留同 Job/程式和進度，優先在原核准額度內修復，不得生成第二個付費 Job 或重跑已付過費的階段。
+
 **嚴格分母延續 §0.5/§0.10/§0.11：**目前兩筆真新網站獨立 E2E 已確認 2/9 = 22.2%，第三筆必須從 Staging **新版 Agent textarea** 首次輸入一個新的互動遊戲需求，原 Chrome creator signed P-256 新 Job，真 GPT-6.1 Sol 多檔自由生成、原需求凍結 QA 由免費隔離 Docker/獨立 Chromium 逐項 PASS、私人預覽、另一次明確 owner 分享、陌生 Chrome 在原 AI UI 真操作與 reload；所有步驟後才能列第 3 個。不得將 2026-10-28 舊十八啦公開卡、工程 fixture、第二個資料庫 App 重開或手寫棋盤充數。
 
 **第三樣本原需求測試契約（不寫遊戲專用 runtime 引擎）：**「雙人井字棋」九格按鈕固定可存取名稱 `第1格`～`第9格`、玩家輪流 X/O、每個落子後有清楚的可見文字例如 `第1格：X`、`第5格：O`、文字 `輪到：X`/`輪到：O`、三個 X 同列宣告 `勝者：X`、已填格禁止覆寫、獲勝後不可再落子、`重新開始` 歸零。前端需至少三個相互匯入的 `src/` TS 模組，受控無外網環境，非對應九宮格模板引擎。模型輸出必須真正符合需求，絕不修改 QA 讓其過關。
