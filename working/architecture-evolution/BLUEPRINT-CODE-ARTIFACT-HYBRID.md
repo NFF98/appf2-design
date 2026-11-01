@@ -191,6 +191,13 @@ G5餐費原需求含585+個中文字與原生數字欄位說明，低於既有80
 
 只將精確 `POST /api/v1/agent-jobs` 的Content-Length與實讀raw bytes上限設為4096，與精確publish一致；合法prompt800 chars、原anonymous_id、explicit_ai_consent、max_cost_cents schema仍不變，原owner P-256、same-Origin、nonce/idempotency和DB admission全部保留。其餘Agent端點1400、QA24000、import200000不變。4097必須413；1401..4096錯PoP必須404、不寫Job/不呼叫模型。免費unit及原Staging先部署前後讀取邊界，確認修復與health/readiness正常，才接續原已批准的單一44¢G5新Job。只有成功建立一次Job之後可調模型，未知paid結果不得重送；兩輪集中修復限制不變。先保留舊run真結果，不算產品分數，仍2/9。
 
+
+### 0.17 Human「批准繼續做完全部」之有限執行封頂（2026-11-02 JST）
+
+Human最新指令為「批准繼續做完全部」。執行延續原目標2/9→9/9，採已報單價**每個新Job最多44¢**，保守封頂為**剩餘7個新Job累計最多308¢（US$3.08）**；一次只建1個Job，不並行模型、不無限補新Job、不把錯誤重生作已成功作品。G5尚未成功建立Job且model POST0之空等待不占付費Job名額。任何已建立並有付費呼叫的失敗Job保留且占名額，不在308¢之外偷偷再開第8個Job。原10/31未決32¢另列，不清零、不重送；供應商invoice未知，不以ceiling冒充實扣。每筆新模型前只讀核帳，原子單Job44¢仍強制；已開始Job與封頂保留額逐筆記錄在原Build固定closeout，不重問已授權的這7件。
+
+每件先凍結自然需求與7項獨立QA，原生網站P-256同意→真GPT-6來源→免費Docker/獨立Chrome→原owner ACTIVE公開→**全新Chromium process**操作/reload/reuse；後續6件依原3工具/3遊戲/3真PG資料App總分母補足：G5餐費工具後，再1工具、3互動遊戲、2真PG CRUD App。各Job至多兩輪集中修復，未知費用不重送；費用/名額不足則保留來源、分析換策略，超308¢必須再獲明確批准。只原#419/#45，無Production/merge/Sprint4。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
