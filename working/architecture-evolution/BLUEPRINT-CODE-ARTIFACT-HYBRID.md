@@ -106,6 +106,14 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 維持 Design PR #45 原 H-001、Build PR #419 原 SSOT；**本節必須先提交 SPEC，才實作與驗收 Build**。不合併、不 Production、不 Sprint 4。
 
+### 0.9 2026-11-01 生成 UI 跨子節點可見文字 QA 不得偽陰性（真 GPT-6 Job 見 0.8）
+
+真 GPT-6 一鍵網站生成的計數工具，歷史模型源碼 `<div class="count"><span class="count-label">計數：</span><span class="count-value">0</span></div>` 把視覺上連續的「計數：0」拆成兩段 DOM；現有 Browser QA 只用 `document.body.innerText.includes("計數：0")`，因 flex/grid 換行而把原需求 initial, increment, twice, reset 全錯判 `ASSERTION_FAILED`，讓 UI 進入一次額外付費修復。**不能因此削弱凍結測試或假裝 QA 已 PASS。**
+
+修正規格：Browser QA 對 `text_includes`、`text_appears` 使用 (a) 真正可見的 body.innerText 原判定，或 (b) 可見 DOM **同一最小界面組件** 的 textContent 經有限空白 normalization 後 **整段等於**預期文字，並確保組件在 viewport layout、有尺寸且不在 `hidden`、`aria-hidden=true`、`display:none` 或 `visibility:hidden` 祖先裡。不得把 body 全文任意刪空白拼接兩個不同功能區文字湊 PASS。保留操作前、每一步後、最終值的 DOM 可見證據與哈希，`text_appears` 初始存在時仍必須見中間真正消失才能 PASS（0→1→0）；沒有作用的按鈕不可 PASS。對一般單一文字顯示和非同步顯示，原獨立 Chromium 行為不變。
+
+提供免費真 Chromium 正反回歸：flex span 計數 0→1→2→0 應 PASS，兩個相距不同組件拼湊字串 FAIL、hidden 文字 FAIL、按鈕不變 FAIL、異步更新 PASS。已保存的原 5 項第一次 FAIL 收據不可覆寫，需合法 original owner/Job 再跑真免費 QA 才能改判；修復模型若已合法送出不因編碼改動而二次扣款。成本仍 Human 全批 US$1（20+20歷史+新44=84c最大準入）、不擴權、不另外新付費 Job。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
