@@ -184,6 +184,13 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 本候選原為PREPARED/PAUSED_BUDGET；**2026-11-02 日本時間，Human回覆「批准繼續做完全部」，明確承接上一則單一新Job最高US$0.44請求，准許本G5餐費分攤Job執行一次**。本次以44¢硬上限執行，不自動放大成無上限費用；舊未決32¢另列且不可重送。先完成免費 script syntax/plan/source-quote 檢查並保存。請求未來額度僅單一新 Job 44¢（CODE 20/REPAIR 16/QA 8保留上限），不可與已消耗的 G3/G4 88¢批准混用；最多兩輪集中修復且不得超出單 Job cap。2026-11-01 UTC ledger：12筆 SUCCEEDED ceiling共228¢；10/31四筆未決共32¢，供應商實扣 NOT_VERIFIED，均不可重送。必須取得此筆明確批准後才允許原生 creator P-256 paid consent；不自動跑批次、不合併、不 Production，仍原 PR #419/#45。
 
+
+### 0.16 G5 建立入口 UTF-8 上限：第一輪集中修復（2026-11-02 JST，SPEC FIRST）
+
+G5餐費原需求含585+個中文字與原生數字欄位說明，低於既有800-character合法上限，但 CREATE JSON raw bytes超過1400。原#41326123312網站流程未產生新Job，PG model journal仍只有原12筆，無新付費呼叫。靜態根因：`src/edge/agent-jobs.ts` 的 `url.pathname===CREATE` 仍落入通用1400，而先前§0.14只修了publish route。**不能靠縮短/刪除原需求和QA或重付模型偽造修復**。原workflow尚未結束時不重開paid workflow；其原creator沒有成功Job，不需或允許SQL代簽補造。
+
+只將精確 `POST /api/v1/agent-jobs` 的Content-Length與實讀raw bytes上限設為4096，與精確publish一致；合法prompt800 chars、原anonymous_id、explicit_ai_consent、max_cost_cents schema仍不變，原owner P-256、same-Origin、nonce/idempotency和DB admission全部保留。其餘Agent端點1400、QA24000、import200000不變。4097必須413；1401..4096錯PoP必須404、不寫Job/不呼叫模型。免費unit及原Staging先部署前後讀取邊界，確認修復與health/readiness正常，才接續原已批准的單一44¢G5新Job。只有成功建立一次Job之後可調模型，未知paid結果不得重送；兩輪集中修復限制不變。先保留舊run真結果，不算產品分數，仍2/9。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
