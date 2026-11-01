@@ -42,6 +42,27 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 - **執行節奏**：固定 `SP35-FIVE-CORE-PRODUCT-CLOSEOUT`，四個交付關卡（真實阻斷盤點、雲端五核心修復、v2 卡片／分享接線、全鏈驗收）；**產品集中修復最多兩輪**，其餘為查證與驗收；未證實改善就停、列阻斷而非開第三輪。具體計畫在 Build，不複製到 Design。
 - **授權界線**：Plan 不自動授權付費 AI、Cloudflare Container、正式合併或 Production 部署；由原本批准／使用者明確授權及最小必要安全護欄控制。Design PR #45 / Build PR #419 原址延續，不另開產品 PR。
 
+
+### 0.4 Sprint 3.5 缺口關閉 SPEC／分期突破門檻（Human 2026-11-01 重新對齊；**先 SPEC 後 Build**）
+
+**最終不變目標：**使用者在**真網站**輸入一句自然語言，由**同一個**通用 AI Code Builder 產出可操作、多檔案 App（需求需要時接已核准後端／資料庫能力）；即時顯示真狀態與耗時，持久保存原始 Job 和每版程式／已付費結果；在免費隔離 Docker 真 build、由獨立 Chromium 依原需求操作、失敗有證據才有限修復及換策略；通過才交付可重開、可明確分享、他人可免重新生成使用的 **Blueprint v2 App 卡片**。不依 App 類型切不同引擎，不靠單一計分板樣例、不假 PASS。
+
+**產品範圍與技術誠實界線：**Sprint 3.5 是一套通用**程式生成引擎**，不是承諾任何語言、任何外部服務／套件皆可無權限執行。已核准可執行的 Profile 才能啟動：前端 Vite 多模組 + 受控且使用者隔離的 platform data bridge（可用 PostgreSQL-backed CRUD），不得讓生成程式拿 DB 連線字串或直接部署任意 server。要求獨立任意 Node/Python 後端、任意 npm、網際網路、付款或未核准權限時，生成前清楚標記 `UNSUPPORTED_RUNTIME_PROFILE`／`BLOCKED_APPROVAL`，**不可**假裝已完成全端、偷換成無資料的靜態 mock，亦不可自動加購 Cloudflare Containers／付費 Browser Run。
+
+| ID | 缺口與 SPEC 實作要求（先設契約後寫碼） | 唯一有效的產品驗收證據（不得以 mock 代替） |
+| --- | --- | --- |
+| **G0 / 可量測真使用者旅程** | 網站自然語言→明確同意→原 owner Job→AI→可操作私人預覽→驗收→完成／繼續。Job 每一里程碑（原請求入庫、模型開始／完成、source CAS、Runner queue/start、build、QA、卡片／分享）需有伺服器時間戳，含未完成、錯誤、超預算與離站重開；顯示階段／已花預算，不能把頁面計時或 HTTP202 當完成 | 同一真 Staging browser session，逐一重讀 PG、出具 signed Job/Runner/QA/卡片事件時序，`first_interactive_ms`／`qa_complete_ms`／`resume_ms`；無事件時標 `NOT_MEASURED` |
+| **G1 / 自由多檔／受控真全端** | AI 回傳可驗 schema 的完整來源樹，修復可原子 add/replace/delete，檔案 hash/版號不可變；既有合法付費 `main_ts/style_css` 答案可重播，不另收費。資料需求只能呼叫已核准且有 viewer 隔離的 bridge；不用未核准執行 profile 假裝寫 server | **三個獨立、未見過**的真付費 GPT 需求：簡單工具、互動遊戲、含真 PostgreSQL viewer-private CRUD 的資料型 App。至少兩個非範本多模組；真正由模型生成、真 Vite、真按鍵／表單／CRUD＋刷新及跨 viewer 隔離，所有功能按原需求凍結 QA PASS。可信手寫 fixture 只能證明管線 |
+| **G2 / 持久 Job 與來源重用** | 原 owner 非匯出式 PoP；原文、file snapshots、parent hash、checkpoint、paid call journal、build/QA receipt、預覽、版本和權限可從同 Job 唯一接續；401/403/404 不補建新 Job／不再調 AI。完成版本可卡片重開 | 真 Chromium A 關閉，B 原 profile 重開→讀同一 Job、同 hash App、相同有效來源，`0` 新模型 POST；陌生 owner、失效 PoP、竄改來源全部拒絕 |
+| **G3 / 真實隔離執行與 QA** | GitHub Actions 標準免費 runner 裡 restricted Docker（network none/no secrets/bounded CPU/memory），獨立 Chromium 使用先凍結且與模型輸出無關的 QA；無未通過/未測試的 public publish。compile/runtime 不得以模型文字代替 | 每個**真 AI 版本**都有 signed runner id、immutable source digest、build exit、診斷與 frozen QA receipt；失敗必須保留並在 UI 可見，任何 `FAIL/UNTESTED` 絕無 READY/ACTIVE 公開卡片 |
+| **G4 / AI 真自動修復與策略** | 同一 Job 的 QA FAIL→修復模型讀真診斷→source CAS 新版→Runner 重驗；三個相同根因的**連續真失敗**才切 `RETHINK_ROOT_CAUSE`，提出不同方法；失敗不改善必須停或改方案，不能無限重試。`MAX_JOB_CALLS=8`，模型成本逐筆原 owner 批准，未知收費結果先查 journal，絕不雙 POST；超資源 `PAUSED_APPROVAL` 仍可繼續 | 至少一個**真付費 GPT**首次 FAIL→修復→獨立 PASS；三份同 Job immutable 失敗收據可證明策略被選、第三輪真 model prompt/行動實際改策略並驗收。三輪情境若真模型第一輪已 PASS 不得故意造 FAIL，不得報 G4 全量 PASS |
+| **G5 / v2 卡片與分享** | Build/artifact/manifest + Blueprint v2 immutable hash 的 admission 完成後，原 owner 私人卡片可重開；公開分享需新一次明確同意 + 原 owner PoP + ACTIVE share；新乾淨 browser 走相同 hash 開真正 App，資料各 viewer 隔離、0 生成模型 POST；revoked/unknown/foreign 失敗閉鎖 | 真網站：creator 生成→獨立 QA PASS→建立私有 v2 卡→重開→**另一次明確** share:create→陌生 browser 由 public URL 使用／刷新同 hash、0 新生成；跨 user 資料不得洩漏；公開卡只能按真 share 引用，禁止靈感假卡 |
+
+**速度 SPEC / 先量測再宣稱加速：**同一產品旅程須區分 `time_to_job_saved`、`time_to_first_interactive`、`time_to_qa_complete`；記錄 AI provider 推論、GitHub queue/start、依賴／Chromium cache hit、Docker build、browser QA 分段時間。用至少 **3 種 App × 3 次真使用者路徑**獲得 P50/P95／失敗率；當樣本不足 P95 標 `INSUFFICIENT_SAMPLES`。首輪目標（**不是已驗證 SLA**）：原 Job 建立 P95 ≤ 5 秒、簡單 App 首次可操作 P50 ≤ 120 秒、完整 QA 簡單 App P50 ≤ 300 秒。達不到時先列耗時占比與首要根因；不得靠隱藏 QA／縮減功能／跳過分享偽造加速。複雜 App 允許長流程，應可離站後恢復，顯示等待及阻斷。
+
+**執行順序（最多兩輪集中修復，不開新 Sprint/PR）**：`SPEC/G0` 凍結本 Gate 表與測試樣本／費用護欄 → **Round A** 通用模型多檔來源、受控 DB bridge、持久 Job 和可見執行時間戳 → 真 Staging + 三類受控測試 → **Round B** 只修首個真 FAIL：策略執行／卡片分享／速度最大瓶頸，按 Gate 留證 → 最後 `G0..G5` 一次全鏈重跑。每項 **PASS / PARTIAL / BLOCKED / NOT_RUN** 必填原 Job + HEAD + GitHub run + PG/Chrome 證據；不能用「完成度約60%」代替實際 PASS 比例。既有舊 16P Gate/HOLD 不能凌駕 Human 指定產品優先，但**不得**修改不可變 BS-P1-025 或冒建已啟用 BS-P1-026；`build-spec/CURRENT.json` 的舊 HOLD 不因這個工作草案自動變更。須於 Design PR #45 本 H-001 更新並先提交，**再**在既有 Build PR #419 原 `SP35-FIVE-CORE-PRODUCT-CLOSEOUT.md` 留映射、實作與驗收；不另開 Spec/Build PR。
+
+
 ---
 
 ## 1. Product outcome
