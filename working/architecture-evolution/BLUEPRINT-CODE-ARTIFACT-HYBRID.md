@@ -1807,6 +1807,677 @@ G7 `3f46af99-25f9-487d-bac7-e0ecfec5e0fc` CODE一次20¢ ceiling（1337/4797toke
 
 **處置**：原prompt/plan/兩份receipt/兩版source/model journal全部保留；不修改原已凍結QA讓本件過、不手填PASS、不SQL補發布/冒用原owner。此樣本標BLOCKED_INVALID_QA_PRECONDITION，不再消費。其餘未開始原樣本逐一執行，預檢狀態回復test必須先有原需求導出的可見狀態改變，不能再用不變的指標浪費修復。未完成樣本永遠列未完成，真產品仍3/9。原既定G8/G9的reset有實際亮→暗/紅→藍→紅過渡，其他原文/QA不改。成本上限與原7Job/308¢先保持；任何後續調整需先SPEC明列完整保守帳本，不可冒用invoice未知為0或增加美元授權。
 
+
+### 0.24 以已批准美元總上限接續，完整披露嘗試數與成功數；不加價（2026-11-02 JST）
+
+Human批准「繼續做完全部」，本執行者§0.17自設七個Job次數上限是假設七件皆成功的程序估計，**不是Human指定必須遇失敗即停在七次**。以產品優先，取消此自設次數阻擋，**不增加已公開308¢新增總上限，不增加每Job44¢硬上限**。只要保守可計算的總風險額+下一Job44¢<=308，才可一次執行一件全新不同創意；否則停止，必須取得新的明確美元批准。不得重生已付過的G6/G7需求，不把它們刪帳或改成PASS。
+
+**保守帳本算法／不得以invoice未知當0**：已完整驗收並由本工作明確關閉、不再發出AI命令的Job，保留其所有SUCCEEDED/UNKNOWN模型呼叫的max_charge總上界（絕非0），釋放**未被發送**的餘額；未完成、暫停、任何IN_FLIGHT/BLOCKED_UNCERTAIN的Job仍保留原整Job44¢。每次新Job前先read-only重查原PG model journal，將所有已發出的呼叫逐筆列出，並確認沒有未記錄命令/模型。釋放後的Job不准再自動AI修復；要重啟必須先重算風險及授權，已發布重用永遠0模型。**舊10/31四筆32¢未決仍獨立保留，不歸零不重送**，invoice始終NOT_VERIFIED。只序列一個新Job/模型，不並發；每個原owner仍原子44¢ admission，free/paid markers嚴格分離。此處不宣稱已新增伺服器全域原子預算資料表。
+
+目前保守風險基準：G5全鏈完成關閉為20¢（不是其44¢額度當實扣）；G6暫停仍44¢；G7未完成仍44¢，合108¢；新G8保留44¢後152¢<=308。其後依實際結算逐件核算，不預設都PASS或費用為0。這讓原有金額可用於真正新產品，不讓程序次數限額代替金融護欄。
+
+**百分比分母不偷換**：`completed_independent_products/target9` 是交付目標進度，不是第一次生成成功率。必須同時列 `paid_jobs_started`、`complete_new_products`、`failed_or_blocked_jobs`；例如最終9個目標完成仍須披露未計分的G6/G7及其他失敗，絕不可說「所有付費嘗試100%成功」。原baseline2個+之後真正完整PASS累計到9才可報目標9/9，舊重開/fixture/ACTIVE單點永遠不補分。
+
+以下兩個**全新不同自然需求**先凍結原文與各七項獨立QA，僅在完成原待執行g8/g9/g10/g11、仍有美元風險餘額時才可選；不是G6/G7重新生成，不變更其既有QA/receipt。兩項reset/clear均先有原文導出的明確可見過渡（估算結果取代「尚未估算」；點1使下一個1→2，再重設2→1），已免費人工前置審核，不重演G7不變指標。
+
+```json
+[
+  {
+    "id": "g12-reading",
+    "title": "閱讀時間估算器",
+    "category": "tool",
+    "original_prompt": "製作「閱讀時間估算器」。標題顯示「閱讀時間估算器」。提供原生number欄位「字數」「每分鐘字數」，按鈕「估算」「清除」。未估算時顯示「尚未估算」。字數1200、每分鐘300後估算顯示「分鐘：4.00」。字數900、每分鐘300後估算顯示「分鐘：3.00」。字數150、每分鐘200後估算顯示「分鐘：0.75」。字數0、每分鐘300後估算顯示「分鐘：0.00」。字數1200、每分鐘0後估算顯示「速度必須大於0」，移除舊成功結果，不得Infinity或NaN。先估算1200字、每分鐘300再按清除顯示「尚未估算」，欄位回到字數0、速度300。以字數除以每分鐘字數計算分鐘並顯示兩位小數；負字數顯示「字數不可為負數」。可連續修改再算，刷新後仍可填表操作。請由AI自由撰寫至少三個互相import的src/ TypeScript模組及CSS，不得用模板、mock、固定成功畫面、外部網路、外部套件或localStorage。按鈕與文字依以下名稱，手機也可完整操作。",
+    "criteria": [
+      {
+        "id": "title",
+        "source_quote": "標題顯示「閱讀時間估算器」",
+        "description": "title",
+        "automatable": true,
+        "steps": [],
+        "assertions": [
+          {
+            "kind": "text_includes",
+            "text": "閱讀時間估算器"
+          }
+        ]
+      },
+      {
+        "id": "four",
+        "source_quote": "字數1200、每分鐘300後估算顯示「分鐘：4.00」",
+        "description": "four",
+        "automatable": true,
+        "steps": [
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "字數",
+            "value": "1200"
+          },
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "每分鐘字數",
+            "value": "300"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "估算"
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "text_appears",
+            "text": "分鐘：4.00"
+          }
+        ]
+      },
+      {
+        "id": "three",
+        "source_quote": "字數900、每分鐘300後估算顯示「分鐘：3.00」",
+        "description": "three",
+        "automatable": true,
+        "steps": [
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "字數",
+            "value": "900"
+          },
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "每分鐘字數",
+            "value": "300"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "估算"
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "text_appears",
+            "text": "分鐘：3.00"
+          }
+        ]
+      },
+      {
+        "id": "fraction",
+        "source_quote": "字數150、每分鐘200後估算顯示「分鐘：0.75」",
+        "description": "fraction",
+        "automatable": true,
+        "steps": [
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "字數",
+            "value": "150"
+          },
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "每分鐘字數",
+            "value": "200"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "估算"
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "text_appears",
+            "text": "分鐘：0.75"
+          }
+        ]
+      },
+      {
+        "id": "zero",
+        "source_quote": "字數0、每分鐘300後估算顯示「分鐘：0.00」",
+        "description": "zero",
+        "automatable": true,
+        "steps": [
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "字數",
+            "value": "0"
+          },
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "每分鐘字數",
+            "value": "300"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "估算"
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "text_appears",
+            "text": "分鐘：0.00"
+          }
+        ]
+      },
+      {
+        "id": "invalid",
+        "source_quote": "字數1200、每分鐘0後估算顯示「速度必須大於0」",
+        "description": "invalid",
+        "automatable": true,
+        "steps": [
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "字數",
+            "value": "1200"
+          },
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "每分鐘字數",
+            "value": "300"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "估算"
+          },
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "字數",
+            "value": "1200"
+          },
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "每分鐘字數",
+            "value": "0"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "估算"
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "text_appears",
+            "text": "速度必須大於0"
+          }
+        ]
+      },
+      {
+        "id": "clear",
+        "source_quote": "先估算1200字、每分鐘300再按清除顯示「尚未估算」",
+        "description": "clear",
+        "automatable": true,
+        "steps": [
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "字數",
+            "value": "1200"
+          },
+          {
+            "action": "fill",
+            "role": "spinbutton",
+            "name": "每分鐘字數",
+            "value": "300"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "估算"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "清除"
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "text_appears",
+            "text": "尚未估算"
+          }
+        ]
+      }
+    ],
+    "published_guest_operations": [
+      {
+        "action": "fill",
+        "args": [
+          "字數",
+          "1200"
+        ]
+      },
+      {
+        "action": "fill",
+        "args": [
+          "每分鐘字數",
+          "300"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "估算"
+        ]
+      },
+      {
+        "action": "expect",
+        "args": [
+          "分鐘：4.00"
+        ]
+      },
+      {
+        "action": "fill",
+        "args": [
+          "字數",
+          "150"
+        ]
+      },
+      {
+        "action": "fill",
+        "args": [
+          "每分鐘字數",
+          "200"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "估算"
+        ]
+      },
+      {
+        "action": "expect",
+        "args": [
+          "分鐘：0.75"
+        ]
+      },
+      {
+        "action": "fill",
+        "args": [
+          "每分鐘字數",
+          "0"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "估算"
+        ]
+      },
+      {
+        "action": "expect",
+        "args": [
+          "速度必須大於0"
+        ]
+      },
+      {
+        "action": "absent",
+        "args": [
+          "Infinity"
+        ]
+      },
+      {
+        "action": "absent",
+        "args": [
+          "NaN"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "清除"
+        ]
+      },
+      {
+        "action": "expect",
+        "args": [
+          "尚未估算"
+        ]
+      },
+      {
+        "action": "reload",
+        "args": []
+      },
+      {
+        "action": "fill",
+        "args": [
+          "字數",
+          "600"
+        ]
+      },
+      {
+        "action": "fill",
+        "args": [
+          "每分鐘字數",
+          "240"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "估算"
+        ]
+      },
+      {
+        "action": "expect",
+        "args": [
+          "分鐘：2.50"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "g13-order",
+    "title": "數字按序挑戰",
+    "category": "game",
+    "original_prompt": "製作「數字按序挑戰」。標題顯示「數字按序挑戰」。提供可存取名稱固定為「數字1」到「數字5」的五個按鈕。初始顯示「下一個：1」。按數字1顯示「下一個：2」。按數字1再按數字2顯示「下一個：3」。首次按數字3顯示「順序錯誤」，下一個仍1，可再從1開始。必須按1、2、3、4、5的順序，每次正確才前進，錯誤顯示提示並回到待按1；不能用固定成功畫面。依序按數字1、2、3、4、5顯示「挑戰完成」，完成後所有數字按鈕不能再改變遊戲。按數字1再按重新開始顯示「下一個：1」，清除錯誤、勝利和進度，能再玩完整一局；按鈕叫「重新開始」。請由AI自由撰寫至少三個互相import的src/ TypeScript模組及CSS，不得用模板、mock、固定成功畫面、外部網路、外部套件或localStorage。按鈕與文字依以下名稱，手機也可完整操作。",
+    "criteria": [
+      {
+        "id": "title",
+        "source_quote": "標題顯示「數字按序挑戰」",
+        "description": "title",
+        "automatable": true,
+        "steps": [],
+        "assertions": [
+          {
+            "kind": "text_includes",
+            "text": "數字按序挑戰"
+          }
+        ]
+      },
+      {
+        "id": "initial",
+        "source_quote": "初始顯示「下一個：1」",
+        "description": "initial",
+        "automatable": true,
+        "steps": [],
+        "assertions": [
+          {
+            "kind": "text_includes",
+            "text": "下一個：1"
+          }
+        ]
+      },
+      {
+        "id": "one",
+        "source_quote": "按數字1顯示「下一個：2」",
+        "description": "one",
+        "automatable": true,
+        "steps": [
+          {
+            "action": "click",
+            "role": "button",
+            "name": "數字1"
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "text_appears",
+            "text": "下一個：2"
+          }
+        ]
+      },
+      {
+        "id": "two",
+        "source_quote": "按數字1再按數字2顯示「下一個：3」",
+        "description": "two",
+        "automatable": true,
+        "steps": [
+          {
+            "action": "click",
+            "role": "button",
+            "name": "數字1"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "數字2"
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "text_appears",
+            "text": "下一個：3"
+          }
+        ]
+      },
+      {
+        "id": "wrong",
+        "source_quote": "首次按數字3顯示「順序錯誤」",
+        "description": "wrong",
+        "automatable": true,
+        "steps": [
+          {
+            "action": "click",
+            "role": "button",
+            "name": "數字3"
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "text_appears",
+            "text": "順序錯誤"
+          }
+        ]
+      },
+      {
+        "id": "win",
+        "source_quote": "依序按數字1、2、3、4、5顯示「挑戰完成」",
+        "description": "win",
+        "automatable": true,
+        "steps": [
+          {
+            "action": "click",
+            "role": "button",
+            "name": "數字1"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "數字2"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "數字3"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "數字4"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "數字5"
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "text_appears",
+            "text": "挑戰完成"
+          }
+        ]
+      },
+      {
+        "id": "reset",
+        "source_quote": "按數字1再按重新開始顯示「下一個：1」",
+        "description": "reset",
+        "automatable": true,
+        "steps": [
+          {
+            "action": "click",
+            "role": "button",
+            "name": "數字1"
+          },
+          {
+            "action": "click",
+            "role": "button",
+            "name": "重新開始"
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "text_appears",
+            "text": "下一個：1"
+          }
+        ]
+      }
+    ],
+    "published_guest_operations": [
+      {
+        "action": "click",
+        "args": [
+          "數字3"
+        ]
+      },
+      {
+        "action": "expect",
+        "args": [
+          "順序錯誤"
+        ]
+      },
+      {
+        "action": "expect",
+        "args": [
+          "下一個：1"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "數字1"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "數字2"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "數字3"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "數字4"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "數字5"
+        ]
+      },
+      {
+        "action": "expect",
+        "args": [
+          "挑戰完成"
+        ]
+      },
+      {
+        "action": "blocked",
+        "args": [
+          [
+            "數字1",
+            "數字2",
+            "數字3",
+            "數字4",
+            "數字5"
+          ]
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "重新開始"
+        ]
+      },
+      {
+        "action": "expect",
+        "args": [
+          "下一個：1"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "數字1"
+        ]
+      },
+      {
+        "action": "expect",
+        "args": [
+          "下一個：2"
+        ]
+      },
+      {
+        "action": "reload",
+        "args": []
+      },
+      {
+        "action": "expect",
+        "args": [
+          "下一個：1"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "數字1"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "數字2"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "數字3"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "數字4"
+        ]
+      },
+      {
+        "action": "click",
+        "args": [
+          "數字5"
+        ]
+      },
+      {
+        "action": "expect",
+        "args": [
+          "挑戰完成"
+        ]
+      }
+    ]
+  }
+]
+```
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
