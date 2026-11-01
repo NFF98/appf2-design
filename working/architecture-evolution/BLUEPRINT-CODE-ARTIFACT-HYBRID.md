@@ -125,6 +125,17 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 **效能**：本次紀錄瀏覽器點擊開始、原 Job 建立、首次 source 保存、第一次 UI 可操作的 QA preview、final share and guest interaction 的真時間；與首筆 13m26s 對比，不宣稱提前性能 PASS；重開無新 AI。最新結果附原 Build SSOT 的既有章節，單 PR #419/Design #45、Staging only、無 Production/新 Sprint。
 
 
+
+### 0.11 2026-11-01 第 2 個「AI-authored 真 PostgreSQL App」完整網站驗收結算：**2/9 = 22.2%**
+
+**本節是 §0.10 凍結驗收規格的結果，不放寬原先 Gate；所有以前 §0.8–§0.10 之 1/9 數字為歷史快照。** 第二個新網站自然語言 Job `a2689c78-5362-43a2-8f7c-a4cfd8b6affb` 經 GPT-6.1 Sol 生成四檔多模組 App（`src/main.ts`、`src/store.ts`、`src/view.ts`、`src/style.css`），原需求 frozen QA 六條由免費 Docker/Chromium [#41307455393](https://github.com/NFF98/appf2-build/actions/runs/41307455393) **6/6 PASS**；已經建立者在原網站發布為 ACTIVE、`public_opt_in=true` 的 [公開 Blueprint v2 客戶備忘錄](https://appf2-sp35-417-staging.juiyuang69.workers.dev/code/e29027dd-cd71-4424-a182-3fb7706614b8)。首次 [#41306946235](https://github.com/NFF98/appf2-build/actions/runs/41306946235) 為 **FAIL**（`G2_REAL_SIGNED_PG_WORKER_REQUESTS_NOT_VERIFIED`），不得抹去。
+
+**零付費重驗證：** 原 Build PR #419 `deploy/scripts/sp35-g2-published-db-free-browser-e2e.mjs` 直接啟動兩個獨立 Chromium context，以原 AI 自寫 iframe UI 可見按鈕新增／修改／刪除，真網站 `POST /api/v1/code-apps/e29027dd-cd71-4424-a182-3fb7706614b8/records`，由 Playwright 監看實際 response HTTP 2xx；沒有 `appf2Records` iframe evaluate/injection、沒有假 PG bridge、沒有新 GPT 模型呼叫。A：`list/create/read/update/delete` 共 14 HTTP requests，B：`list/create/read/delete` 共 6 HTTP requests；兩人從乾淨獨立 context 各自 0 筆開始，A 建立「咖啡」後刷新保留、A 改「茶」後刷新保留、B 無法看到 A 內容，兩人刪除後各自刷新為 0。 [免費 Workflow #41307944305](https://github.com/NFF98/appf2-build/actions/runs/41307944305) 的 `g2-free-published-original-browser-retest` **SUCCESS**，Job 原始 log 有完整 `SP35 G2 STRICT PG HTTP RECEIPT`；獨立 frozen QA 與發布後真 Worker/PG 不混算。
+
+**只承認真產品 2/9，非通用產品 100%。** 已確認「計數器工具」與「PostgreSQL 客戶備忘錄」兩個不同新 Job 的完整網站交付，剩餘 7 個不同新需求，仍需按 §0.5 嚴格 3 類×3 次補足；至少互動遊戲類、不同工具/DB 類新樣本和原始需求自修可靠性、首次可操作時間／P50/P95 未全面 PASS。重驗為 Chromium `reload`，不可冒充「關閉 Chromium 進程再重開同一原建立者持久 Job」的額外要求；先前 §0.7 獨立 cold-reopen 工程證據仍單獨存在。
+
+**費用界線**：本第二樣本只有原已核准 CODE，不重新付費生成；本次 free retest 額外模型 POST=0。前兩筆歷史各 20c、第一新網站 Job 44c、第二 Job 44c，累計保守上限 `US$1.28`，是分筆最大授權/預留非實際發票；provider actual `NOT_VERIFIED`。剩下 7 個新模型 Job 未得到本節自動授權，必須逐次確認可用額度與成本控制，避免重複收費。Build 結果與下一個阻斷只寫回原 `SP35-FIVE-CORE-PRODUCT-CLOSEOUT.md`。兩 PR 均不合併，Staging only，禁止 Production 與 Sprint 4。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
