@@ -182,7 +182,7 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 下一候選必須是**全新餐費分攤工具**，不可重生已付費井字棋/拿石頭。輸入餐費、用餐人數、服務費百分比，按「計算」顯示總額與每人金額；1000/4/10 → 總額1100.00、每人275.00；600/3/0 → 每人200.00；人數0顯示錯誤且不可產生 Infinity；重設清空結果。至少三個互相 import 的 src TypeScript 模組與 CSS。模型生成前凍結七項原需求 QA：標題、1000/4/10 的總額、同案例每人金額、600/3/0、零人拒絕、重設、重設後重新計算。陌生 browser 必須完成相同實際輸入/點擊、錯誤/重設、重新整理後再算；0 guest AI/Job POST，公開 ACTIVE 與 immutable hash仍必須核對。
 
-本候選**尚無新增費用授權**，不是可執行付費指令。先完成免費 script syntax/plan/source-quote 檢查並保存。請求未來額度僅單一新 Job 44¢（CODE 20/REPAIR 16/QA 8保留上限），不可與已消耗的 G3/G4 88¢批准混用；最多兩輪集中修復且不得超出單 Job cap。2026-11-01 UTC ledger：12筆 SUCCEEDED ceiling共228¢；10/31四筆未決共32¢，供應商實扣 NOT_VERIFIED，均不可重送。必須取得此筆明確批准後才允許原生 creator P-256 paid consent；不自動跑批次、不合併、不 Production，仍原 PR #419/#45。
+本候選原為PREPARED/PAUSED_BUDGET；**2026-11-02 日本時間，Human回覆「批准繼續做完全部」，明確承接上一則單一新Job最高US$0.44請求，准許本G5餐費分攤Job執行一次**。本次以44¢硬上限執行，不自動放大成無上限費用；舊未決32¢另列且不可重送。先完成免費 script syntax/plan/source-quote 檢查並保存。請求未來額度僅單一新 Job 44¢（CODE 20/REPAIR 16/QA 8保留上限），不可與已消耗的 G3/G4 88¢批准混用；最多兩輪集中修復且不得超出單 Job cap。2026-11-01 UTC ledger：12筆 SUCCEEDED ceiling共228¢；10/31四筆未決共32¢，供應商實扣 NOT_VERIFIED，均不可重送。必須取得此筆明確批准後才允許原生 creator P-256 paid consent；不自動跑批次、不合併、不 Production，仍原 PR #419/#45。
 
 ## 1. Product outcome
 
