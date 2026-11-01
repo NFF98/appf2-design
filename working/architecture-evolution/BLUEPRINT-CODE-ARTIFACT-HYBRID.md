@@ -136,6 +136,19 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 **費用界線**：本第二樣本只有原已核准 CODE，不重新付費生成；本次 free retest 額外模型 POST=0。**本批指定四個 Job**（兩筆 20c 歷史 + 第一次新網站 44c + 第二次新網站 44c）以各自授權額加總為 `US$1.28`，不是整個 2026-11-01 所有 Job 的總費用。**Supabase 唯讀事後交叉核實**：2026-11-01 UTC 全日 PostgreSQL `appf2_agent_model_call` 共 **7 個不同 Job、10 筆 SUCCEEDED 模型呼叫、逐筆 `max_charge_cents` 合計 188c**；其中**本批四 Job**分別為 20c + 20c + 36c(CODE+REPAIR) + 20c(CODE)，即 **96c 實際已執行呼叫的單次風險上限**，另三個較早 Job 是 20c + 36c + 36c = **92c**。`US$1.28` 是指定四 Job 的**工作授權 ceiling**而非真實 provider billing；`US$1.88` 是**全日模型呼叫逐筆 ceiling**亦非實扣。provider actual `NOT_VERIFIED`，更不能將這兩種 ceiling 相減當作可支用餘額。**額外風險**：整庫另有 2026-10-31 UTC 起 2 筆 `IN_FLIGHT` + 2 筆 `BLOCKED_UNCERTAIN` 的歷史 QA model calls，每筆 8c ceiling，合計 **32c 未結清最大風險**，不可視為已確定扣款或直接歸零。由於沒有核實供應商實扣與跨 Job 原子費用 fence，下一筆 paid generation 必須保持 `PAUSED_BUDGET`；可繼續免費 E2E、程式品質及前置成本診斷，但不盲 POST。剩下 7 個新模型 Job 未得到本節自動授權，必須逐次確認可用額度與成本控制，避免重複收費。Build 結果與下一個阻斷只寫回原 `SP35-FIVE-CORE-PRODUCT-CLOSEOUT.md`。兩 PR 均不合併，Staging only，禁止 Production 與 Sprint 4。
 
+
+### 0.12 2026-11-01 第三個獨立自然語言作品：雙人井字棋（互動遊戲 G3）— SPEC FIRST，**未執行模型、不得預報 3/9**
+
+**嚴格分母延續 §0.5/§0.10/§0.11：**目前兩筆真新網站獨立 E2E 已確認 2/9 = 22.2%，第三筆必須從 Staging **新版 Agent textarea** 首次輸入一個新的互動遊戲需求，原 Chrome creator signed P-256 新 Job，真 GPT-6.1 Sol 多檔自由生成、原需求凍結 QA 由免費隔離 Docker/獨立 Chromium 逐項 PASS、私人預覽、另一次明確 owner 分享、陌生 Chrome 在原 AI UI 真操作與 reload；所有步驟後才能列第 3 個。不得將 2026-10-28 舊十八啦公開卡、工程 fixture、第二個資料庫 App 重開或手寫棋盤充數。
+
+**第三樣本原需求測試契約（不寫遊戲專用 runtime 引擎）：**「雙人井字棋」九格按鈕固定可存取名稱 `第1格`～`第9格`、玩家輪流 X/O、每個落子後有清楚的可見文字例如 `第1格：X`、`第5格：O`、文字 `輪到：X`/`輪到：O`、三個 X 同列宣告 `勝者：X`、已填格禁止覆寫、獲勝後不可再落子、`重新開始` 歸零。前端需至少三個相互匯入的 `src/` TS 模組，受控無外網環境，非對應九宮格模板引擎。模型輸出必須真正符合需求，絕不修改 QA 讓其過關。
+
+**凍結至少七條互動 QA**（原 prompt 必須逐條包含對應 source quote，不能 QA 看過模型後再變更）：標題；首次 `輪到：X`；點 `第1格` 顯示 `第1格：X`；點一次 `第1格` 顯示 `輪到：O`；依序點 `第1格`、`第5格` 顯示 `第5格：O`；依序 X1/O5/X2/O8/X3 顯示 `勝者：X`；點 `第1格` → `重新開始` 回到 `輪到：X`（須有真正  X→O→X 可見中間時序）。另於**已發布原 AI UI** 用陌生 Chrome 實際執行至少一次 X1/O5/X2/O8/X3 → X 勝、獲勝後無法改棋盤、reload 重置/保留依原需求、按重新開始後新回合可操作。不得在 iframe 注入 play 函式／手動移動狀態，嚴禁只看 QA 7/7 就計數。
+
+**預付成本安全與先完成免費準備：**已確認 Supabase ledger 在 2026-11-01 UTC 全日 **10 筆 SUCCEEDED model calls，逐筆 ceiling 共 188c（非實際 bill）**，另四筆 2026-10-31 起未結清 `IN_FLIGHT` ×2、`BLOCKED_UNCERTAIN` ×2（各8c）。先完成免費驗收程式 syntax、原 prompt QA 計畫完整性、真 Staging readiness GET、既有公開 App 零付費回歸，保留同 PR 新樣本腳本為 **PREPARED / NOT_RUN**。第三筆新 Job 原上限如繼續 `44c`（CODE 20c，REPAIR 16c，QA 虛擬 reservation 8c），**不得**因 Human 籠統要求持續突破而將先前四 Job `US$1.28` 限額或 `188c` 全日 ceiling 誤讀成有新增餘額。必須核實歷史未決呼叫、當前可用額度和模型前原子 budget admission，另取得本筆最高額度批准及原 browser owner P-256 paid/public-sharing 明確同意；沒有證據維持 `PAUSED_BUDGET`，不能靠偷偷換模型、提高 cap、重新生成同一個已付費 Job。結論只能是 2/9，直到單獨新 Job 全部真 PASS。
+
+**工程執行限制：**只改 Design PR #45、Build PR #419；本 SPEC commit 先於 Build script；同一 Sprint 3.5，禁止 Sprint 4、Production、merge；不允許推送另一筆模型消費用的 commit marker 以製造假進度。真成本／Job／run／分享 hash 確定之後，才在原 Build SSOT 追加第 3 個 outcome。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
