@@ -114,6 +114,17 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 提供免費真 Chromium 正反回歸：flex span 計數 0→1→2→0 應 PASS，兩個相距不同組件拼湊字串 FAIL、hidden 文字 FAIL、按鈕不變 FAIL、異步更新 PASS。已保存的原 5 項第一次 FAIL 收據不可覆寫，需合法 original owner/Job 再跑真免費 QA 才能改判；修復模型若已合法送出不因編碼改動而二次扣款。成本仍 Human 全批 US$1（20+20歷史+新44=84c最大準入）、不擴權、不另外新付費 Job。
 
+### 0.10 2026-11-01 Human 最新「real product percentage, 突破；需 credit 告知再繼續」：第 2 個真網站 App E2E 規格
+
+**實際產品完成百分比以真網站端新生成完整 PASS 的 9 個 Job 當分母；截至上一筆確認 1/9（11.1%），目標本輪真資料庫 App 2/9（22.2%），剩 7。** Foundation/Runner 10/10、舊 App 重開或 API-only 工作不可冒充第二次新生成。每個新 Job 要從 Staging 真 Chromium 網站原生 Agent textarea 進站並凍結原 QA，網站勾選模型與自修同意、同一 owner P-256 Job，GPT-6.1 Sol 真 code，免費 Docker + Chromium frozen QA 全 PASS，私人 preview，建立者在網站勾選分享，乾淨第二 Chrome 真實操作公開 App 並重開。不得以人工注入 CRUD、模板程式或測試 harness 操作 App 冒充 model-authored UI。
+
+**第二種 App 是 AI 自己寫的 viewer-private PostgreSQL「客戶備忘錄」**。網站自然語言 prompt 包含固定可驗按鈕標籤 `新增紀錄` `修改紀錄` `刪除紀錄`，以及內容文字「咖啡」「茶」、計數 0→1→0；AI 使用已經存在的 `window.appf2Records` Bridge (list/create/read/update/delete) 真接已發布網站的 Worker/PG，無 fetch/localStorage/偽資料。Frozen QA 六項：標題、初始 0、新增 1、讀咖啡、新增後改成茶、新增後刪除歸零，**每項獨立新頁，0→1→0 必須真正觀察中間狀態**。免費 Docker 的 memory bridge 只做 UI behavior QA；發布後另一真 browser context 才是 PostgreSQL RLS：A 真新增→reload 後保存→修改→reload 更新仍在，B 不可 list/read A 私有資料且反向隔離，A 刪除後持久消失，這些必須由**AI 自己生成的可見 UI**完成、而非 console 直呼 `appf2Records`。另以簽章 Worker/PG 真實往返收據，不將 mock QA 當真正 PG E2E。
+
+**授權及成本**：使用者最新明確說「if need more credit let me know and go」，已先通知此次最低新增預算 **US$0.28**，把此小批保守整批 cap 從 **US$1.00 提到 US$1.28**（前兩個歷史 Job ceiling 40c + 第一網站 Job ceiling 44c + 第二新網站 Job ceiling 44c = **128c**）。只核准這一個全新 Job，不核准所有其餘七個自動付費；單 Job cap=44c，其中 CODE 20c、REPAIR 16c 且 frozen QA 8c reservation，provider actual invoice 仍未取得不能假寫。Runner 觸發前原子 ledger 必須確認目前真模型 journal 本時段最多 4 calls/76c max，各舊 Job cap 已關閉、0 未決；如果多筆或未知費用停用觸發。新版模型生成時不得不經同意擴額、換模型、重送同一付費 CODE；瀏覽器失敗照實保留 Job。未完成 2/9 就維持 1/9，費用上限不可當完成證據。
+
+**效能**：本次紀錄瀏覽器點擊開始、原 Job 建立、首次 source 保存、第一次 UI 可操作的 QA preview、final share and guest interaction 的真時間；與首筆 13m26s 對比，不宣稱提前性能 PASS；重開無新 AI。最新結果附原 Build SSOT 的既有章節，單 PR #419/Design #45、Staging only、無 Production/新 Sprint。
+
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
