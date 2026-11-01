@@ -80,6 +80,14 @@ Build target: NFF98/appf2-build PR #419 (Sprint 3.5 product-priority spike / inc
 
 ---
 
+### 0.6 2026-11-01 真正 Browser QA「回復初始狀態」時序契約（Human 持續修 Sprint 3.5）
+
+**已見到真實 5/6 FAIL 的驗收偽陰性風險。** 原新資料庫 App 的第六項要求「新增一筆→刪除→紀錄數：0」；瀏覽器初始本來就是「紀錄數：0」。現有免費 Chromium Runner 在每項 QA 開新頁後，以 `!initialBody.includes(expected) && finalBody.includes(expected)` 判斷 `text_appears`。這對「0→1→0」永遠 FAIL，即使功能正確。必須先改此通用測試語意，不能隨意扣一次 GPT-6 修理一個可能已正確的 App；但也不能僅放寬成「最終仍有 0 就 PASS」。
+
+**獨立驗證契約：**每一 QA criterion 以新頁啟動，保存初始畫面、每一步操作後的已觀察穩定畫面及最終畫面，按原凍結 `steps` 順序真 click/fill。對 `text_appears(E)`：最終畫面包含 E；若初始畫面已有 E，則操作過程至少一次明確觀察到 **E 曾消失**，再重新出現，且畫面確實有可辨認的過渡狀態。只有初始/最終相同、沒有中間消失證據的無效果動作 **FAIL**。對初始沒有 E 的普通情形，必須最終可見 E；瀏覽器要等候合理的非同步 UI 更新，超時誠實 FAIL。原需求包含資料庫保留與 viewer 隔離時，**記憶體替身只算前端功能驗證**，另要真 PostgreSQL 的發布後跨重新整理/不同 viewer E2E，不能把 mock 判成全端 PASS。
+
+**證據與歷史**：新的 QA Runner 必須用免費 Chromium 覆蓋 0→1→0 正例、完全無效果負例、異步操作正例、沒有 E 的負例。保留先前原 App 5/6 immutable receipt 不變，新的演算法只在新 Runner、重跑原相同版本及同一 frozen QA 得到真收據後才能改判。**沒有原 owner 私鑰不准以特權模式代簽或發佈原 Job**。成本沿用 US$1 整批上限，首選 0 新 AI 測試；SPEC 先於 Build，仍只 Design PR #45、Build PR #419。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
