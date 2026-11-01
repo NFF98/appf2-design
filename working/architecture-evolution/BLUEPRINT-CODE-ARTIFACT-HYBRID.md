@@ -1780,6 +1780,17 @@ Human最新指令為「批准繼續做完全部」。執行延續原目標2/9→
 
 發布後以原既有Workflow之**獨立免費**訪客job在新的Chromium process，按§0.15/0.19 frozen guest operations操作真正公開版本、reload、holdout輸入與0 model/Job POST。DB還須第三個新Chromium process驗viewer隔離，根代理只讀PG核ACTIVE/hash、原model/source/QA receipt與真records。訪客只接受既有share UUID，不調原owner或生成API；分享不是隱式生成、不准用CI成功替代PG或原生UI證據。這是驗收與恢復策略轉換，不是第三輪產品修碼，非新引擎，也不增加既有308¢額度。
 
+
+### 0.21 兩輪後真公開FAIL之根因與策略轉換：NO_NETWORK通用表單事件適配（先免費驗證）
+
+G5 Job `8880979c-d09d-44ef-aaa7-bd114a31a967` 真GPT CODE成功（1889/5042 tokens，上限20¢），六檔含3 TS模組，原需求[Docker/Chromium #41329192200](https://github.com/NFF98/appf2-build/actions/runs/41329192200)7/7 PASS。原owner明確發布 `760b46d4-19b7-4092-b53a-d5276eaf9068`，PG ACTIVE/public_opt_in，blueprint_hash `sha256:1e8806cb43f40f6ddc7e1ee0fab35d76199fe6a1a3b3141ee4a8f7ac1c842be1`。**獨立公開UI #41329592905 FAIL：填1000/4/10點計算後無1100。產品仍2/9**，不得以ACTIVE或7/7計3/9，不重生模型。
+
+已查原碼/產物：公開13,619字JS完整包含原5,871字Vite bundle，原碼/事件綁定未被漏包。原碼使用form submit event。原owner私人module預覽與公開classic預覽均真點擊無效果，排除僅module包裝差異；兩者sandbox都僅allow-scripts、form-action none。HTML提交演算法在sandboxed forms flag設定時，於派發submit事件前已返回（https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#form-submission-algorithm）。普通CI頁面QA能PASS而真sandbox不能，是**執行語意不一致**，不是應付費重生餐費計算邏輯。
+
+**不是第三輪盲試App**：停止同一修補模式，採通用受信任**DOM事件適配策略**。保持sandbox **allow-scripts**（不加allow-forms/same-origin）、CSP **form-action none/connect-src none/default-src none**、無導航/外網/主頁DOM權限。受信任固定bootstrap只在使用者點擊有效form的submit button時，取消原生預設動作、遵守noValidate/formNoValidate或reportValidity，並在該**子frame**派發cancelable/bubbling SubmitEvent給既有App listener；不執行HTTP提交、不呼叫form.submit/requestSubmit、不注入App特定計算/按鈕名稱、不改任何AI原碼或immutable artifact。已有click handler preventDefault者不重複處理，reset沿用原生。只增加固定bootstrap自己的CSP hash，不開unsafe-inline script、不改artifact hash。私人與公開frame共用同一adapter；不承諾未支援的原生網路form/任意外部profile。
+
+**先免費做因果與安全實驗**：在network-denied Chromium fixture中，原始submit listener無adapter應保持不生效；同一碼有adapter才因真按鍵計算成功，invalid欄位仍拒絕、重設有效、已有click-preventDefault不雙執行；惡意form action POST（含target=_top/_blank等）從不送網路、parent DOM/storage仍拒絕、sandbox/CSP原deny原則不變。同原G5公開artifact在真網站重新驗完整guest流程含100/3/5 holdout、refresh/reuse、model/Job POST0；只有真全通過才3/9。若實驗不成立即保留FAIL並分析，不以加allow-forms或改QA放行。發布前的QA需加入相同sandbox事件語意正/負回歸，後續新App仍須公開UI同一完整嚴格驗收。此策略不增加模型費用；舊ACTIVE不當合格樣板宣傳，原Job與完整code保存可恢復。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
