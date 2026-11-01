@@ -2772,6 +2772,12 @@ G8原Job55ae5d78-e986-401a-91bb-70949f46c7da，CODE/REPAIR20+16¢，QA4133386732
 }
 ```
 
+### 0.26 原要求額外免費holdout，凍結QA及模型程式不改（2026-11-02 JST）
+
+G9原文要求「滿欄禁止落子，連續四顆同色橫直斜線獲勝」，原7條QA只含直線，額外公開訪客不能只測直線便聲稱全要求。未讀生成game.ts實作前先由原規則推導下列holdout；模型不會收到此實作或參考App。維持原七條QA/原碼/hash不變，**只加嚴免費實際訪客測試**，不得用新增pass掩蓋任何原fail。直線原seq1,2,1,2,1,2,1保留；新增紅橫線1,1,2,2,3,3,4；兩向紅斜線1,2,2,3,4,3,3,4,1,4,4及鏡像4,3,3,2,1,2,2,1,4,1,1；每局先重新開始，必須真顯示勝者紅且完成後不能再變狀態。滿第1欄四次後頂格藍、輪到紅；真嘗試第5次（disabled則確認disabled，enabled則click），仍輪到紅；再按第2欄底格必紅證明無偷換turn/塞入第5棋。只有受信任UI動作，不注入邏輯/偽資料。try_click僅此語意，必須恰一可見按鈕；沒有按鈕不是pass。
+
+完整owner鏈成功後另跑原workflow免費recipient-only，成本0模型；上述任何失敗都先不加分，保留原Job，不重跑paid全鏈。PG資料型仍額外真HTTP CRUD/refresh/read-only PG與獨立viewer，不拿記憶橋QA代替。此新增holdout不是完成聲明，也不增加AI預算。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
