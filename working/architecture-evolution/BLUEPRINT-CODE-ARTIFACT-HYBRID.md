@@ -2811,6 +2811,12 @@ G9原文要求「滿欄禁止落子，連續四顆同色橫直斜線獲勝」，
 **財務先決**：本款沒有現在立即可用的新費用授權。G12全過後新批保守232¢；G14先佔44¢為276¢。唯有G14原paid命令全部最終完成且明確關閉，並在新查PG帳本確認其實際已發模型 ceiling 使`目前保守風險+新G15 44¢ <= 原308¢`、無IN_FLIGHT/uncertain新call、沒有既存相同需求Job，才可按原§0.24啟動新G15單次paid。若超308¢，先停在免費準備，請Human明確批准新增差額；供應商invoice未知不能當0。本SPEC仍只附Design原PR#45、Build原PR#419、Staging，禁止合併/Production/Sprint4。
 
 
+### 0.30 G14原生全鏈 PASS 8/9，G15最後1件仍受308¢總上限（2026-11-02 JST）
+
+- 原始新遊戲「小屋逃脫」唯一本次 GPT-6 Job `0aa5c5b9-9b59-429c-b246-d9530a232853`，CODE `SUCCEEDED`（上限20¢，input1309/output8326 tokens，無額外REPAIR）；原website owner [41451412153](https://github.com/NFF98/appf2-build/actions/runs/41451412153) **completed/SUCCESS**，免費原需求 QA [41452392255](https://github.com/NFF98/appf2-build/actions/runs/41452392255) **7/7真Docker/Chromium PASS**，沒有修改原凍結七條。原作者HTTP201正式public `ACTIVE`、PG `public_opt_in=true`，公開 [小屋逃脫](https://appf2-sp35-417-staging.juiyuang69.workers.dev/code/f6377216-86c2-400b-bc27-91586609836a)，share `f6377216-86c2-400b-bc27-91586609836a`，immutable hash `sha256:1d2a542f034672fa45a50c4b8d6d9ec7764f42a579a9d4eca4afd89fd4e7b40a`。
+- 完全不同新Chromium真點原App：未拿鑰匙無法出門、門鎖須鑰匙、拿鑰匙開門成功、完成後所有舊按鈕不可亂變結果、重新開始清除勝利狀態、reload重玩成功；原主run具多個`SP35 GUEST VERIFIED`及`SP35 REMAINING CANDIDATE FULL PRODUCT PROOF PASS: g14-escape`、訪客0模型/Job POST，非模型文字/單測/fixture。從7/9正式加至**8/9=88.9%**，類別工具3、遊戲2、真PG3。
+- **關閉G14一切未來paid操作**（包括repair/duplicate），保守新批次模型責任 G5/G9/G10/G11/G12/G14 六完整各已發20¢=120¢；G6/G7/G8三個未完成各留44¢=132¢；合`252¢/308¢`。其餘歷史10/31未決4筆32¢仍另記、provider invoice NOT_VERIFIED。第9款 G15 先已Design §0.29 frozen原文/7 criterion與第二Chromium三回合holdout；只有先Build原PR#419完成免費全案例`--preflight-all`且唯讀PG確認無相同paid/新IN_FLIGHT，才准**僅G15一次**44¢ reserve，`252+44=296<=308¢`。如任一次模型失敗/修復，需在下一paid前重新算本批保守風險，超308¢則先Human明確批准；禁止以欲完成9/9為由繞過帳本。只在PR #45/#419，Staging，不merge、不Prod、不Sprint4。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
