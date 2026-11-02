@@ -2778,6 +2778,14 @@ G9原文要求「滿欄禁止落子，連續四顆同色橫直斜線獲勝」，
 
 完整owner鏈成功後另跑原workflow免費recipient-only，成本0模型；上述任何失敗都先不加分，保留原Job，不重跑paid全鏈。PG資料型仍額外真HTTP CRUD/refresh/read-only PG與獨立viewer，不拿記憶橋QA代替。此新增holdout不是完成聲明，也不增加AI預算。
 
+
+### 0.26 G11 真資料庫已 UPDATE、公開瀏覽器 UI 驗收逾時：只允許有界免費復核（2026-11-02 JST）
+
+- **原始憑證不得竄改**：G11「每日喝水紀錄」原 P-256 owner Job `224ba726-de85-4a1c-ad3c-aef7eb0f334b`、一次 GPT-6 CODE20¢ SUCCEEDED、原凍結 QA 7/7、原網站全鏈 [41364911735](https://github.com/NFF98/appf2-build/actions/runs/41364911735) FAIL。正式分享 HTTP201 且原公開 `share_id=4acf553e-09a8-4568-86f2-20a78caceb4d` 真 ACTIVE；新訪客按「建立紀錄」看到「杯數：1」，按「再喝一杯」後 16 秒未見「杯數：2」，未完成訪客全流程，**不得加分**。相同原公開 App 零模型、獨立免費 Chrome [41448485261](https://github.com/NFF98/appf2-build/actions/runs/41448485261) 亦在18秒視窗失敗，未更動來源／原QA。兩次 PostgreSQL 唯讀查詢均看到這些訪客所建資料已 UPDATE `{kind:water,cups:2}`，但**DB 成功不等於畫面 PASS**，亦未證實一定只是測試器問題。
+- **跨來源非同步 UI 驗收契約（SPEC FIRST）**：保留完整原始凍結7條要求與公開後 guest 動作，不刪 assert、不加人工 fixture 或直接 iframe bridge evaluate。當 Postgres-backed App 進行真 signed Worker CRUD 時，公開測試的每一步可在**最多45秒**等候其原本指定的**真可見 UI**狀態；每步記錄 UI 等待耗時及有無實際 2xx signed records 回覆，未觀測到便 FAIL。這是對已明確採 Promise/await 的持久資料操作採一致有界等待，**不是**篡改原功能語意或把 DB 成功當成視覺 PASS。非資料類保持原短等候；等待超過15秒須另行揭露體感延遲（`PERFORMANCE_SLOW`），不可冒稱已達速度 KPI。
+- **成功之必要條件**：只讀**原 ACTIVE hash**，從一個全新 Chromium 真點生成 UI 依序驗證 0→1→2→3、reload後3、第二個完全獨立 Chrome 仍0無資料洩漏、刪除→0、reload仍0、再次建立→1及reload持久、HTTP list/create/read/update/delete **2xx**、新付費模型/Job POST=0，最後 Supabase 唯讀驗證真 row 與 hash。任何一項 FAIL 或 missing/unknown 都不計 6/9；保存舊失敗 run。不得補 SQL、冒用原 owner 或重送 G11 CODE／付費工作流。兩輪免費修復後仍 FAIL 則分析根因並變更策略，超出308¢總授權前先詢問 Human。
+- **費用口徑**：在 G11 未全鏈 PASS 之前，其原44¢ Job 風險全額保留。G5/G9/G10已結算20¢各，G6/G7/G8未完成44¢各，故 G11 進行中的保守新增授權風險 `20+44+44+44+20+20+44=236¢`，另舊32¢不重送，provider invoice NOT_VERIFIED。只有 G11 真產品全 PASS 且本工作**正式關閉 G11 任何未來 paid 呼叫**後才可按§0.24降為212¢；不得在未通過時先釋放24¢。
+
 ## 1. Product outcome
 
 **One natural-language request → one general-purpose AI Code Builder → one Blueprint v2 → one verified, reusable App card.** New Apps should not be routed into separate generation methods based on whether their category is a game, financial tracker, form or animation. AI writes real project code; safety, supported environments and required permissions determine *how it can be executed*, not whether the creative task is permitted by a catalog of prebuilt components.
