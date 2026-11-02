@@ -2779,7 +2779,7 @@ G9原文要求「滿欄禁止落子，連續四顆同色橫直斜線獲勝」，
 完整owner鏈成功後另跑原workflow免費recipient-only，成本0模型；上述任何失敗都先不加分，保留原Job，不重跑paid全鏈。PG資料型仍額外真HTTP CRUD/refresh/read-only PG與獨立viewer，不拿記憶橋QA代替。此新增holdout不是完成聲明，也不增加AI預算。
 
 
-### 0.26 G11 真資料庫已 UPDATE、公開瀏覽器 UI 驗收逾時：只允許有界免費復核（2026-11-02 JST）
+### 0.27 G11 真資料庫已 UPDATE、公開瀏覽器 UI 驗收逾時：只允許有界免費復核（2026-11-02 JST）
 
 **2026-11-02 結算：G11 原作品全鏈 6/9 PASS（保留兩次歷史公開 FAIL）**。依本節先改 Design→Build，一次調整公開真 PG 可見等待為最多45秒（非 PG仍18秒），對同一原 ACTIVE immutable hash 執行唯一新的免費獨立公開驗收 [#41449070224](https://github.com/NFF98/appf2-build/actions/runs/41449070224)：最終 completed/SUCCESS，原AI UI 0→1→2→3、reload仍3、不同第二Chrome viewer為0且不能讀前者、刪除後0、reload仍0、再次新增1、reload仍1，真 POST HTTP 2xx list/create/update/delete、0 model/Job POST。原 G11 CODE20¢ max、沒有第二次付費；original frozen QA 7/7 receipt、原網站 HTTP201/ACTIVE 不變，PG唯讀 hash `sha256:d29d72c588335eb70fd51cee4dbf314ce6f28aa5d0b49d92ce261e01c0a374cb`。最長可見等待 16159ms（亦有15755ms），`PERFORMANCE_SLOW`，不可報速度 PASS；雙 Chrome/QA/publish 合計才計第6件。**此Job從此關閉所有未來 paid 命令**，保守新授權已發出20¢，按§0.24將本批 liability從236¢降為212¢／總308¢；舊32¢未決仍另保留、invoice NOT_VERIFIED。下一未見新需求 G12 僅可經逐項 read-only ledger/無並行確認後單Job44¢，風險上限256¢<=308¢；不得重送G11或未結算G6-G8。
 
