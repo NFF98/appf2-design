@@ -2779,6 +2779,13 @@ G9原文要求「滿欄禁止落子，連續四顆同色橫直斜線獲勝」，
 完整owner鏈成功後另跑原workflow免費recipient-only，成本0模型；上述任何失敗都先不加分，保留原Job，不重跑paid全鏈。PG資料型仍額外真HTTP CRUD/refresh/read-only PG與獨立viewer，不拿記憶橋QA代替。此新增holdout不是完成聲明，也不增加AI預算。
 
 
+### 0.28 G12 全新 GPT-6 閱讀時間估算器完整原網站驗收：7/9 PASS（2026-11-02 JST）
+
+- **唯一原生 owner Job／不可替代**：`0700ab27-5e10-4bd4-93ea-ff515a1fc672` 依原 §0.24 凍結「閱讀時間估算器」七條原文 QA；原網站 [#41449772821](https://github.com/NFF98/appf2-build/actions/runs/41449772821) `completed/SUCCESS`，新模型 [#41450149913](https://github.com/NFF98/appf2-build/actions/runs/41450149913) 單次 GPT-6 CODE `SUCCEEDED` 20¢ ceiling (1541輸入/4131輸出 tokens)，未重新傳送，provider invoice NOT_VERIFIED。
+- **Docker/Chromium QA**：[#41450603067](https://github.com/NFF98/appf2-build/actions/runs/41450603067) 七條 `7/7 PASS` 不修改 frozen plan；包括4.00/3.00/0.75/0.00、速度0錯誤、按清除重設；一次新Job、一次正式發布HTTP201，PG `appf2_code_app` 記錄 ACTIVE/public_opt_in=true，新 immutable share [9758e421-e04e-4474-8c48-8e97e110f3c6](https://appf2-sp35-417-staging.juiyuang69.workers.dev/code/9758e421-e04e-4474-8c48-8e97e110f3c6) hash `sha256:7a1d71ea833d63088895cc1ffeebea5acb16e5d9ca2868dc5e20a4bf0d096f59`。
+- **完全不同乾淨Chromium**：原AI源碼按字數/速度真計算4.00與0.75、0速度錯誤且無Infinity/NaN、清除、reload再計算2.50，GitHub原owner run逐步 `SP35 GUEST VERIFIED`、`SP35 REMAINING CANDIDATE FULL PRODUCT PROOF PASS: g12-reading`，訪客`model_or_job_POST=0`，不是fixture或原卡重開加分；原G12現可保守關閉所有後續paid，計第七件新網站產品 7/9=77.8%。原5/9、6/9為歷史進度，不覆蓋。
+- **財務護欄與下一個產品**：G5/G9/G10/G11/G12 五個完成且關閉任何paid操作，5×20=100¢ 已發呼叫 ceiling；G6/G7/G8 三個未完成保守3×44=132¢；新批准整批風險合計 `232¢/308¢`（與舊32¢ unresolved分開、不是發票）。下一唯一未見遊戲 G14 escape 44¢ reservation時232+44=276<=308，先查PG模型帳本、G14是否已有原Job、無並行，才允許原 PR #419 單一paid marker。仍欠兩款**不同**新遊戲才達9/9，且需繼續同一通用Code Builder，原作者真授權分享、真Chromium，所有失敗保留；後續新需求亦須 SPEC 先於 Build，不能用未凍結 QA 補分。只准原 #45/#419、Staging、不merge/Prod/Sprint4。
+
 ### 0.27 G11 真資料庫已 UPDATE、公開瀏覽器 UI 驗收逾時：只允許有界免費復核（2026-11-02 JST）
 
 **2026-11-02 結算：G11 原作品全鏈 6/9 PASS（保留兩次歷史公開 FAIL）**。依本節先改 Design→Build，一次調整公開真 PG 可見等待為最多45秒（非 PG仍18秒），對同一原 ACTIVE immutable hash 執行唯一新的免費獨立公開驗收 [#41449070224](https://github.com/NFF98/appf2-build/actions/runs/41449070224)：最終 completed/SUCCESS，原AI UI 0→1→2→3、reload仍3、不同第二Chrome viewer為0且不能讀前者、刪除後0、reload仍0、再次新增1、reload仍1，真 POST HTTP 2xx list/create/update/delete、0 model/Job POST。原 G11 CODE20¢ max、沒有第二次付費；original frozen QA 7/7 receipt、原網站 HTTP201/ACTIVE 不變，PG唯讀 hash `sha256:d29d72c588335eb70fd51cee4dbf314ce6f28aa5d0b49d92ce261e01c0a374cb`。最長可見等待 16159ms（亦有15755ms），`PERFORMANCE_SLOW`，不可報速度 PASS；雙 Chrome/QA/publish 合計才計第6件。**此Job從此關閉所有未來 paid 命令**，保守新授權已發出20¢，按§0.24將本批 liability從236¢降為212¢／總308¢；舊32¢未決仍另保留、invoice NOT_VERIFIED。下一未見新需求 G12 僅可經逐項 read-only ledger/無並行確認後單Job44¢，風險上限256¢<=308¢；不得重送G11或未結算G6-G8。
