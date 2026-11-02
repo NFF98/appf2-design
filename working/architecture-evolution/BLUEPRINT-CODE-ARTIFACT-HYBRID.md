@@ -2779,13 +2779,6 @@ G9原文要求「滿欄禁止落子，連續四顆同色橫直斜線獲勝」，
 完整owner鏈成功後另跑原workflow免費recipient-only，成本0模型；上述任何失敗都先不加分，保留原Job，不重跑paid全鏈。PG資料型仍額外真HTTP CRUD/refresh/read-only PG與獨立viewer，不拿記憶橋QA代替。此新增holdout不是完成聲明，也不增加AI預算。
 
 
-### 0.28 G12 全新 GPT-6 閱讀時間估算器完整原網站驗收：7/9 PASS（2026-11-02 JST）
-
-- **唯一原生 owner Job／不可替代**：`0700ab27-5e10-4bd4-93ea-ff515a1fc672` 依原 §0.24 凍結「閱讀時間估算器」七條原文 QA；原網站 [#41449772821](https://github.com/NFF98/appf2-build/actions/runs/41449772821) `completed/SUCCESS`，新模型 [#41450149913](https://github.com/NFF98/appf2-build/actions/runs/41450149913) 單次 GPT-6 CODE `SUCCEEDED` 20¢ ceiling (1541輸入/4131輸出 tokens)，未重新傳送，provider invoice NOT_VERIFIED。
-- **Docker/Chromium QA**：[#41450603067](https://github.com/NFF98/appf2-build/actions/runs/41450603067) 七條 `7/7 PASS` 不修改 frozen plan；包括4.00/3.00/0.75/0.00、速度0錯誤、按清除重設；一次新Job、一次正式發布HTTP201，PG `appf2_code_app` 記錄 ACTIVE/public_opt_in=true，新 immutable share [9758e421-e04e-4474-8c48-8e97e110f3c6](https://appf2-sp35-417-staging.juiyuang69.workers.dev/code/9758e421-e04e-4474-8c48-8e97e110f3c6) hash `sha256:7a1d71ea833d63088895cc1ffeebea5acb16e5d9ca2868dc5e20a4bf0d096f59`。
-- **完全不同乾淨Chromium**：原AI源碼按字數/速度真計算4.00與0.75、0速度錯誤且無Infinity/NaN、清除、reload再計算2.50，GitHub原owner run逐步 `SP35 GUEST VERIFIED`、`SP35 REMAINING CANDIDATE FULL PRODUCT PROOF PASS: g12-reading`，訪客`model_or_job_POST=0`，不是fixture或原卡重開加分；原G12現可保守關閉所有後續paid，計第七件新網站產品 7/9=77.8%。原5/9、6/9為歷史進度，不覆蓋。
-- **財務護欄與下一個產品**：G5/G9/G10/G11/G12 五個完成且關閉任何paid操作，5×20=100¢ 已發呼叫 ceiling；G6/G7/G8 三個未完成保守3×44=132¢；新批准整批風險合計 `232¢/308¢`（與舊32¢ unresolved分開、不是發票）。下一唯一未見遊戲 G14 escape 44¢ reservation時232+44=276<=308，先查PG模型帳本、G14是否已有原Job、無並行，才允許原 PR #419 單一paid marker。仍欠兩款**不同**新遊戲才達9/9，且需繼續同一通用Code Builder，原作者真授權分享、真Chromium，所有失敗保留；後續新需求亦須 SPEC 先於 Build，不能用未凍結 QA 補分。只准原 #45/#419、Staging、不merge/Prod/Sprint4。
-
 ### 0.27 G11 真資料庫已 UPDATE、公開瀏覽器 UI 驗收逾時：只允許有界免費復核（2026-11-02 JST）
 
 **2026-11-02 結算：G11 原作品全鏈 6/9 PASS（保留兩次歷史公開 FAIL）**。依本節先改 Design→Build，一次調整公開真 PG 可見等待為最多45秒（非 PG仍18秒），對同一原 ACTIVE immutable hash 執行唯一新的免費獨立公開驗收 [#41449070224](https://github.com/NFF98/appf2-build/actions/runs/41449070224)：最終 completed/SUCCESS，原AI UI 0→1→2→3、reload仍3、不同第二Chrome viewer為0且不能讀前者、刪除後0、reload仍0、再次新增1、reload仍1，真 POST HTTP 2xx list/create/update/delete、0 model/Job POST。原 G11 CODE20¢ max、沒有第二次付費；original frozen QA 7/7 receipt、原網站 HTTP201/ACTIVE 不變，PG唯讀 hash `sha256:d29d72c588335eb70fd51cee4dbf314ce6f28aa5d0b49d92ce261e01c0a374cb`。最長可見等待 16159ms（亦有15755ms），`PERFORMANCE_SLOW`，不可報速度 PASS；雙 Chrome/QA/publish 合計才計第6件。**此Job從此關閉所有未來 paid 命令**，保守新授權已發出20¢，按§0.24將本批 liability從236¢降為212¢／總308¢；舊32¢未決仍另保留、invoice NOT_VERIFIED。下一未見新需求 G12 僅可經逐項 read-only ledger/無並行確認後單Job44¢，風險上限256¢<=308¢；不得重送G11或未結算G6-G8。
@@ -2794,6 +2787,29 @@ G9原文要求「滿欄禁止落子，連續四顆同色橫直斜線獲勝」，
 - **跨來源非同步 UI 驗收契約（SPEC FIRST）**：保留完整原始凍結7條要求與公開後 guest 動作，不刪 assert、不加人工 fixture 或直接 iframe bridge evaluate。當 Postgres-backed App 進行真 signed Worker CRUD 時，公開測試的每一步可在**最多45秒**等候其原本指定的**真可見 UI**狀態；每步記錄 UI 等待耗時及有無實際 2xx signed records 回覆，未觀測到便 FAIL。這是對已明確採 Promise/await 的持久資料操作採一致有界等待，**不是**篡改原功能語意或把 DB 成功當成視覺 PASS。非資料類保持原短等候；等待超過15秒須另行揭露體感延遲（`PERFORMANCE_SLOW`），不可冒稱已達速度 KPI。
 - **成功之必要條件**：只讀**原 ACTIVE hash**，從一個全新 Chromium 真點生成 UI 依序驗證 0→1→2→3、reload後3、第二個完全獨立 Chrome 仍0無資料洩漏、刪除→0、reload仍0、再次建立→1及reload持久、HTTP list/create/read/update/delete **2xx**、新付費模型/Job POST=0，最後 Supabase 唯讀驗證真 row 與 hash。任何一項 FAIL 或 missing/unknown 都不計 6/9；保存舊失敗 run。不得補 SQL、冒用原 owner 或重送 G11 CODE／付費工作流。兩輪免費修復後仍 FAIL 則分析根因並變更策略，超出308¢總授權前先詢問 Human。
 - **費用口徑**：在 G11 未全鏈 PASS 之前，其原44¢ Job 風險全額保留。G5/G9/G10已結算20¢各，G6/G7/G8未完成44¢各，故 G11 進行中的保守新增授權風險 `20+44+44+44+20+20+44=236¢`，另舊32¢不重送，provider invoice NOT_VERIFIED。只有 G11 真產品全 PASS 且本工作**正式關閉 G11 任何未來 paid 呼叫**後才可按§0.24降為212¢；不得在未通過時先釋放24¢。
+
+### 0.28 G12 全新 GPT-6 閱讀時間估算器完整原網站驗收：7/9 PASS（2026-11-02 JST）
+
+- **唯一原生 owner Job／不可替代**：`0700ab27-5e10-4bd4-93ea-ff515a1fc672` 依原 §0.24 凍結「閱讀時間估算器」七條原文 QA；原網站 [#41449772821](https://github.com/NFF98/appf2-build/actions/runs/41449772821) `completed/SUCCESS`，新模型 [#41450149913](https://github.com/NFF98/appf2-build/actions/runs/41450149913) 單次 GPT-6 CODE `SUCCEEDED` 20¢ ceiling (1541輸入/4131輸出 tokens)，未重新傳送，provider invoice NOT_VERIFIED。
+- **Docker/Chromium QA**：[#41450603067](https://github.com/NFF98/appf2-build/actions/runs/41450603067) 七條 `7/7 PASS` 不修改 frozen plan；包括4.00/3.00/0.75/0.00、速度0錯誤、按清除重設；一次新Job、一次正式發布HTTP201，PG `appf2_code_app` 記錄 ACTIVE/public_opt_in=true，新 immutable share [9758e421-e04e-4474-8c48-8e97e110f3c6](https://appf2-sp35-417-staging.juiyuang69.workers.dev/code/9758e421-e04e-4474-8c48-8e97e110f3c6) hash `sha256:7a1d71ea833d63088895cc1ffeebea5acb16e5d9ca2868dc5e20a4bf0d096f59`。
+- **完全不同乾淨Chromium**：原AI源碼按字數/速度真計算4.00與0.75、0速度錯誤且無Infinity/NaN、清除、reload再計算2.50，GitHub原owner run逐步 `SP35 GUEST VERIFIED`、`SP35 REMAINING CANDIDATE FULL PRODUCT PROOF PASS: g12-reading`，訪客`model_or_job_POST=0`，不是fixture或原卡重開加分；原G12現可保守關閉所有後續paid，計第七件新網站產品 7/9=77.8%。原5/9、6/9為歷史進度，不覆蓋。
+- **財務護欄與下一個產品**：G5/G9/G10/G11/G12 五個完成且關閉任何paid操作，5×20=100¢ 已發呼叫 ceiling；G6/G7/G8 三個未完成保守3×44=132¢；新批准整批風險合計 `232¢/308¢`（與舊32¢ unresolved分開、不是發票）。下一唯一未見遊戲 G14 escape 44¢ reservation時232+44=276<=308，先查PG模型帳本、G14是否已有原Job、無並行，才允許原 PR #419 單一paid marker。仍欠兩款**不同**新遊戲才達9/9，且需繼續同一通用Code Builder，原作者真授權分享、真Chromium，所有失敗保留；後續新需求亦須 SPEC 先於 Build，不能用未凍結 QA 補分。只准原 #45/#419、Staging、不merge/Prod/Sprint4。
+
+
+### 0.29 最後第三款不同遊戲 G15「雙人猜拳對決」原需求／7條QA先凍結（2026-11-02 JST）
+
+**先 SPEC 再 Build，Prepared 不代表授權呼叫付費模型**。完成G14小屋逃脫後如嚴格真全鏈8/9，產品類別仍須另一款新遊戲才成3工具×3遊戲×3 PostgreSQL；本款必須從新原生網站文字輸入由同一通用 GPT-6 Code Builder 自行撰寫多檔TypeScript/CSS，無新模板或專用遊戲引擎、無外網/套件/假PASS；建立者以原P-256完成 QA、按正式分享、另開全新Chromium真玩，重開0 AI。若G14 FAIL，仍應如實不加分，不得預報本款或重生舊遊戲。
+
+**原始自然語言需求（上線提交時必須原樣，不能看完模型後修改）：**
+
+> 製作「雙人猜拳對決」。標題顯示「雙人猜拳對決」。這是兩名玩家在同一螢幕依序出拳的三回合猜拳遊戲，甲先、乙後，直到乙出拳前不得揭露甲的選擇。初始顯示「回合：1」「甲分：0」「乙分：0」。六個選擇按鈕固定叫「甲選石頭」「甲選剪刀」「甲選布」「乙選石頭」「乙選剪刀」「乙選布」，另有「下一回合」「重新開始」。按甲選石頭顯示「甲已出拳」；按甲選石頭再按乙選剪刀顯示「甲分：1」及「本回合：甲勝」。按甲選石頭再按乙選布顯示「乙分：1」及「本回合：乙勝」。按甲選石頭再按乙選石頭顯示「本回合：平手」，平手雙方不得得分。出拳前後不得重複計分，乙不得搶先出拳，未比完一回合不可下一回合。完成該回合才能按下一回合，回合顯示從1到2到3；三回合後按累計得分顯示「總冠軍：甲」「總冠軍：乙」或「總冠軍：平手」，不能再改分數或開下一回合。按甲選石頭、乙選剪刀再按重新開始顯示「甲分：0」，同時「回合：1」「乙分：0」，且清除舊回合及冠軍文字。重新整理後可重新開始一局。任何勝負及完成文字必須在實際結果後才出現在可見遊戲結果區，不得在玩法說明或隱藏節點預印QA字串。要由AI自由寫至少三個互相import的src/ TypeScript模組和CSS，可手機真實操作，不得硬編固定成功畫面、外部網路、外部套件、localStorage或模板。
+
+**原始source_quote綁定之固定7條QA**（每條獨立 fresh page 與真可見狀態變化）：title=「標題顯示『雙人猜拳對決』」→顯示標題；initial=「初始顯示『回合：1』」→回合1；first=「按甲選石頭顯示『甲已出拳』」→點甲石頭後該字出現；a_win=「按甲選石頭再按乙選剪刀顯示『甲分：1』」→甲石頭、乙剪刀後出現甲分1；b_win=「按甲選石頭再按乙選布顯示『乙分：1』」→甲石頭、乙布後出現乙分1；draw=「按甲選石頭再按乙選石頭顯示『本回合：平手』」→甲石頭、乙石頭後平手；reset=「按甲選石頭、乙選剪刀再按重新開始顯示『甲分：0』」→先真觀測甲分從0到1，再按重新開始回0，必須真非0→0過渡避免G7無效凍結QA。實作時 source_quote 必須使用**原 prompt 的精確連續文字**，不可用書名號轉換成不同引號後斷言假PASS。每條均以原要求中的顯示字眼驗證，不得憑靜態書面說明拼接或hidden DOM文字。
+
+**另起第二乾淨 Chromium 的公開訪客 holdout**（不納入原7條但全部必過）：初始回合1/0:0，甲石頭→乙剪刀應甲1；下一回合2，甲布→乙石頭應甲2；下一回合3，甲剪刀→乙布應甲3／`總冠軍：甲`；勝後按任何出拳或下一回合不得改變狀態；點重新開始回1/0:0及冠軍訊息消失；接著甲石頭→乙布應乙1；下一回合甲石頭→乙石頭應平手乙分仍1；reload後新局可操作。所有真UI動作、明確同意發布、公開卡ACTIVE/hash、新訪客重開0模型、單Job成本及原始來源都留憑證。失敗最多兩輪有證據修復，不可修改原凍結QA或SQL冒用建立者。
+
+**財務先決**：本款沒有現在立即可用的新費用授權。G12全過後新批保守232¢；G14先佔44¢為276¢。唯有G14原paid命令全部最終完成且明確關閉，並在新查PG帳本確認其實際已發模型 ceiling 使`目前保守風險+新G15 44¢ <= 原308¢`、無IN_FLIGHT/uncertain新call、沒有既存相同需求Job，才可按原§0.24啟動新G15單次paid。若超308¢，先停在免費準備，請Human明確批准新增差額；供應商invoice未知不能當0。本SPEC仍只附Design原PR#45、Build原PR#419、Staging，禁止合併/Production/Sprint4。
+
 
 ## 1. Product outcome
 
