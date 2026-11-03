@@ -1,6 +1,14 @@
 # Sprint 3.5 — 產品完成率唯一執行目標 SSOT（2026-11-03）
 
 
+## 2026-11-03 既有 App 受控修改：完成原 PR 免費 CI、非 Staging 產品 PASS
+
+- Design #45 先凍結 SPEC，Build #419 已新增已保存私人 `VITE_WEB` 專案的「修改背景」入口及 `/api/v1/agent-jobs/:id/safe-style-edit` 原 owner P-256 授權路徑。只接受 blue/green/sand 三種色彩；驗證原專案 QA PASS、資料存在、正確 head CAS、步數上限；成功儲存新候選版本並失效舊預覽，不呼叫模型／Container、不自動發布／覆寫已發布 immutable App。
+- **實際 GitHub Actions [#41596214939](https://github.com/NFF98/appf2-build/actions/runs/41596214939) completed/SUCCESS**：TypeScript + ESLint + 建置 PASS；新安全 API 測試檔 5/5 PASS（owner、stale、原需求 QA fail 關閉、版本不變與新 immutable CAS）；舊五次 Chromium 累積修改 5/5 PASS、故意破壞阻擋、重開與 V1 保留 PASS。皆為免費 CI／trusted fixture，不是一般用戶在 Staging 真網站修改成功。
+- Supabase 唯讀核對當時 52 份現存候選 Job 符合必要 `CODING`、`VITE_WEB`、`src/style.css`、完整 frozen QA PASS、預覽、剩餘步數等資料條件；**符合條件不代表原用戶簽章金鑰可恢復、已實際使用新修改入口或已發布新版**。
+- **實際新產品 Gate PASS 0；官方通用引擎驗收維持 4/9 = 44.4%；新五項完整產品能力仍沒有一項完成端到端驗收。** 不能把有限配色視為任意 AI 修改，不將 CI 當產品。新增付費 AI POST=0、Container=0；Actions 計入既有 CI 配額，實際 provider invoice 未核。
+- 下一唯一產品驗證：在 Staging 部署後，用原建立者真瀏覽器開啟既有已驗收 App → 配色修改產生新 project hash → 原全部 QA 真 Chromium 通過 → 舊 App 不動，新 App owner 同意後有獨立分享 URL → 新舊重開；全鏈證據齊全才可評估下一 Gate。禁止 Production、其他 PR、未授權模型費用。
+
 ## 2026-11-03 既有 App 第一條真修改路徑：零 AI 外觀版（SPEC FIRST）
 
 使用者指示不再停留在 trusted fixture，而是把已驗證的版本原語真正接入 APPf2 已保存的 App。採 **最小、安全、可以免費驗證** 的既有 App 編輯縱切面；不誇稱已完成全部五項能力、不重做發布架構、不授權模型或雲端 Container。
