@@ -1,5 +1,15 @@
 # Sprint 3.5 — 產品完成率唯一執行目標 SSOT（2026-11-03）
 
+
+## 2026-11-03 五次修改保護：零付費驗證 SPEC（不算產品 PASS）
+
+用戶授權先驗證「已有 App 基礎上連續五次修改、故意破壞一次、確認舊版不受影響及重開仍可用」。只在原 Design PR #45 與 Build PR #419 執行；免費 GitHub CI/Chromium，不觸發新 AI、Container、部署或 Production。先測保護基礎，不冒充真正用戶產品驗收。
+
+- 使用現存 `createProjectSnapshot` / `applyProjectEdits` / `verifyProjectSnapshot` 不可變 CAS 版本原語；從同一份可操作的 trusted web fixture 開始，逐一新增減少、重設、步長選擇、重載持久化與外觀切換五種變更；每次新版本需同時通過所有已接受需求的獨立 Chromium 實際點擊 QA 才可移動受測 accepted-head。
+- 人為製造第六次破壞：保留按鈕但撤除原「新增」動作；獨立 Browser QA 必須 FAIL，accepted-head hash 保持不變；舊 V1 可由原 immutable snapshot 重開，且 V6 在同一身分新頁能保留資料。錯誤的 stale CAS 必須拒絕。每次測試印出逐輪 PASS/FAIL 和 0 paid calls。
+- **證據界線**：這是 trusted fixture、回歸驗證程式與本機瀏覽器，不是 AI 生成、不是 Staging 用戶修改入口、不是 Supabase 端資料升級或 Production；通過只能證實可重用的底層能力。現有五項完整產品能力仍不得標為 PASS，真正產品百分比維持 4/9，直到原網站可以完成真正既有 App 的多次用戶修改及發布前驗收。
+- 若 CI 失敗，保留原歷史、明示真實錯誤與阻斷，不重跑任何付費 Job、不重建已付款 App。免費 CI 觸發不得包含任何付費 marker。
+
 ## 2026-11-03 產品帳本更正：已完成 4/9 = 44.4%（依既有真網站 E2E 及 PostgreSQL 原證據補認）
 
 **使用者要求先查舊真實驗收，不得重跑或假報 2/9。** 現以四個互不相同、已有發布網站的 AI App 為保守已核實的獨立產品網站 E2E：原先計數器與客戶備忘錄 2 件，另加本次獨立查證、但**過去已完成、非本次新執行**的 G10 閱讀書單與 G11 每日喝水紀錄，合計 **4/9=44.4%**。此段優先於下方仍保留的「2/9」舊基線，舊數字不是現況。不可因其餘既有樣本已成功而**自動**宣稱更多通用未知 App Gate PASS；必須逐一重新核對同等真實證據與既定驗收範圍。
