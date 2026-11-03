@@ -143,3 +143,30 @@ One fresh, genuinely unspecified **multi-file front end + backend + real Postgre
 - Only a VITE_NODE Job may accept `server/**/*.mjs` plus `src/**/*` in the bounded complete AI JSON source reply. Require `server/index.mjs` and `server/test.mjs` and client entry/style, with 12 source-file and overall byte limits. The pre-code acceptance plan and model output belong to the SAME saved job and owner. No packages, deployment scripts, migrations, host commands or credentials; original paid answer must be replayed without recharging.
 - Same frozen ProjectSnapshot goes to existing free locked Docker runner: trusted Vite front build, fixed `node --check server/index.mjs`, fixed `node --check server/test.mjs`, then fixed `node --test server/test.mjs` inside the egress-disabled, resource-capped sandbox. Failed server test yields a **failure receipt** (never success) bound to snapshot hash and repair context. The browser QA remains separately derived from the original prompt. Model-authored Node tests are only self-test signals, not independent proof that business requirements work.
 - **Publication must fail closed for VITE_NODE** until backend hosting, owner-scoped database permissions, real API/browser integration and independent backend QA are implemented. No frontend-only preview may be represented as a complete full-stack published App. No Production, AI POST, paid Containers, new PR or merge in this step.
+
+
+## 2026-11-03 USER_EDIT — 對同一已驗收真 App 的安全進化（本次新增 SPEC，優先於受限配色流程）
+
+### 目的與證據界線
+唯一流程：原建立者簽章 → 讀取原 App 完整 immutable source、原需求、所有「已接受」增量需求及驗收標準 → 取得自然語言修改要求與必要的歧義確認 → 先保存需求/QA → **每次至多一次明確授權的付費 USER_EDIT** → 產生獨立 Candidate → 針對原+新增需求的完整 Chromium/後端測試 → 人工接受 → 切換 Accepted 指標。既有 4/9 = 44.4% 不變；免費測試及 GitHub CI 不計真正產品 PASS。沒有真網站連續五次完整證據則一律 FAIL。
+
+### 資料模型與不變量
+- `Accepted` 是獨立持久化、owner-bound 的指標，至少 `job_id, owner_anonymous_id, accepted_project_hash, accepted_project_revision, accepted_requirements_hash, accepted_qa_hash, generation, accepted_at`；不得以 mutable Job head 或任意 `preview_ready` 代替。
+- `Edit` 為 append-only 意圖：`edit_id`、owner、`base_accepted_hash`、原始需求文字、使用者新需求文字、明確確認的驗收規則、建立時間、成本上限與狀態；資料永不得覆寫舊需求。新 QA 必須引用本次需求原文，原 QA 原樣保留。
+- `Candidate` 由 `edit_id` 唯一對應、儲存完整不可變檔案 snapshot、parent accepted hash、candidate hash、費用 journal key、完整整合 QA verdict/receipt，狀態分別為 DRAFT / MODEL_PENDING / QA_REQUIRED / QA_FAILED / READY_FOR_USER / ACCEPTED / REJECTED / UNCERTAIN；異常或額度不足不動 Accepted。
+- 進度拆為 `accepted_head`（對外、重開與分享所用）與 `working_head`（未認證改動）。任何新 Job head 不代表新 Accepted。過去已發布的 share URL 始終固定指向舊 immutable artifact；升級後新 hash 必須有不同的可分享版本，不能暗中修改舊 URL。
+- 保留完整 parent chain、檔案 hash、original owner PoP、job revision、expected accepted hash/generation CAS；不同 owner、hash/版本過期或 request replay 一律 fail closed。不能藉由新增候選略過已接受的功能與資料。
+
+### API / UX 合約
+- `POST /api/v1/agent-jobs/:id/user-edits`：owner-signed、同源、不可重放，要求 `expected_revision`、`expected_accepted_hash`、`request`、`new_acceptance`。先儲存內容，不觸發模型、不花費。模糊需求先提示簡短選擇，驗收條件未確認則停在 DRAFT。
+- `POST /api/v1/agent-jobs/:id/user-edits/:edit_id/generate`：**另一次 owner 明確授權**，在記帳前檢查 accepted lineage、完整原檔、原需求+全部已接受的新需求、job head 無競爭、總費用和每次上限；模型新階段 `USER_EDIT` 不可偷用 `REPAIR`，不得重做 CODE/原 App。Prompt 必須提供已保存檔案、原始 QA 與累積 QA，並要求保留全部已接受功能。收到輸出只建立 Candidate，不更新 accepted，也不能宣稱 QA PASS。未知/逾時/回應已付費情況使用原 journal GET 恢復，不重送 POST。
+- `POST /api/v1/agent-jobs/:id/user-edits/:edit_id/accept`：需原 owner 明確按下確認、完整原+新 QA **逐項** fresh Chromium PASS（含有後端時的真 API/PostgreSQL 證據）、receipt 綁定該 exact candidate hash、以及 expected accepted generation/hash CAS；原版任一 FAIL 或 UNTESTED 皆不能接受。以單一原子 CAS 更新 Accepted 指標。QA 與接受不可由模型自行宣告。
+- `POST .../:edit_id/reject` 或故障保留：原 Accepted 不變；候選與失敗證據持久保存，容許讀取或重新制定下一步。UI 清楚並排顯示「現行已接受版」「候選待驗收版」、每條新舊需求、QA 狀態、已用/核准成本、已接受按鈕。畫面指定元素以受控的 DOM 定位或畫面描述做為**用戶資料**，無法驗證時要求確認，不由元素字串授予任意程式權限。
+
+### 工程階段及產品 Gate
+1. SPEC committed（本段）。最少改動現有 `free-ci-ai-code.ts`、`agent-jobs.ts`、`agent-browser-client.ts`、`AgentBuilderPanel.tsx`、CAS snapshots、QA 模組；採 DB migration + RLS owner isolation。沒有完成實作不得把 SPEC 算 PASS。
+2. 先免費測 API owner/重放/競爭、獨立 accepted 指標、費用保護、candidate QA FAIL/UNTESTED 不升級、舊版重開；部署/付費均另授權。不得以 mock 操作當網站 E2E。
+3. 真網站只有在新付費明確授權後才進行：選一個**已存在已驗收 App**，連續五輪自然語言 USER_EDIT，逐輪舊+新真 Chromium PASS + 明確 accept + 重開，另刻意 QA FAIL 一次確認 Accepted hash、舊分享均不變。記錄每輪 job/edit/accepted/candidate hash、原新 QA、網站操作、實際時間、模型 receipt/費用上限/發票差異；五輪未完整 PASS 則如實 FAIL。
+
+### 嚴格預算及不得假報
+每輪模型限一次合法 journal key、不得超過簽署總預算與 owner 單輪 cap；修復不得由 REPAIR 的原 frozen QA 偷改成 USER_EDIT。模型、Container 的付費費用在未經新授權前均為零次新呼叫。免費 CI SUCCESS 只說明程式門檻，永遠不提升 4/9。
