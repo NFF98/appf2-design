@@ -1,12 +1,22 @@
 # Sprint 3.5 — 產品完成率唯一執行目標 SSOT（2026-11-03）
 
+## 2026-11-03 產品帳本更正：已完成 4/9 = 44.4%（依既有真網站 E2E 及 PostgreSQL 原證據補認）
+
+**使用者要求先查舊真實驗收，不得重跑或假報 2/9。** 現以四個互不相同、已有發布網站的 AI App 為保守已核實的獨立產品網站 E2E：原先計數器與客戶備忘錄 2 件，另加本次獨立查證、但**過去已完成、非本次新執行**的 G10 閱讀書單與 G11 每日喝水紀錄，合計 **4/9=44.4%**。此段優先於下方仍保留的「2/9」舊基線，舊數字不是現況。不可因其餘既有樣本已成功而**自動**宣稱更多通用未知 App Gate PASS；必須逐一重新核對同等真實證據與既定驗收範圍。
+
+- **G10「閱讀書單」**：原 AI Job `9eecc831-4bb9-4af4-ac88-546fd159c22d`；模型 CODE `SUCCEEDED`，20¢ ceiling；原 frozen QA [41364310433](https://github.com/NFF98/appf2-build/actions/runs/41364310433) 7/7；原網站 [41363905501](https://github.com/NFF98/appf2-build/actions/runs/41363905501) SUCCESS；**實際新 Chromium、signed Worker → PostgreSQL 新增／更新／刪除、重新載入、另一 viewer 隔離** [41364683866](https://github.com/NFF98/appf2-build/actions/runs/41364683866) SUCCESS，log `REAL_PUBLISHED_RECIPIENT_FULL_PASS sample=g10-books`、visitor `model_or_job_POST=0`。Supabase live `appf2_code_app` share `4c07f75f-1f4b-43d2-9a66-dab6761b8414`，`ACTIVE/public_opt_in=true`，原 blueprint hash `sha256:710314711d4704a81c380f537ab67225fc86632d430e5d510b26ad2fcbcab738`，PG 2 viewer rows 仍存在。
+- **G11「每日喝水紀錄」**：原 AI Job `224ba726-de85-4a1c-ad3c-aef7eb0f334b`；模型 CODE `SUCCEEDED`，20¢ ceiling；原 frozen QA [41365402062](https://github.com/NFF98/appf2-build/actions/runs/41365402062) 7/7；**原首波網站流程 41364911735 為 FAILURE，不可改寫**，後續真網站獨立 [41449070224](https://github.com/NFF98/appf2-build/actions/runs/41449070224) SUCCESS：0→1→2→3、重載保留、另一 viewer 隔離、刪除和再建立、真 Worker／PG CRUD 2xx、訪客 `model_or_job_POST=0`，log `REAL_PUBLISHED_RECIPIENT_FULL_PASS sample=g11-water`。Supabase share `4acf553e-09a8-4568-86f2-20a78caceb4d` 為 `ACTIVE/public_opt_in=true`，blueprint `sha256:d29d72c588335eb70fd51cee4dbf314ce6f28aa5d0b49d92ce261e01c0a374cb`；PG 4 rows 仍存在。曾有約 16 秒等待，**速度不標 PASS**。
+- **邊界不得混淆**：這兩件有真 API／PostgreSQL，但目前 project profile 都是 `VITE_WEB`，使用既有簽署 `appf2Records` 後端橋接，**不是** AI 任意編寫的 `VITE_NODE` 長駐後端。此 4/9 表示已核實的「不同自然語言 App 真網站 E2E」，**不表示完整通用 AI 後端自主運行已驗收**。第一階段 55.6%（5/9）的下一新增產品 PASS 必須針對此剩餘後端整合能力作更嚴格驗收；禁止拿更多同型 CRUD 例子湊數。專用未知完整後端仍無正式 PASS。
+- **本次無新增模型 POST／新 App／付費使用**，只認列原來已通過而被最新置頂錯誤忽略的兩個產品證據；不重跑已付模型、不觸發新 paid Sandbox。沒有新實際 PASS，不得再把 CI commit 當作進度。下一目標是 5/9=55.6%，不是再做另一個平台 smoke。
+
+
 > **最高使用者指令：目標不是繼續修平台，而是讓真正產品從 22.2% 突破到 100%。** 不允許每次修改只產生工程活動而沒有可驗證的產品進度。僅做 Sprint 3.5；先更新本 Design PR #45 SPEC，再修改原 Build PR #419、Implement、真實網站 E2E。不開新 PR、不合併、不部署 Production、不做 Sprint 4。
 
 ## 產品完成率與舊樣本成績不得混算
 
-- **當前通用未知複雜 App 產品驗收基線：2/9 = 22.2%。** 這是本輪使用者指定的產品目標基線；沒有新增、可追溯的完整產品驗收證據，不得提高。後續更新必須明確標出**新增通過的驗收編號、網站原始操作、Job/程式版號、Sandbox 執行、後端 API、PostgreSQL 實際紀錄、恢復／分享證據及成本**。
+- **原通用未知複雜 App 產品基線為 2/9；經上段既有產品 E2E 查帳補認，現已核 4/9 = 44.4%。** 這是本輪使用者指定的產品目標基線；沒有新增、可追溯的完整產品驗收證據，不得提高。後續更新必須明確標出**新增通過的驗收編號、網站原始操作、Job/程式版號、Sandbox 執行、後端 API、PostgreSQL 實際紀錄、恢復／分享證據及成本**。
 - 本檔歷史所述 **9/9 已知 Staging 樣本**以及交接中的 7/9、8/9，是不同的既有樣本驗收帳本，**不是**通用未知複雜 App 能力完成率。不得用同一批已知樣本重跑、平台單測、CI 綠燈、模擬 Browser／DB 或新增程式行數提升此處 2/9。
-- 本目標採 9 項獨立產品驗收的離散計分；因此要求的「50%、80%」依序落在可實際驗收的 **5/9=55.6%** 與 **8/9=88.9%**。每個新增 PASS 必須先對應原需求及既定產品驗收；不能事後更改驗收定義、拆小現有關卡灌水或自稱完成。
+- 本目標採 9 項獨立產品驗收的離散計分；經既有結果查核現為 **4/9=44.4%**，「50%、80%」依序落在可實際驗收的 **5/9=55.6%** 與 **8/9=88.9%**。每個新增 PASS 必須先對應原需求及既定產品驗收；不能事後更改驗收定義、拆小現有關卡灌水或自稱完成。
 
 ## 三階段必須突破的真正產品 Gate（不可用平台修補充數）
 
