@@ -1,6 +1,17 @@
 # Sprint 3.5 — 產品完成率唯一執行目標 SSOT（2026-11-03）
 
 
+## 2026-11-03 既有 App 第一條真修改路徑：零 AI 外觀版（SPEC FIRST）
+
+使用者指示不再停留在 trusted fixture，而是把已驗證的版本原語真正接入 APPf2 已保存的 App。採 **最小、安全、可以免費驗證** 的既有 App 編輯縱切面；不誇稱已完成全部五項能力、不重做發布架構、不授權模型或雲端 Container。
+
+- **入口**：原始建立者從 AgentBuilderPanel「我的私人 App」開啟現存成功建置且完整原需求 Browser QA PASS 的 `VITE_WEB` 專案；可選擇明確的背景配色（藍、綠或米色），不需要寫程式。這不是任意 AI 自然語言修改或點選任意 DOM 元素。
+- **安全授權**：僅允許 Staging FREE_ONLY 模式；POST 帶原 P-256 owner 證明、原 Job ID、expected job revision、expected project hash、受控配色 enum；後端再次驗證原 owner、原 hash、`CODING`、project revision >= 2、原獨立 QA `ALL PASS` 且私人建置資產存在；來源資料不可由別的 anonymous_id 讀取。禁止未驗收原版、過期版本、不完整原 QA 與 `VITE_NODE` 通過。
+- **不可變修改**：只修改同個 project 中現有 `src/style.css`，追加 bounded 受控背景覆寫；不得碰 JS、後端、package、金鑰、原 prompt、原 QA，使用 `applyProjectEdits` 的 hash-CAS 和 `advanceDurableAgentJob` 儲存新版本。費用與 token checkpoint 不變。重複同色／stale CAS 必須拒絕，不得付費重送。
+- **發布保護**：此 API 只回傳 `STYLE_CANDIDATE_SAVED_QA_REQUIRED`。不會直接發布，也不會替換既有 ACTIVE/share 的 hash；後續必須原樣跑完整 frozen QA，獨立 Docker/Chromium 認證新 project hash，並由用戶重新確認才可以對外分享新版（新版單獨分享連結）。舊分享仍指向舊 immutable artifact；QA 失敗不取代已發布作品。免費 QA 需原 owner 另外點擊明確同意。
+- **負面驗證**：不同 owner、錯誤 hash、錯誤 revision、無 QA、FAIL/UNTESTED、原檔缺失、修改後沒變、非法 palette、step 額度不足全部 fail closed。第一次可免費本機/CI mock DB 測；沒有 Staging 真網站新 App 修改證據，就只能報「程式已接通＋CI」，不能 +1 產品 PASS。
+- **下一階段才是**：將此安全修改骨架擴展成「用戶文字/指向畫面 → 明確修改約束與新 QA → 有額度 AI 修改既有 source → 新舊 QA → user accept → publication」。需另一回合的真網站 E2E，絕不可把本回合配色修改測試冒充完整五項或 AI 修改能力。
+
 ## 2026-11-03 五次修改保護：零付費驗證 SPEC（不算產品 PASS）
 
 用戶授權先驗證「已有 App 基礎上連續五次修改、故意破壞一次、確認舊版不受影響及重開仍可用」。只在原 Design PR #45 與 Build PR #419 執行；免費 GitHub CI/Chromium，不觸發新 AI、Container、部署或 Production。先測保護基礎，不冒充真正用戶產品驗收。
